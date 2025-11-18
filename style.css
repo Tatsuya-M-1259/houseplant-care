@@ -1,0 +1,73 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f4f7f6;
+    color: #333;
+    padding: 20px;
+}
+
+#plant-card-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.plant-card {
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 20px;
+    width: 350px; /* 普通サイズのカルテ幅 */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+.card-header {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.card-header h3 {
+    margin: 0;
+    color: #1a535c;
+}
+
+.card-image {
+    width: 100%;
+    height: 180px;
+    background-color: #ccc;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    /* Placeholder for actual image */
+    text-align: center;
+    line-height: 180px;
+    font-size: 14px;
+    color: #555;
+    overflow: hidden; 
+}
+
+.status-box {
+    background-color: #fce38a;
+    padding: 8px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    font-weight: bold;
+    color: #a30000; /* クリティカルパス強調色 */
+}
+
+.season-selector {
+    margin-bottom: 10px;
+    display: flex;
+    gap: 5px;
+}
+
+.season-selector button {
+    padding: 5px 10px;
+    border: 1px solid #1a535c;
+    background-color: #fff;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.season-selector button.active {
+    background-color: #1a535c;
+    color: #fff;
+}
