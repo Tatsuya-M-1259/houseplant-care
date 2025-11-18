@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>観葉植物管理カルテ</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <h1>🪴 My Plant Care - 観葉植物管理カルテ</h1>
+
+    <section id="plant-registration">
+        <h2>🌱 新規植物の登録</h2>
+        <form id="add-plant-form">
+            <label for="plant-name">植物名 (ニックネーム):</label>
+            <input type="text" id="plant-name" required>
+            
+            <label for="species-select">植物種 (20種リストから):</label>
+            <select id="species-select" required>
+                </select>
+            
+            <label for="last-watered">直近の水やり日:</label>
+            <input type="date" id="last-watered" required>
+            
+            <button type="submit">カルテに追加</button>
+        </form>
+    </section>
+
+    <hr>
+
+    <section id="plant-card-list">
+        <h2>📝 登録済みの植物 (カルテ)</h2>
+        </section>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
