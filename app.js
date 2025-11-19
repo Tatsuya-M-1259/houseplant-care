@@ -5,9 +5,10 @@ const addPlantForm = document.getElementById('add-plant-form');
 const plantCardList = document.getElementById('plant-card-list');
 
 let userPlants = JSON.parse(localStorage.getItem('userPlants')) || [];
+let draggedId = null; // 🌟 追加: ドラッグ中のカードIDを保持
 
 // ----------------------------------------------------
-// 1. 季節判定ロジック
+// 1. 季節判定ロジック (変更なし)
 // ----------------------------------------------------
 
 function getCurrentSeason() {
@@ -25,7 +26,7 @@ function getCurrentSeason() {
 }
 
 // ----------------------------------------------------
-// 2. 初期化 (Select Boxへのデータ挿入)
+// 2. 初期化 (Select Boxへのデータ挿入) (変更なし)
 // ----------------------------------------------------
 
 function initializeApp() {
@@ -60,8 +61,28 @@ function renderPlantCards() {
 function createPlantCard(userPlant, data, activeSeasonKey) {
     const card = document.createElement('div');
     card.className = 'plant-card';
+    card.setAttribute('data-id', userPlant.id); // 🌟 追加: 削除・並び替え用のID
+    card.setAttribute('draggable', true); // 🌟 追加: ドラッグ可能にする
 
-    // 季節選択ボタンの生成
+    // 🌟 追加: コントロールボタンコンテナ
+    const controls = document.createElement('div');
+    
+    // 🌟 追加: ドラッグハンドル (持ち手)
+    const dragHandle = document.createElement('span');
+    dragHandle.className = 'drag-handle';
+    dragHandle.textContent = '☰'; // 持ち手アイコン
+    controls.appendChild(dragHandle);
+
+    // 🌟 追加: 削除ボタン
+    const deleteButton = document.createElement('button');
+    deleteButton.className = 'delete-btn';
+    deleteButton.textContent = '×';
+    deleteButton.onclick = () => deletePlantCard(userPlant.id); // 削除関数を呼び出す
+    controls.appendChild(deleteButton);
+
+    card.appendChild(controls); 
+
+    // 季節選択ボタンの生成 (変更なし)
     const seasonSelector = document.createElement('div');
     seasonSelector.className = 'season-selector';
     ['SPRING', 'SUMMER', 'AUTUMN', 'WINTER'].forEach(key => {
@@ -86,12 +107,19 @@ function createPlantCard(userPlant, data, activeSeasonKey) {
     
     card.appendChild(seasonSelector); 
     card.appendChild(content);
+    
+    // 🌟 追加: ドラッグイベントリスナーの設定
+    card.addEventListener('dragstart', handleDragStart);
+    card.addEventListener('dragover', handleDragOver);
+    card.addEventListener('drop', handleDrop);
+    card.addEventListener('dragend', handleDragEnd);
 
     return card;
 }
 
 function updateCardContent(cardElement, userPlant, data, newSeasonKey) {
     // 季節選択UIの次の要素（コンテンツ部分）を取得し、更新
+    // DOM構造の変更に合わせて修正
     const contentElement = cardElement.querySelector('.season-selector').nextElementSibling;
     if (contentElement) {
         contentElement.innerHTML = generateCardContent(userPlant, data, newSeasonKey);
@@ -99,7 +127,7 @@ function updateCardContent(cardElement, userPlant, data, newSeasonKey) {
 }
 
 // ----------------------------------------------------
-// 4. カルテコンテンツ生成 (HTMLテンプレート)
+// 4. カルテコンテンツ生成 (HTMLテンプレート) (変更なし)
 // ----------------------------------------------------
 
 function generateCardContent(userPlant, data, seasonKey) {
@@ -172,7 +200,7 @@ function getSeasonRisk(seasonKey, data) {
 }
 
 // ----------------------------------------------------
-// 5. 植物登録処理
+// 5. 植物登録処理 (変更なし)
 // ----------------------------------------------------
 
 addPlantForm.addEventListener('submit', function(e) {
@@ -192,6 +220,79 @@ addPlantForm.addEventListener('submit', function(e) {
     renderPlantCards();
     addPlantForm.reset();
 });
+
+// ----------------------------------------------------
+// 6. 🌟 追加: カルテ削除ロジック
+// ----------------------------------------------------
+
+function deletePlantCard(id) {
+    // IDは数値型として比較するため、引数を数値に変換
+    const numericId = parseInt(id); 
+    
+    if (!confirm('この植物のカルテを削除してもよろしいですか？')) {
+        return;
+    }
+    
+    // IDに一致しないものだけを残してフィルタリング
+    userPlants = userPlants.filter(plant => plant.id !== numericId);
+    
+    // localStorageを更新
+    localStorage.setItem('userPlants', JSON.stringify(userPlants));
+    
+    // UIを再描画
+    renderPlantCards();
+}
+
+// ----------------------------------------------------
+// 7. 🌟 追加: ドラッグ＆ドロップ（順序変更）ロジック
+// ----------------------------------------------------
+
+function handleDragStart(e) {
+    // ドラッグする要素のIDを取得
+    draggedId = parseInt(e.target.dataset.id);
+    e.target.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+}
+
+function handleDragOver(e) {
+    e.preventDefault(); // これがないとdropイベントが発火しない
+    
+    const targetCard = e.target.closest('.plant-card');
+    if (!targetCard || targetCard.classList.contains('dragging')) return;
+    
+    e.dataTransfer.dropEffect = 'move';
+}
+
+function handleDrop(e) {
+    e.preventDefault();
+    
+    const targetCard = e.target.closest('.plant-card');
+    if (!targetCard || draggedId === null) return;
+
+    const droppedId = parseInt(targetCard.dataset.id);
+    
+    // 1. 配列内のインデックスを取得
+    const draggedIndex = userPlants.findIndex(p => p.id === draggedId);
+    const droppedIndex = userPlants.findIndex(p => p.id === droppedId);
+
+    if (draggedIndex === -1 || droppedIndex === -1 || draggedIndex === droppedIndex) return;
+
+    // 2. 配列の順番を入れ替える
+    const [draggedItem] = userPlants.splice(draggedIndex, 1);
+    userPlants.splice(droppedIndex, 0, draggedItem);
+    
+    // 3. localStorageを更新
+    localStorage.setItem('userPlants', JSON.stringify(userPlants));
+    
+    // 4. UIを再描画
+    renderPlantCards();
+}
+
+function handleDragEnd(e) {
+    // ドラッグ終了時にクラスを削除し、IDをクリア
+    e.target.classList.remove('dragging');
+    draggedId = null;
+}
 
 // アプリケーション起動
 initializeApp();
