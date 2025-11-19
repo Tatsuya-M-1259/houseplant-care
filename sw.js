@@ -9,8 +9,28 @@ const urlsToCache = [
     'data.js',
     'manifest.json',
     'icon-192x192.png',
-    'icon-512x512.png'
-    // 注: 植物の個別画像（.jpg/.jfif）はキャッシュ戦略を複雑にするため、ここではPWAのインストール要件を満たすコアファイルのみを対象とします。
+    'icon-512x512.png',
+    // 🌟 修正: すべての画像ファイルをキャッシュ対象に追加 (半角英数字名に統一)
+    'cordyline.jpg',
+    'pachira.jpg',
+    'monstera.jpg',
+    'gajumaru.jpg',
+    'sansevieria.jpeg',
+    'dracaena.jpg',
+    'schefflera.jpg',
+    'yucca.jpg',
+    'anthurium.jpg',
+    'pothos.jpg',
+    'alocasia.jpg',
+    'indian_rubber.jpg',
+    'everfresh.jpg',
+    'croton.jpg',
+    'coffee_tree.jpg',
+    'ponytail_palm.jpg',
+    'ficus_umbellata.jpg',
+    'augusta.jpg',
+    'staghorn_fern.jpg',
+    'araucaria.jpg'
 ];
 
 // インストールイベント: キャッシュの作成とコアアセットの追加
