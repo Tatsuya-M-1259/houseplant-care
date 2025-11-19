@@ -116,7 +116,9 @@ function generateCardContent(userPlant, data, seasonKey) {
                           : seasonData.water;
 
     return `
-        <div class="card-image">${data.species}の写真</div>
+        <div class="card-image">
+            <img src="${data.img}" alt="${data.species}">
+        </div>
         <div class="card-header">
             <h3>${userPlant.name}</h3>
             <p>${data.species} (最低越冬温度: ${data.minTemp}℃)</p>
