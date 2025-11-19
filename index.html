@@ -3,38 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>観葉植物管理カルテ</title>
+    <title>観葉植物ケア情報</title>
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
 </head>
 <body>
 
-    <h1>🪴 My Plant Care - 観葉植物管理カルテ</h1>
+    <header>
+        <h1>My Houseplant Care Guide</h1>
+    </header>
 
-    <section id="plant-registration">
-        <h2>🌱 新規植物の登録</h2>
-        <form id="add-plant-form">
-            <label for="plant-name">植物名 (ニックネーム):</label>
-            <input type="text" id="plant-name" required>
-            
-            <label for="species-select">植物種 (20種リストから):</label>
-            <select id="species-select" required>
-                </select>
-            
-            <label for="last-watered">直近の水やり日:</label>
-            <input type="date" id="last-watered" required>
-            
-            <button type="submit">カルテに追加</button>
-        </form>
-    </section>
+    <main id="plant-list">
+        </main>
 
-    <hr>
-
-    <section id="plant-card-list">
-        <h2>📝 登録済みの植物 (カルテ)</h2>
-        </section>
+    <div id="details-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <div id="plant-details">
+                </div>
+            
+            <div class="user-data-section">
+                <h2>マイカルテ情報</h2>
+                <p><strong>購入日:</strong> <span id="purchase-date-display">未設定</span></p>
+                <button id="edit-purchase-date-button" class="action-button">購入日を記録/変更</button>
+            </div>
+            
+        </div>
+    </div>
+    
+    <div id="purchase-date-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button-purchase-date">&times;</span>
+            <h2>購入日の記録</h2>
+            <label for="purchase-date-input">日付:</label>
+            <input type="date" id="purchase-date-input" required>
+            <button id="save-purchase-date-button" class="action-button">保存</button>
+        </div>
+    </div>
 
     <script src="data.js"></script>
     <script src="app.js"></script>
+    <script src="sw.js"></script>
 </body>
 </html>
