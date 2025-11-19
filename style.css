@@ -18,6 +18,56 @@ header {
     justify-content: center;
 }
 
+/* ---------------------------------- */
+/* 🌟 追加: データ管理セクションのスタイル */
+/* ---------------------------------- */
+#data-management {
+    background-color: #e0f2f1; /* Light Teal background */
+    padding: 15px 20px;
+    margin-bottom: 30px;
+    border-radius: 8px;
+    border: 1px solid #b2dfdb;
+    max-width: 640px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#data-management h2 {
+    color: #00796b;
+    font-size: 1.1em;
+    border-bottom: 1px dashed #00796b;
+    padding-bottom: 5px;
+    margin-top: 0;
+}
+
+.data-controls {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    align-items: center;
+}
+
+.import-control {
+    flex-grow: 1;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.file-name-display {
+    font-size: 0.9em;
+    color: #666;
+    max-width: 100px; /* ファイル名の長さを制限 */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
+/* ---------------------------------- */
+/* カード共通スタイル (既存) */
+/* ---------------------------------- */
+
 .plant-card {
     background-color: #fff;
     border: 1px solid #e0e0e0;
@@ -55,10 +105,10 @@ header {
 }
 
 /* ---------------------------------- */
-/* モーダル共通スタイル */
+/* モーダル共通スタイル (既存) */
 /* ---------------------------------- */
 .modal {
-    display: none; /* 初期状態では非表示 */
+    display: none; 
     position: fixed;
     z-index: 1000;
     left: 0;
@@ -71,7 +121,7 @@ header {
 
 .modal-content {
     background-color: #fff;
-    margin: 5% auto; /* 上から5%の位置に配置 */
+    margin: 5% auto; 
     padding: 30px;
     border: 1px solid #888;
     width: 90%;
@@ -127,7 +177,7 @@ header {
 }
 
 /* ---------------------------------- */
-/* 🌟 追加/修正: マイカルテセクションのスタイル */
+/* マイカルテセクション (既存) */
 /* ---------------------------------- */
 .user-data-section {
     margin-top: 20px;
@@ -138,7 +188,7 @@ header {
 }
 
 .user-data-section h2 {
-    color: #4CAF50; /* 植物らしい緑色 */
+    color: #4CAF50; 
     margin-top: 0;
     font-size: 1.2em;
     border-bottom: 2px solid #e0e0e0;
@@ -151,16 +201,40 @@ header {
 }
 
 /* ---------------------------------- */
-/* 🌟 追加: 購入日入力モーダルのスタイル */
+/* ボタン共通スタイル (既存) */
 /* ---------------------------------- */
+.action-button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1em;
+    min-width: 100px;
+    box-sizing: border-box;
+    transition: background-color 0.2s;
+}
 
+.action-button:hover {
+    background-color: #45a049;
+}
+
+.action-button.secondary {
+    background-color: #00bcd4; /* Light Blue for Export */
+}
+.action-button.secondary:hover {
+    background-color: #00acc1;
+}
+
+/* 購入日入力モーダル (既存) */
 #purchase-date-modal .modal-content {
     background-color: #fff;
-    margin: 15% auto; /* 画面中央に配置 */
+    margin: 15% auto; 
     padding: 20px;
     border: 1px solid #888;
-    width: 80%; /* 幅を調整 */
-    max-width: 400px; /* 最大幅 */
+    width: 80%; 
+    max-width: 400px; 
     border-radius: 10px;
     box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
     position: relative;
@@ -173,26 +247,9 @@ header {
     display: inline-block;
     border: 1px solid #ccc;
     border-radius: 4px;
-    box-sizing: border-box; /* paddingをwidthに含める */
+    box-sizing: border-box; 
 }
 
-/* アクションボタン（共通） */
-.action-button {
-    background-color: #4CAF50;
-    color: white;
-    padding: 10px 15px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 1em;
-    width: 100%;
-}
-
-.action-button:hover {
-    background-color: #45a049;
-}
-
-/* モーダル内のクローズボタンの位置調整 */
 #purchase-date-modal .close-button-purchase-date {
     top: 10px; 
     right: 10px;
