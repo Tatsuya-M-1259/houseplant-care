@@ -171,4 +171,63 @@ const PLANT_DATA = [
             SPRING: { water: '土表面が乾いたらすぐ', light: '明るい日なた' },
             SUMMER: { water: '土表面が乾いたらすぐ', light: '明るい日なた' },
             AUTUMN: { water: '土表面が乾いたらすぐ', light: '明るい日なた' },
-            WINTER: { water: '土表面が乾いたら少量', light: '明るい日なた', tempRisk:
+            WINTER: { water: '土表面が乾いたら少量', light: '明るい日なた', tempRisk: '厳重な温度管理（最低10℃確保）' }
+        },
+        maintenance: { fertilizer: '5月, 8月', repotting: '5月〜8月', pruning: '5月〜8月 (徒長枝剪定)' }
+    },
+    // No. 16: トックリラン
+    {
+        id: 16, species: 'トックリラン', scientific: 'Beaucarnea recurvata', minTemp: -3, difficulty: '容易', feature: '極めて乾燥に強い、基部肥大化', img: 'Beaucarnea.jpg',
+        management: {
+            SPRING: { water: '土表面が乾いたらすぐ', light: '明るい日なた' },
+            SUMMER: { water: '土表面が乾いたらすぐ', light: '明るい日なた' },
+            AUTUMN: { water: '土表面が乾いてから2日後', light: '明るい日なた' },
+            WINTER: { water: '土中が乾いてから3日後 (少量)', light: '明るい日なた', tempRisk: '断水で休眠誘導。管理容易。' }
+        },
+        maintenance: { fertilizer: '4月, 9月', repotting: '5月〜7月', pruning: '不要' }
+    },
+    // No. 17: フィカス・ウンベラータ
+    {
+        id: 17, species: 'ウンベラータ', scientific: 'Ficus umbellata', minTemp: 10, difficulty: '中程度', feature: '成長早い、剪定必須', img: 'FicusUmbellata.jpg',
+        management: {
+            SPRING: { water: '土表面が乾いたらすぐ', light: '明るい日なた/半日陰' },
+            SUMMER: { water: '土表面が乾いたらすぐ', light: '明るい日なた/半日陰' },
+            AUTUMN: { water: '土表面が乾いてから1日後', light: '明るい日なた/半日陰' },
+            WINTER: { water: '土中が乾いてから2日後 (少量)', light: '明るい日なた/半日陰', tempRisk: '厳重な温度管理（最低10℃確保）' }
+        },
+        maintenance: { fertilizer: '4月, 9月', repotting: '5月〜8月', pruning: '5月〜8月 (積極的な剪定)' }
+    },
+    // No. 18: オーガスタ
+    {
+        id: 18, species: 'オーガスタ', scientific: 'Strelitzia nicolai', minTemp: 5, difficulty: 'やや容易', feature: '極楽鳥花の仲間、大型化', img: 'Strelitzia.jpg',
+        management: {
+            SPRING: { water: '土表面が乾いたらすぐ', light: '明るい日なた' },
+            SUMMER: { water: '土を乾かさないように', light: '明るい日なた' },
+            AUTUMN: { water: '土表面が乾いたらすぐ', light: '明るい日なた' },
+            WINTER: { water: '土中が乾いてから2日後', light: '明るい日なた', tempRisk: '夜間窓際隔離（最低5℃確保）' }
+        },
+        maintenance: { fertilizer: '4月, 9月', repotting: '5月〜8月', pruning: '随時 (古葉除去)' }
+    },
+    // No. 19: ビカクシダ
+    {
+        id: 19, species: 'ビカクシダ', scientific: 'Platycerium', minTemp: 10, difficulty: '難しい', feature: '着生植物、水やり方法が特殊', img: 'Platycerium.jpg',
+        management: {
+            SPRING: { water: '水苔が乾いたら', light: '明るい日陰' },
+            SUMMER: { water: '水苔が乾いたら', light: '明るい日陰' },
+            AUTUMN: { water: '水苔が乾いてから1日後', light: '明るい日陰' },
+            WINTER: { water: '水苔が乾いてから2日後 (頻度低)', light: '明るい日陰', tempRisk: '厳重な温度管理（最低10℃確保）' }
+        },
+        maintenance: { fertilizer: '施肥不要 (または液肥)', repotting: '5月〜8月', pruning: '不要' }
+    },
+    // No. 20: アローカリア
+    {
+        id: 20, species: 'アローカリア', scientific: 'Araucaria heterophylla', minTemp: 0, difficulty: '容易', feature: '強い耐寒性、コニファー', img: 'Araucaria.jpg',
+        management: {
+            SPRING: { water: '土表面が乾いたらすぐ', light: '明るい日なた' },
+            SUMMER: { water: '土表面が乾いたらすぐ', light: '明るい日なた' },
+            AUTUMN: { water: '土表面が乾いたらすぐ', light: '明るい日なた' },
+            WINTER: { water: '土表面が乾いてから2日後 (少量)', light: '明るい日なた', tempRisk: '管理容易。' }
+        },
+        maintenance: { fertilizer: '4月, 9月', repotting: '5月〜7月', pruning: '不要' }
+    }
+];
