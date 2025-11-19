@@ -68,35 +68,34 @@ function createPlantCard(userPlant, data, activeSeasonKey) {
         const button = document.createElement('button');
         button.textContent = SEASONS[key].name.split(' ')[0]; // 季節名のみ
         button.className = key === activeSeasonKey ? 'active' : '';
-        button.onclick = () => updateCardContent(card, userPlant, data, key);
+        // ボタンクリック時にコンテンツを更新するイベントリスナーを設定
+        button.onclick = () => {
+            // 現在アクティブなボタンを非アクティブにし、クリックされたボタンをアクティブにする
+            card.querySelectorAll('.season-selector button').forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            
+            // カードコンテンツを更新
+            updateCardContent(card, userPlant, data, key);
+        };
         seasonSelector.appendChild(button);
     });
 
     // 初期コンテンツの生成
-    card.innerHTML = generateCardContent(userPlant, data, activeSeasonKey);
-    card.prepend(seasonSelector); // 選択ボタンをコンテンツの前に配置
+    const content = document.createElement('div');
+    content.innerHTML = generateCardContent(userPlant, data, activeSeasonKey);
+    
+    card.appendChild(seasonSelector); 
+    card.appendChild(content);
 
     return card;
 }
 
 function updateCardContent(cardElement, userPlant, data, newSeasonKey) {
-    // ボタンのアクティブ状態を更新
-    cardElement.querySelectorAll('.season-selector button').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    cardElement.querySelector(`.season-selector button:contains(${SEASONS[newSeasonKey].name.split(' ')[0]})`).classList.add('active');
-
-    // コンテンツ部分のみを更新
-    const newContent = generateCardContent(userPlant, data, newSeasonKey);
-    
-    // 季節選択UI以外の部分を置き換えるための処理
-    // （ここでは簡略化のためinnerHTMLを直接更新していますが、実務ではより細かくDOM操作を行います）
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = newContent;
-    
-    // 既存のカードコンテンツを削除し、新しいものを追加
-    Array.from(cardElement.children).filter(child => !child.classList.contains('season-selector')).forEach(child => child.remove());
-    Array.from(tempDiv.children).forEach(child => cardElement.appendChild(child));
+    // 季節選択UIの次の要素（コンテンツ部分）を取得し、更新
+    const contentElement = cardElement.querySelector('.season-selector').nextElementSibling;
+    if (contentElement) {
+        contentElement.innerHTML = generateCardContent(userPlant, data, newSeasonKey);
+    }
 }
 
 // ----------------------------------------------------
@@ -111,8 +110,9 @@ function generateCardContent(userPlant, data, seasonKey) {
     const timeSinceWatered = Math.floor((new Date() - lastWateredDate) / (1000 * 60 * 60 * 24)); // 日数計算
     
     // 次の水やり目安のロジックは複雑なため、ここでは簡略化し、注意喚起に留めます。
-    const waterGuidance = timeSinceWatered > 5 && seasonKey !== 'WINTER' 
-                          ? `水やりから${timeSinceWatered}日経過。注意して土の状態を確認してください。` 
+    // 冬は14日、その他は7日経過で確認を促すメッセージに変更
+    const waterGuidance = (timeSinceWatered > 7 && seasonKey !== 'WINTER') || (timeSinceWatered > 14 && seasonKey === 'WINTER')
+                          ? `水やりから${timeSinceWatered}日経過。**土の状態を厳格に確認**し、プロトコルに従って給水してください。` 
                           : seasonData.water;
 
     return `
@@ -129,36 +129,44 @@ function generateCardContent(userPlant, data, seasonKey) {
 
         <h4>現在の管理プロトコル (${SEASONS[seasonKey].name.split(' ')[0]})</h4>
         <ul>
-            [cite_start]<li>**水やり:** ${waterGuidance} [cite: 45]</li>
-            [cite_start]<li>**光量要求:** ${seasonData.light} [cite: 45]</li>
-            ${seasonData.tempRisk ? [cite_start]`<li>**⚠️ 特殊対応:** ${seasonData.tempRisk} [cite: 16, 30, 31]</li>` : ''}
+            <li>**水やり:** ${waterGuidance}</li>
+            <li>**光量要求:** ${seasonData.light}</li>
+            ${seasonData.tempRisk ? `<li>**⚠️ 特殊対応:** ${seasonData.tempRisk}</li>` : ''}
+            ${seasonKey === 'WINTER' ? '<li>**根腐れ注意:** 過剰水やりは最大の死亡原因です。</li>' : ''}
         </ul>
 
         <h4>年間メンテナンス</h4>
         <ul>
-            [cite_start]<li>**植え替え推奨:** ${data.maintenance.repotting} [cite: 64]</li>
-            [cite_start]<li>**施肥推奨:** ${data.maintenance.fertilizer} [cite: 64]</li>
-            [cite_start]<li>**剪定推奨:** ${data.maintenance.pruning} [cite: 64]</li>
+            <li>**植え替え推奨:** ${data.maintenance.repotting}</li>
+            <li>**施肥推奨:** ${data.maintenance.fertilizer}</li>
+            <li>**剪定推奨:** ${data.maintenance.pruning}</li>
         </ul>
     `;
 }
 
 function getSeasonRisk(seasonKey, data) {
     if (seasonKey === 'WINTER') {
-        [cite_start]// 耐寒性「弱」（10℃以上）の種は特に厳重な管理を強調 [cite: 30]
+        // 耐寒性「弱」（10℃以上）の種は特に厳重な管理を強調
         if (data.minTemp >= 10) {
-            return '厳重な低温・断水管理！根腐れリスク大！'; [cite_start]// [cite: 12]
+            return '厳重な低温・断水管理！根腐れリスク大！'; 
         }
-        return '断水管理と夜間の窓際隔離！'; [cite_start]// [cite: 16, 43]
+        // 耐寒性「やや弱」（5℃以上）の種
+        if (data.minTemp >= 5) {
+            return '断水管理と夜間の窓際隔離！';
+        }
+        // 耐寒性「強」の種
+        return '冬季は極端な断水で休眠誘導。管理容易。';
     }
     if (seasonKey === 'SUMMER') {
-        [cite_start]// 夏は換気による高温障害回避が重要 [cite: 10, 15]
+        // 日中の高温障害（換気管理）が重要
         return '積極的な換気による高温障害回避！';
     }
     if (seasonKey === 'AUTUMN') {
-        return '休眠に向けた水・施肥の漸減準備。'; [cite_start]// [cite: 11]
+        // 休眠期に向けた乾燥耐性訓練を開始
+        return '休眠に向けた水・施肥の漸減準備。'; 
     }
-    return '成長期再開！施肥と水やりを再開。'; [cite_start]// [cite: 9]
+    // 春
+    return '成長期再開！水やりと施肥を徐々に再開。'; 
 }
 
 // ----------------------------------------------------
