@@ -5,7 +5,7 @@ const addPlantForm = document.getElementById('add-plant-form');
 const plantCardList = document.getElementById('plant-card-list');
 
 let userPlants = JSON.parse(localStorage.getItem('userPlants')) || [];
-let draggedId = null; // 🌟 追加: ドラッグ中のカードIDを保持
+let draggedId = null; // ドラッグ中のカードIDを保持
 
 // ----------------------------------------------------
 // 1. 季節判定ロジック (変更なし)
@@ -61,19 +61,19 @@ function renderPlantCards() {
 function createPlantCard(userPlant, data, activeSeasonKey) {
     const card = document.createElement('div');
     card.className = 'plant-card';
-    card.setAttribute('data-id', userPlant.id); // 🌟 追加: 削除・並び替え用のID
-    card.setAttribute('draggable', true); // 🌟 追加: ドラッグ可能にする
+    card.setAttribute('data-id', userPlant.id);
+    card.setAttribute('draggable', true);
 
-    // 🌟 追加: コントロールボタンコンテナ
+    // コントロールボタンコンテナ
     const controls = document.createElement('div');
     
-    // 🌟 追加: ドラッグハンドル (持ち手)
+    // ドラッグハンドル (持ち手)
     const dragHandle = document.createElement('span');
     dragHandle.className = 'drag-handle';
     dragHandle.textContent = '☰'; // 持ち手アイコン
     controls.appendChild(dragHandle);
 
-    // 🌟 追加: 削除ボタン
+    // 削除ボタン
     const deleteButton = document.createElement('button');
     deleteButton.className = 'delete-btn';
     deleteButton.textContent = '×';
@@ -108,7 +108,7 @@ function createPlantCard(userPlant, data, activeSeasonKey) {
     card.appendChild(seasonSelector); 
     card.appendChild(content);
     
-    // 🌟 追加: ドラッグイベントリスナーの設定
+    // ドラッグイベントリスナーの設定
     card.addEventListener('dragstart', handleDragStart);
     card.addEventListener('dragover', handleDragOver);
     card.addEventListener('drop', handleDrop);
@@ -119,7 +119,6 @@ function createPlantCard(userPlant, data, activeSeasonKey) {
 
 function updateCardContent(cardElement, userPlant, data, newSeasonKey) {
     // 季節選択UIの次の要素（コンテンツ部分）を取得し、更新
-    // DOM構造の変更に合わせて修正
     const contentElement = cardElement.querySelector('.season-selector').nextElementSibling;
     if (contentElement) {
         contentElement.innerHTML = generateCardContent(userPlant, data, newSeasonKey);
@@ -127,7 +126,7 @@ function updateCardContent(cardElement, userPlant, data, newSeasonKey) {
 }
 
 // ----------------------------------------------------
-// 4. カルテコンテンツ生成 (HTMLテンプレート) (変更なし)
+// 4. 🌟 修正: カルテコンテンツ生成 (水やり間隔の計算ロジックを追加)
 // ----------------------------------------------------
 
 function generateCardContent(userPlant, data, seasonKey) {
@@ -135,13 +134,46 @@ function generateCardContent(userPlant, data, seasonKey) {
     const riskText = getSeasonRisk(seasonKey, data);
     
     const lastWateredDate = new Date(userPlant.lastWatered);
-    const timeSinceWatered = Math.floor((new Date() - lastWateredDate) / (1000 * 60 * 60 * 24)); // 日数計算
+    const today = new Date();
+    // 前回水やり日からの経過日数
+    const timeSinceWatered = Math.floor((today - lastWateredDate) / (1000 * 60 * 60 * 24)); 
     
-    // 次の水やり目安のロジックは複雑なため、ここでは簡略化し、注意喚起に留めます。
-    // 冬は14日、その他は7日経過で確認を促すメッセージに変更
-    const waterGuidance = (timeSinceWatered > 7 && seasonKey !== 'WINTER') || (timeSinceWatered > 14 && seasonKey === 'WINTER')
-                          ? `水やりから${timeSinceWatered}日経過。**土の状態を厳格に確認**し、プロトコルに従って給水してください。` 
-                          : seasonData.water;
+    // 🌟 推奨される間隔日数（日数で表現できない場合は null）を抽出
+    let recommendedIntervalDays = null;
+    let intervalDisplay = '';
+    
+    // 1. 「乾いてからX日後」のXを抽出 (土が乾くまでの期間を7日と仮定し、推奨間隔とする)
+    const intervalMatch = seasonData.water.match(/(\d+)\s*日後/);
+    if (intervalMatch) {
+        // 例: 「乾いてから2日後」 => 7日(乾くまで) + 2日(乾いてから) = 9日
+        recommendedIntervalDays = parseInt(intervalMatch[1]) + 7; 
+        intervalDisplay = `（前回から約 ${recommendedIntervalDays} 日が目安）`;
+    } else if (seasonData.water.includes('乾いたらすぐ') || seasonData.water.includes('水苔が乾いたら')) {
+        recommendedIntervalDays = 7; // 「乾いたらすぐ」を仮に7日と設定
+        intervalDisplay = `（前回から約 ${recommendedIntervalDays} 日が目安）`;
+    } else if (seasonData.water.includes('乾かさないように')) {
+        recommendedIntervalDays = 4; // 多湿を好む種は短めに4日と設定
+        intervalDisplay = `（前回から約 ${recommendedIntervalDays} 日が目安）`;
+    } else if (seasonData.water.includes('断水')) {
+        recommendedIntervalDays = 999; // 断水は極端に長い日数として扱う
+        intervalDisplay = `（現在 ${SEASONS[seasonKey].name.split(' ')[0]} は断水期間です）`;
+    }
+
+    // 🌟 水やりが必要かどうかを判定するメッセージ (新たな行動喚起ロジック)
+    let actionMessage = '';
+    if (recommendedIntervalDays && recommendedIntervalDays <= 30) { // 極端な断水でない場合
+        const daysUntilNext = recommendedIntervalDays - timeSinceWatered;
+        
+        if (daysUntilNext <= 0) {
+            actionMessage = `<li style="color:#d9534f; font-weight:bold;">🚨 水やり目安日を**${Math.abs(daysUntilNext)}日超過**！土の状態をすぐに確認してください。</li>`;
+        } else if (daysUntilNext <= 3) {
+            actionMessage = `<li style="color:#f0ad4e; font-weight:bold;">⚠️ あと**${daysUntilNext}日**で水やり目安日です。土の状態を確認しましょう。</li>`;
+        } else {
+            actionMessage = `<li>次回水やり目安まで、あと **${daysUntilNext}日** です。</li>`;
+        }
+    } else {
+         actionMessage = `<li>前回水やり日から **${timeSinceWatered}日経過**。土の状態を優先してください。</li>`;
+    }
 
     return `
         <div class="card-image">
@@ -159,7 +191,8 @@ function generateCardContent(userPlant, data, seasonKey) {
 
         <h4>現在の管理プロトコル (${SEASONS[seasonKey].name.split(' ')[0]})</h4>
         <ul>
-            <li>**水やり:** ${waterGuidance}</li>
+            <li>**推奨頻度:** ${seasonData.water} <span style="font-size:0.9em; font-weight:normal;">${intervalDisplay}</span></li>
+            ${actionMessage}
             <li>**光量要求:** ${seasonData.light}</li>
             ${seasonData.tempRisk ? `<li>**⚠️ 特殊対応:** ${seasonData.tempRisk}</li>` : ''}
             ${seasonKey === 'WINTER' ? '<li>**根腐れ注意:** 過剰水やりは最大の死亡原因です。</li>' : ''}
@@ -222,7 +255,7 @@ addPlantForm.addEventListener('submit', function(e) {
 });
 
 // ----------------------------------------------------
-// 6. 🌟 追加: カルテ削除ロジック
+// 6. カルテ削除ロジック (変更なし)
 // ----------------------------------------------------
 
 function deletePlantCard(id) {
@@ -244,7 +277,7 @@ function deletePlantCard(id) {
 }
 
 // ----------------------------------------------------
-// 7. 🌟 追加: ドラッグ＆ドロップ（順序変更）ロジック
+// 7. ドラッグ＆ドロップ（順序変更）ロジック (変更なし)
 // ----------------------------------------------------
 
 function handleDragStart(e) {
