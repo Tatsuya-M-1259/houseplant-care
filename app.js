@@ -329,3 +329,21 @@ function handleDragEnd(e) {
 
 // アプリケーション起動
 initializeApp();
+
+// ----------------------------------------------------
+// 8. PWA Service Worker 登録ロジック (追加箇所)
+// ----------------------------------------------------
+
+// Service Workerの登録
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        // sw.js を登録
+        navigator.serviceWorker.register('./sw.js')
+            .then(registration => {
+                console.log('ServiceWorker registration successful with scope: ', registration.scope);
+            })
+            .catch(err => {
+                console.log('ServiceWorker registration failed: ', err);
+            });
+    });
+}
