@@ -46,6 +46,25 @@
         <h2>📝 登録済みの植物 (カルテ)</h2>
     </section>
     
+    <!-- 🌟 修正: 詳細モーダル（details-modal）を復元 -->
+    <div id="details-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <!-- 🌟 詳細情報表示エリア -->
+            <div id="plant-details">
+                <!-- ここに植物の詳細情報が動的に挿入されます -->
+            </div>
+            
+            <!-- 購入日関連の要素をここに配置 -->
+            <div class="user-data-section">
+                <h2>マイカルテ情報</h2>
+                <p><strong>購入日:</strong> <span id="purchase-date-display">未設定</span></p>
+                <button id="edit-purchase-date-button" class="action-button">購入日を記録/変更</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 購入日入力モーダル (idはそのまま) -->
     <div id="purchase-date-modal" class="modal">
         <div class="modal-content">
             <span class="close-button-purchase-date">&times;</span>
@@ -56,11 +75,8 @@
         </div>
     </div>
     
-    <div style="display:none;">
-        <span id="purchase-date-display"></span>
-        <button id="edit-purchase-date-button"></button>
-    </div>
-
+    <!-- 🌟 修正: ダミー要素は不要になりました。 -->
+    
     <script src="data.js"></script>
     <script src="app.js"></script>
     <script src="sw.js"></script>
