@@ -1,349 +1,193 @@
 // app.js
 
-const speciesSelect = document.getElementById('species-select');
-const addPlantForm = document.getElementById('add-plant-form');
-const plantCardList = document.getElementById('plant-card-list');
-
-let userPlants = JSON.parse(localStorage.getItem('userPlants')) || [];
-let draggedId = null; // ドラッグ中のカードIDを保持
-
-// ----------------------------------------------------
-// 1. 季節判定ロジック (変更なし)
-// ----------------------------------------------------
-
-function getCurrentSeason() {
-    const today = new Date();
-    const month = today.getMonth() + 1; // 1-12
-
-    if (month >= SEASONS.SPRING.startMonth && month <= SEASONS.SPRING.endMonth) return 'SPRING';
-    if (month >= SEASONS.SUMMER.startMonth && month <= SEASONS.SUMMER.endMonth) return 'SUMMER';
-    if (month >= SEASONS.AUTUMN.startMonth && month <= SEASONS.AUTUMN.endMonth) return 'AUTUMN';
+document.addEventListener('DOMContentLoaded', () => {
+    const plantList = document.getElementById('plant-list');
+    const detailsModal = document.getElementById('details-modal');
+    const closeButton = detailsModal.querySelector('.close-button');
+    const plantDetails = document.getElementById('plant-details');
     
-    // 12月、1月、2月の場合
-    if (month === 12 || month === 1 || month === 2) return 'WINTER';
+    // 🌟 追加: 購入日関連の要素
+    const purchaseDateModal = document.getElementById('purchase-date-modal');
+    const closePurchaseDateButton = purchaseDateModal.querySelector('.close-button-purchase-date');
+    const editPurchaseDateButton = document.getElementById('edit-purchase-date-button');
+    const purchaseDateInput = document.getElementById('purchase-date-input');
+    const savePurchaseDateButton = document.getElementById('save-purchase-date-button');
+    const purchaseDateDisplay = document.getElementById('purchase-date-display');
     
-    return 'SPRING'; // デフォルト
-}
+    let currentPlantId = null;
 
-// ----------------------------------------------------
-// 2. 初期化 (Select Boxへのデータ挿入) (変更なし)
-// ----------------------------------------------------
-
-function initializeApp() {
-    PLANT_DATA.forEach(plant => {
-        const option = document.createElement('option');
-        option.value = plant.id;
-        option.textContent = `${plant.species} (${plant.scientific})`;
-        speciesSelect.appendChild(option);
-    });
-
-    renderPlantCards();
-}
-
-// ----------------------------------------------------
-// 3. カルテレンダリング
-// ----------------------------------------------------
-
-function renderPlantCards() {
-    plantCardList.innerHTML = '';
+    // 現在の月を取得し、季節を決定するヘルパー関数 (既存)
+    const getCurrentSeason = () => {
+        const month = new Date().getMonth() + 1;
+        // 季節区分の定義はdata.jsにあります
+        if (typeof SEASONS === 'undefined') return 'SPRING'; // Fallback
+        
+        if (month >= SEASONS.SPRING.startMonth && month <= SEASONS.SPRING.endMonth) return 'SPRING';
+        if (month >= SEASONS.SUMMER.startMonth && month <= SEASONS.SUMMER.endMonth) return 'SUMMER';
+        if (month >= SEASONS.AUTUMN.startMonth && month <= SEASONS.AUTUMN.endMonth) return 'AUTUMN';
+        return 'WINTER';
+    };
     const currentSeasonKey = getCurrentSeason();
 
-    userPlants.slice(0, 10).forEach(userPlant => { // デフォで10個まで表示
-        const data = PLANT_DATA.find(p => p.id == userPlant.speciesId);
-        if (!data) return;
+    // 観葉植物リストのレンダリング (既存)
+    const renderPlantList = () => {
+        plantList.innerHTML = '';
+        PLANT_DATA.forEach(plant => {
+            const card = document.createElement('div');
+            card.className = 'plant-card';
+            card.setAttribute('data-id', plant.id);
 
-        const card = createPlantCard(userPlant, data, currentSeasonKey);
-        plantCardList.appendChild(card);
-    });
-    // 10個以上の処理（ここでは省略）
-}
+            const seasonData = plant.management[currentSeasonKey];
 
-function createPlantCard(userPlant, data, activeSeasonKey) {
-    const card = document.createElement('div');
-    card.className = 'plant-card';
-    card.setAttribute('data-id', userPlant.id);
-    card.setAttribute('draggable', true);
-
-    // コントロールボタンコンテナ
-    const controls = document.createElement('div');
-    
-    // ドラッグハンドル (持ち手)
-    const dragHandle = document.createElement('span');
-    dragHandle.className = 'drag-handle';
-    dragHandle.textContent = '☰'; // 持ち手アイコン
-    controls.appendChild(dragHandle);
-
-    // 削除ボタン
-    const deleteButton = document.createElement('button');
-    deleteButton.className = 'delete-btn';
-    deleteButton.textContent = '×';
-    deleteButton.onclick = () => deletePlantCard(userPlant.id); // 削除関数を呼び出す
-    controls.appendChild(deleteButton);
-
-    card.appendChild(controls); 
-
-    // 季節選択ボタンの生成 (変更なし)
-    const seasonSelector = document.createElement('div');
-    seasonSelector.className = 'season-selector';
-    ['SPRING', 'SUMMER', 'AUTUMN', 'WINTER'].forEach(key => {
-        const button = document.createElement('button');
-        button.textContent = SEASONS[key].name.split(' ')[0]; // 季節名のみ
-        button.className = key === activeSeasonKey ? 'active' : '';
-        // ボタンクリック時にコンテンツを更新するイベントリスナーを設定
-        button.onclick = () => {
-            // 現在アクティブなボタンを非アクティブにし、クリックされたボタンをアクティブにする
-            card.querySelectorAll('.season-selector button').forEach(btn => btn.classList.remove('active'));
-            button.classList.add('active');
-            
-            // カードコンテンツを更新
-            updateCardContent(card, userPlant, data, key);
-        };
-        seasonSelector.appendChild(button);
-    });
-
-    // 初期コンテンツの生成
-    const content = document.createElement('div');
-    content.innerHTML = generateCardContent(userPlant, data, activeSeasonKey);
-    
-    card.appendChild(seasonSelector); 
-    card.appendChild(content);
-    
-    // ドラッグイベントリスナーの設定
-    card.addEventListener('dragstart', handleDragStart);
-    card.addEventListener('dragover', handleDragOver);
-    card.addEventListener('drop', handleDrop);
-    card.addEventListener('dragend', handleDragEnd);
-
-    return card;
-}
-
-function updateCardContent(cardElement, userPlant, data, newSeasonKey) {
-    // 季節選択UIの次の要素（コンテンツ部分）を取得し、更新
-    const contentElement = cardElement.querySelector('.season-selector').nextElementSibling;
-    if (contentElement) {
-        contentElement.innerHTML = generateCardContent(userPlant, data, newSeasonKey);
-    }
-}
-
-// ----------------------------------------------------
-// 4. 🌟 修正: カルテコンテンツ生成 (水やり間隔の計算ロジックを追加)
-// ----------------------------------------------------
-
-function generateCardContent(userPlant, data, seasonKey) {
-    const seasonData = data.management[seasonKey];
-    const riskText = getSeasonRisk(seasonKey, data);
-    
-    const lastWateredDate = new Date(userPlant.lastWatered);
-    const today = new Date();
-    // 前回水やり日からの経過日数
-    const timeSinceWatered = Math.floor((today - lastWateredDate) / (1000 * 60 * 60 * 24)); 
-    
-    // 🌟 推奨される間隔日数（日数で表現できない場合は null）を抽出
-    let recommendedIntervalDays = null;
-    let intervalDisplay = '';
-    
-    // 1. 「乾いてからX日後」のXを抽出 (土が乾くまでの期間を7日と仮定し、推奨間隔とする)
-    const intervalMatch = seasonData.water.match(/(\d+)\s*日後/);
-    if (intervalMatch) {
-        // 例: 「乾いてから2日後」 => 7日(乾くまで) + 2日(乾いてから) = 9日
-        recommendedIntervalDays = parseInt(intervalMatch[1]) + 7; 
-        intervalDisplay = `（前回から約 ${recommendedIntervalDays} 日が目安）`;
-    } else if (seasonData.water.includes('乾いたらすぐ') || seasonData.water.includes('水苔が乾いたら')) {
-        recommendedIntervalDays = 7; // 「乾いたらすぐ」を仮に7日と設定
-        intervalDisplay = `（前回から約 ${recommendedIntervalDays} 日が目安）`;
-    } else if (seasonData.water.includes('乾かさないように')) {
-        recommendedIntervalDays = 4; // 多湿を好む種は短めに4日と設定
-        intervalDisplay = `（前回から約 ${recommendedIntervalDays} 日が目安）`;
-    } else if (seasonData.water.includes('断水')) {
-        recommendedIntervalDays = 999; // 断水は極端に長い日数として扱う
-        intervalDisplay = `（現在 ${SEASONS[seasonKey].name.split(' ')[0]} は断水期間です）`;
-    }
-
-    // 🌟 水やりが必要かどうかを判定するメッセージ (新たな行動喚起ロジック)
-    let actionMessage = '';
-    if (recommendedIntervalDays && recommendedIntervalDays <= 30) { // 極端な断水でない場合
-        const daysUntilNext = recommendedIntervalDays - timeSinceWatered;
-        
-        if (daysUntilNext <= 0) {
-            actionMessage = `<li style="color:#d9534f; font-weight:bold;">🚨 水やり目安日を**${Math.abs(daysUntilNext)}日超過**！土の状態をすぐに確認してください。</li>`;
-        } else if (daysUntilNext <= 3) {
-            actionMessage = `<li style="color:#f0ad4e; font-weight:bold;">⚠️ あと**${daysUntilNext}日**で水やり目安日です。土の状態を確認しましょう。</li>`;
-        } else {
-            actionMessage = `<li>次回水やり目安まで、あと **${daysUntilNext}日** です。</li>`;
-        }
-    } else {
-         actionMessage = `<li>前回水やり日から **${timeSinceWatered}日経過**。土の状態を優先してください。</li>`;
-    }
-
-    return `
-        <div class="card-image">
-            <img src="${data.img}" alt="${data.species}">
-        </div>
-        <div class="card-header">
-            <h3>${userPlant.name}</h3>
-            <p>${data.species} (最低越冬温度: ${data.minTemp}℃)</p>
-            <p>難易度: <b>${data.difficulty}</b> | 特徴: ${data.feature}</p>
-        </div>
-        
-        <div class="status-box">
-            ${SEASONS[seasonKey].name.split(' ')[0]}の最重要管理項目: **${riskText}**
-        </div>
-
-        <h4>現在の管理プロトコル (${SEASONS[seasonKey].name.split(' ')[0]})</h4>
-        <ul>
-            <li>**推奨頻度:** ${seasonData.water} <span style="font-size:0.9em; font-weight:normal;">${intervalDisplay}</span></li>
-            ${actionMessage}
-            <li>**光量要求:** ${seasonData.light}</li>
-            ${seasonData.tempRisk ? `<li>**⚠️ 特殊対応:** ${seasonData.tempRisk}</li>` : ''}
-            ${seasonKey === 'WINTER' ? '<li>**根腐れ注意:** 過剰水やりは最大の死亡原因です。</li>' : ''}
-        </ul>
-
-        <h4>年間メンテナンス</h4>
-        <ul>
-            <li>**植え替え推奨:** ${data.maintenance.repotting}</li>
-            <li>**施肥推奨:** ${data.maintenance.fertilizer}</li>
-            <li>**剪定推奨:** ${data.maintenance.pruning}</li>
-        </ul>
-    `;
-}
-
-function getSeasonRisk(seasonKey, data) {
-    if (seasonKey === 'WINTER') {
-        // 耐寒性「弱」（10℃以上）の種は特に厳重な管理を強調
-        if (data.minTemp >= 10) {
-            return '厳重な低温・断水管理！根腐れリスク大！'; 
-        }
-        // 耐寒性「やや弱」（5℃以上）の種
-        if (data.minTemp >= 5) {
-            return '断水管理と夜間の窓際隔離！';
-        }
-        // 耐寒性「強」の種
-        return '冬季は極端な断水で休眠誘導。管理容易。';
-    }
-    if (seasonKey === 'SUMMER') {
-        // 日中の高温障害（換気管理）が重要
-        return '積極的な換気による高温障害回避！';
-    }
-    if (seasonKey === 'AUTUMN') {
-        // 休眠期に向けた乾燥耐性訓練を開始
-        return '休眠に向けた水・施肥の漸減準備。'; 
-    }
-    // 春
-    return '成長期再開！水やりと施肥を徐々に再開。'; 
-}
-
-// ----------------------------------------------------
-// 5. 植物登録処理 (変更なし)
-// ----------------------------------------------------
-
-addPlantForm.addEventListener('submit', function(e) {
-    e.preventDefault();
-
-    const newPlant = {
-        id: Date.now(),
-        name: document.getElementById('plant-name').value,
-        speciesId: document.getElementById('species-select').value,
-        lastWatered: document.getElementById('last-watered').value,
+            card.innerHTML = `
+                <img src="${plant.img}" alt="${plant.species}" class="plant-image">
+                <h2>${plant.species} (${plant.scientific})</h2>
+                <div class="info-group">
+                    <p><strong>現在の季節:</strong> ${SEASONS[currentSeasonKey].name}</p>
+                    <p><strong>💡 水やり:</strong> ${seasonData.water}</p>
+                    <p><strong>☀️ 光:</strong> ${seasonData.light}</p>
+                    <p><strong>🌡️ 最低温度:</strong> ${plant.minTemp}°C</p>
+                </div>
+            `;
+            card.addEventListener('click', () => showDetailsModal(plant));
+            plantList.appendChild(card);
+        });
     };
 
-    userPlants.unshift(newPlant); // 新しいものをリストの先頭に追加
-    localStorage.setItem('userPlants', JSON.stringify(userPlants));
-    
-    // UIを更新
-    renderPlantCards();
-    addPlantForm.reset();
-});
+    // 🌟 修正: 詳細モーダルの表示（購入日表示ロジック追加）
+    const showDetailsModal = (plant) => {
+        currentPlantId = plant.id;
+        const seasonData = plant.management[currentSeasonKey];
+        const maintenance = plant.maintenance;
 
-// ----------------------------------------------------
-// 6. カルテ削除ロジック (変更なし)
-// ----------------------------------------------------
+        plantDetails.innerHTML = `
+            <h2>${plant.species}</h2>
+            <p class="scientific-name">${plant.scientific}</p>
+            <img src="${plant.img}" alt="${plant.species}" class="detail-image">
+            <div class="detail-section">
+                <h3>季節別ケア (${SEASONS[currentSeasonKey].name})</h3>
+                <ul>
+                    <li><strong>水やり:</strong> ${seasonData.water}</li>
+                    <li><strong>光:</strong> ${seasonData.light}</li>
+                    ${seasonData.tempRisk ? `<li><strong>寒さ対策:</strong> ${seasonData.tempRisk}</li>` : ''}
+                </ul>
+            </div>
+            <div class="detail-section">
+                <h3>基本情報・年間メンテナンス</h3>
+                <ul>
+                    <li><strong>難易度:</strong> ${plant.difficulty}</li>
+                    <li><strong>特徴:</strong> ${plant.feature}</li>
+                    <li><strong>最低越冬温度:</strong> ${plant.minTemp}°C</li>
+                    <li><strong>肥料:</strong> ${maintenance.fertilizer}</li>
+                    <li><strong>植え替え:</strong> ${maintenance.repotting}</li>
+                    <li><strong>剪定:</strong> ${maintenance.pruning}</li>
+                </ul>
+            </div>
+        `;
+        
+        // 🌟 追加: 購入日を取得して表示を更新
+        updatePurchaseDateDisplay(plant.id);
 
-function deletePlantCard(id) {
-    // IDは数値型として比較するため、引数を数値に変換
-    const numericId = parseInt(id); 
+        detailsModal.style.display = 'block';
+    };
+
+    // モーダルの閉じるロジック (既存)
+    closeButton.onclick = () => {
+        detailsModal.style.display = 'none';
+        currentPlantId = null;
+    };
+
+    window.onclick = (event) => {
+        if (event.target == detailsModal) {
+            detailsModal.style.display = 'none';
+            currentPlantId = null;
+        }
+        // 🌟 追加: 購入日モーダルを閉じる
+        if (event.target == purchaseDateModal) {
+            purchaseDateModal.style.display = 'none';
+        }
+    };
     
-    if (!confirm('この植物のカルテを削除してもよろしいですか？')) {
-        return;
+    // 🌟 追加: 購入日モーダルを閉じるボタン
+    closePurchaseDateButton.onclick = () => {
+        purchaseDateModal.style.display = 'none';
+    };
+
+
+    // =================================================================
+    // 🌟 [購入日記録機能] 
+    // =================================================================
+
+    // 🌟 追加: LocalStorageから購入日を取得する関数
+    const getPurchaseDate = (plantId) => {
+        // キーを 'purchase_date_1', 'purchase_date_2' のように設定
+        return localStorage.getItem(`purchase_date_${plantId}`);
+    };
+
+    // 🌟 追加: LocalStorageに購入日を保存する関数
+    const savePurchaseDate = (plantId, date) => {
+        localStorage.setItem(`purchase_date_${plantId}`, date);
+    };
+
+    // 🌟 追加: 購入日表示を更新する関数
+    const updatePurchaseDateDisplay = (plantId) => {
+        const date = getPurchaseDate(plantId);
+        if (date) {
+            // YYYY-MM-DD形式をYYYY年M月D日に変換して表示
+            const [year, month, day] = date.split('-');
+            purchaseDateDisplay.textContent = `${year}年${parseInt(month)}月${parseInt(day)}日`;
+        } else {
+            purchaseDateDisplay.textContent = '未設定';
+        }
+    };
+
+
+    // 🌟 追加: 「購入日を記録/変更」ボタンクリック時の処理
+    editPurchaseDateButton.onclick = () => {
+        if (currentPlantId === null) return; 
+
+        // 詳細モーダルから購入日入力モーダルへ切り替え
+        detailsModal.style.display = 'none';
+        purchaseDateModal.style.display = 'block';
+
+        // 既に保存されている日付があれば入力欄にセット
+        const existingDate = getPurchaseDate(currentPlantId);
+        purchaseDateInput.value = existingDate || '';
+    };
+
+    // 🌟 追加: 「保存」ボタンクリック時の処理
+    savePurchaseDateButton.onclick = () => {
+        const newDate = purchaseDateInput.value;
+        if (newDate && currentPlantId !== null) {
+            savePurchaseDate(currentPlantId, newDate);
+            alert('購入日を保存しました。');
+            
+            // 購入日入力モーダルを閉じる
+            purchaseDateModal.style.display = 'none';
+            
+            // 詳細モーダルを再表示し、購入日表示を更新
+            detailsModal.style.display = 'block';
+            updatePurchaseDateDisplay(currentPlantId);
+        } else {
+            alert('日付を入力してください。');
+        }
+    };
+    
+    // 初期化
+    renderPlantList();
+    
+    // PWA Service Worker 登録ロジック (既存)
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            // sw.js を登録
+            navigator.serviceWorker.register('./sw.js')
+                .then(registration => {
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                })
+                .catch(err => {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+        });
     }
-    
-    // IDに一致しないものだけを残してフィルタリング
-    userPlants = userPlants.filter(plant => plant.id !== numericId);
-    
-    // localStorageを更新
-    localStorage.setItem('userPlants', JSON.stringify(userPlants));
-    
-    // UIを再描画
-    renderPlantCards();
-}
 
-// ----------------------------------------------------
-// 7. ドラッグ＆ドロップ（順序変更）ロジック (変更なし)
-// ----------------------------------------------------
-
-function handleDragStart(e) {
-    // ドラッグする要素のIDを取得
-    draggedId = parseInt(e.target.dataset.id);
-    e.target.classList.add('dragging');
-    e.dataTransfer.effectAllowed = 'move';
-}
-
-function handleDragOver(e) {
-    e.preventDefault(); // これがないとdropイベントが発火しない
-    
-    const targetCard = e.target.closest('.plant-card');
-    if (!targetCard || targetCard.classList.contains('dragging')) return;
-    
-    e.dataTransfer.dropEffect = 'move';
-}
-
-function handleDrop(e) {
-    e.preventDefault();
-    
-    const targetCard = e.target.closest('.plant-card');
-    if (!targetCard || draggedId === null) return;
-
-    const droppedId = parseInt(targetCard.dataset.id);
-    
-    // 1. 配列内のインデックスを取得
-    const draggedIndex = userPlants.findIndex(p => p.id === draggedId);
-    const droppedIndex = userPlants.findIndex(p => p.id === droppedId);
-
-    if (draggedIndex === -1 || droppedIndex === -1 || draggedIndex === droppedIndex) return;
-
-    // 2. 配列の順番を入れ替える
-    const [draggedItem] = userPlants.splice(draggedIndex, 1);
-    userPlants.splice(droppedIndex, 0, draggedItem);
-    
-    // 3. localStorageを更新
-    localStorage.setItem('userPlants', JSON.stringify(userPlants));
-    
-    // 4. UIを再描画
-    renderPlantCards();
-}
-
-function handleDragEnd(e) {
-    // ドラッグ終了時にクラスを削除し、IDをクリア
-    e.target.classList.remove('dragging');
-    draggedId = null;
-}
-
-// アプリケーション起動
-initializeApp();
-
-// ----------------------------------------------------
-// 8. PWA Service Worker 登録ロジック (追加箇所)
-// ----------------------------------------------------
-
-// Service Workerの登録
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        // sw.js を登録
-        navigator.serviceWorker.register('./sw.js')
-            .then(registration => {
-                console.log('ServiceWorker registration successful with scope: ', registration.scope);
-            })
-            .catch(err => {
-                console.log('ServiceWorker registration failed: ', err);
-            });
-    });
-}
+});
