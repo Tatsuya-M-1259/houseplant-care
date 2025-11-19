@@ -12,10 +12,22 @@
     <header>
         <h1>My Houseplant Care Guide</h1>
     </header>
+    
+    <section id="data-management">
+        <h2>データ管理 (エクスポート/インポート)</h2>
+        <div class="data-controls">
+            <button id="export-data-button" class="action-button secondary">📤 データエクスポート</button>
+            <div class="import-control">
+                <input type="file" id="import-file-input" accept=".json" style="display: none;">
+                <button id="import-data-button" class="action-button primary">📥 データインポート</button>
+                <span id="import-file-name" class="file-name-display">ファイル未選択</span>
+            </div>
+        </div>
+    </section>
 
     <main id="plant-list">
         </main>
-
+    
     <div id="details-modal" class="modal">
         <div class="modal-content">
             <span class="close-button">&times;</span>
