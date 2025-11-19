@@ -4,14 +4,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // ----------------------------------------------------
     // 1. DOM要素の定義
     // ----------------------------------------------------
-    const plantList = document.getElementById('plant-list'); // 登録済み植物カードの親要素
-    const plantCardList = document.getElementById('plant-card-list'); // 旧名から変更
+    // const plantList = document.getElementById('plant-list'); // 🌟 mainタグ全体は不要なためコメントアウトまたは削除
+    const plantCardList = document.getElementById('plant-card-list'); // 登録済み植物カードの表示エリア
     const speciesSelect = document.getElementById('species-select');
     const addPlantForm = document.getElementById('add-plant-form');
 
     // モーダル要素
-    const detailsModal = document.getElementById('details-modal');
-    // 詳細モーダル内の要素（現在はHTML側で非表示）
+    const detailsModal = document.getElementById('details-modal'); // 🌟 修正: HTMLに復元された詳細モーダル
+    const closeDetailButton = detailsModal ? detailsModal.querySelector('.close-button') : null; // 🌟 修正: close-buttonの取得
+    const plantDetails = document.getElementById('plant-details'); // 🌟 修正: 詳細情報の挿入エリア
+    
+    // 詳細モーダル内の要素
     const purchaseDateDisplay = document.getElementById('purchase-date-display');
     const editPurchaseDateButton = document.getElementById('edit-purchase-date-button');
     
@@ -33,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let draggedId = null; // ドラッグ中のカードIDを保持
 
     // ----------------------------------------------------
-    // 2. 季節判定ロジック
+    // 2. 季節判定ロジック (既存)
     // ----------------------------------------------------
 
     function getCurrentSeason() {
@@ -48,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentSeasonKey = getCurrentSeason();
 
     // ----------------------------------------------------
-    // 3. 初期化処理
+    // 3. 初期化処理 (既存)
     // ----------------------------------------------------
 
     function initializeApp() {
@@ -64,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // ----------------------------------------------------
-    // 4. Local Storage / 購入日データ処理
+    // 4. Local Storage / 購入日データ処理 (既存)
     // ----------------------------------------------------
     
     const getPurchaseDate = (plantId) => {
@@ -77,7 +80,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const updatePurchaseDateDisplay = (plantId) => {
         const date = getPurchaseDate(plantId);
-        // HTML要素が非表示のため、Nullチェックを追加
         if (purchaseDateDisplay) {
             if (date) {
                 const [year, month, day] = date.split('-');
@@ -89,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     // ----------------------------------------------------
-    // 5. カルテレンダリングとカード生成
+    // 5. カルテレンダリングとカード生成 (既存)
     // ----------------------------------------------------
 
     function renderPlantCards() {
@@ -105,8 +107,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function createPlantCard(userPlant, data, activeSeasonKey) {
-        // ... (カード作成ロジック - ターン6の機能を使用)
-        // ここでは簡略化のため、ドラッグ＆ドロップ関連のイベントは省略しますが、元の機能に従ってイベントリスナーを付与する必要があります。
         
         const card = document.createElement('div');
         card.className = 'plant-card';
@@ -127,25 +127,23 @@ document.addEventListener('DOMContentLoaded', () => {
         deleteButton.className = 'delete-btn';
         deleteButton.textContent = '×';
         deleteButton.onclick = (e) => { 
-            e.stopPropagation(); // クリックがカード詳細へ伝播するのを防ぐ
+            e.stopPropagation(); 
             deletePlantCard(userPlant.id);
         };
         controls.appendChild(deleteButton);
         card.appendChild(controls); 
 
-        // 季節選択ボタンの生成 (ここでは簡略化し、詳細モーダルに水やり計算ロジックを移譲)
+        // 季節選択ボタンの生成 
         const seasonSelector = document.createElement('div');
         seasonSelector.className = 'season-selector';
         ['SPRING', 'SUMMER', 'AUTUMN', 'WINTER'].forEach(key => {
             const button = document.createElement('button');
             button.textContent = SEASONS[key].name.split(' ')[0];
             button.className = key === activeSeasonKey ? 'active' : '';
-            // カード表示は現在の季節に固定
             seasonSelector.appendChild(button);
         });
 
         const content = document.createElement('div');
-        // 初期コンテンツの生成
         content.innerHTML = generateCardContent(userPlant, data, activeSeasonKey);
         
         card.appendChild(seasonSelector); 
@@ -154,7 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // イベントリスナーの付与
         card.addEventListener('click', () => showDetailsModal(userPlant, data));
 
-        // ドラッグ＆ドロップイベントリスナー (完全版ロジックを適用)
+        // ドラッグ＆ドロップイベントリスナー (既存)
         card.addEventListener('dragstart', handleDragStart);
         card.addEventListener('dragover', handleDragOver);
         card.addEventListener('drop', handleDrop);
@@ -164,7 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function generateCardContent(userPlant, data, seasonKey) {
-        // ... (水やり計算とコンテンツ生成ロジック - ターン6の機能を使用)
+        // ... (水やり計算とコンテンツ生成ロジック - 既存)
         const seasonData = data.management[seasonKey];
         const riskText = getSeasonRisk(seasonKey, data);
         
@@ -238,29 +236,61 @@ document.addEventListener('DOMContentLoaded', () => {
         return '成長期再開！水やりと施肥を徐々に再開。'; 
     }
 
-    // 詳細モーダル表示（今回はカード詳細として使用せず、購入日編集の連携用として残す）
+    // 🌟 修正: カードクリック時に詳細モーダルを表示し、情報を挿入する
     function showDetailsModal(userPlant, plantData) {
-        currentPlantId = userPlant.id;
-        
-        // 必須ではないが、購入日ボタンを表示するために更新処理を呼び出し
-        updatePurchaseDateDisplay(userPlant.id); 
+        if (!detailsModal || !plantDetails) return; // モーダル要素が存在しない場合はスキップ
 
-        // 💡 登録植物の詳細情報を含む別のモーダルUIをここに展開するのが理想的ですが、
-        // 今回の修正では購入日編集の起動のみを目的とします。
-        // デフォルトでは、カードクリックで何も起こりません。
-        // ただし、購入日編集ボタンが機能するために currentPlantId をセットしておきます。
-        // alert(`[${userPlant.name}] 詳細情報 (購入日編集を有効化)`);
+        currentPlantId = userPlant.id;
+        const seasonData = plantData.management[currentSeasonKey];
+        const maintenance = plantData.maintenance;
+
+        // 詳細情報の内容を動的に生成
+        plantDetails.innerHTML = `
+            <h2>${userPlant.name} (${plantData.species})</h2>
+            <p class="scientific-name">${plantData.scientific}</p>
+            <img src="${plantData.img}" alt="${plantData.species}" class="detail-image">
+            <div class="detail-section">
+                <h3>季節別ケア (${SEASONS[currentSeasonKey].name})</h3>
+                <ul>
+                    <li><strong>水やり:</strong> ${seasonData.water}</li>
+                    <li><strong>光:</strong> ${seasonData.light}</li>
+                    ${seasonData.tempRisk ? `<li><strong>寒さ対策:</strong> ${seasonData.tempRisk}</li>` : ''}
+                </ul>
+            </div>
+            <div class="detail-section">
+                <h3>基本情報・年間メンテナンス</h3>
+                <ul>
+                    <li><strong>難易度:</strong> ${plantData.difficulty}</li>
+                    <li><strong>特徴:</strong> ${plantData.feature}</li>
+                    <li><strong>最低越冬温度:</strong> ${plantData.minTemp}°C</li>
+                    <li><strong>肥料:</strong> ${maintenance.fertilizer}</li>
+                    <li><strong>植え替え:</strong> ${maintenance.repotting}</li>
+                    <li><strong>剪定:</strong> ${maintenance.pruning}</li>
+                </ul>
+            </div>
+        `;
+        
+        updatePurchaseDateDisplay(userPlant.id); 
+        detailsModal.style.display = 'block'; // モーダルを表示
     }
 
+    // 🌟 追加: 詳細モーダルの閉じるロジック
+    if (closeDetailButton) {
+        closeDetailButton.onclick = () => {
+            detailsModal.style.display = 'none';
+            currentPlantId = null;
+        };
+    }
+    
     // ----------------------------------------------------
-    // 6. 新規植物登録処理
+    // 6. 新規植物登録処理 (既存)
     // ----------------------------------------------------
 
     addPlantForm.addEventListener('submit', function(e) {
         e.preventDefault();
 
         const newPlant = {
-            id: Date.now(), // ユニークID
+            id: Date.now(), 
             name: document.getElementById('plant-name').value,
             speciesId: document.getElementById('species-select').value,
             lastWatered: document.getElementById('last-watered').value,
@@ -275,7 +305,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // ----------------------------------------------------
-    // 7. カルテ削除ロジック
+    // 7. カルテ削除ロジック (既存)
     // ----------------------------------------------------
 
     function deletePlantCard(id) {
@@ -285,18 +315,16 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         
-        // userPlantsから削除
         userPlants = userPlants.filter(plant => plant.id !== numericId);
         localStorage.setItem('userPlants', JSON.stringify(userPlants));
         
-        // 購入日データも削除（任意だがクリーンアップのために実施）
         localStorage.removeItem(`purchase_date_${numericId}`);
         
         renderPlantCards();
     }
 
     // ----------------------------------------------------
-    // 8. ドラッグ＆ドロップ（順序変更）ロジック
+    // 8. ドラッグ＆ドロップ（順序変更）ロジック (既存)
     // ----------------------------------------------------
 
     function handleDragStart(e) {
@@ -341,35 +369,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // ----------------------------------------------------
-    // 9. 購入日入力モーダル処理
+    // 9. 購入日入力モーダル処理 (既存)
     // ----------------------------------------------------
     
-    // 購入日モーダルを閉じる
     closePurchaseDateButton.onclick = () => {
         purchaseDateModal.style.display = 'none';
-        // (詳細モーダルがないため、ここでは何もしません)
+        if (detailsModal) detailsModal.style.display = 'block'; // 詳細モーダルに戻る
     };
 
-    // 「購入日を記録/変更」ボタンクリック時の処理
     if (editPurchaseDateButton) {
         editPurchaseDateButton.onclick = () => {
-            // 💡 本来カード詳細から起動される想定だが、ここではIDがセットされていれば実行
             if (currentPlantId === null) {
                  alert('エラー: まず植物カードをクリックして詳細を表示してください。');
                  return;
             }
 
-            // 詳細モーダルから購入日入力モーダルへ切り替え
-            // detailsModal.style.display = 'none'; // 詳細モーダルがないためコメントアウト
+            detailsModal.style.display = 'none'; 
             purchaseDateModal.style.display = 'block';
 
-            // 既に保存されている日付があれば入力欄にセット
             const existingDate = getPurchaseDate(currentPlantId);
             purchaseDateInput.value = existingDate || '';
         };
     }
     
-    // 「保存」ボタンクリック時の処理
     savePurchaseDateButton.onclick = () => {
         const newDate = purchaseDateInput.value;
         if (newDate && currentPlantId !== null) {
@@ -377,7 +399,7 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('購入日を保存しました。');
             
             purchaseDateModal.style.display = 'none';
-            // 詳細表示を更新する関数を呼び出す（画面上の表示も更新される）
+            if (detailsModal) detailsModal.style.display = 'block'; // 詳細モーダルに戻る
             updatePurchaseDateDisplay(currentPlantId);
         } else {
             alert('日付を入力してください。');
@@ -385,14 +407,13 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     // ----------------------------------------------------
-    // 10. エクスポート/インポート機能
+    // 10. エクスポート/インポート機能 (既存)
     // ----------------------------------------------------
 
     const collectAllData = () => {
         const userPlantsRaw = localStorage.getItem('userPlants');
         const purchaseDates = {};
         
-        // LocalStorage全体をチェックし、購入日キーを収集
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
             if (key && key.startsWith('purchase_date_')) {
@@ -450,14 +471,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 // 1. userPlants (メインカルテ) の更新
-                userPlants = importedData.userPlants; // グローバル変数も更新
+                userPlants = importedData.userPlants; 
                 localStorage.setItem('userPlants', JSON.stringify(userPlants));
 
-                // 2. Purchase Dates (購入日) の更新: 既存のデータをクリアしてから書き込み
+                // 2. Purchase Dates (購入日) の更新
+                // 既存の購入日データをクリア
                 for (let i = 0; i < localStorage.length; i++) {
                     const key = localStorage.key(i);
-                    // userPlantsとpurchase_date_以外のデータも残したい場合は、このクリア範囲を調整
-                    if (key && (key.startsWith('purchase_date_') || key === 'userPlants')) {
+                    if (key && key.startsWith('purchase_date_')) {
                         localStorage.removeItem(key);
                     }
                 }
@@ -466,7 +487,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 alert('カルテデータのインポートが完了しました。画面を更新します。');
-                // アプリの初期化と再レンダリング (DOMContentLoaded後の再起動処理)
                 renderPlantCards(); 
 
             } catch (error) {
@@ -482,11 +502,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // ----------------------------------------------------
-    // 11. PWA Service Worker 登録ロジック
+    // 11. PWA Service Worker 登録ロジック (既存)
     // ----------------------------------------------------
     
-    // Service Workerの登録はHTMLの最後に<script src="sw.js"></script>で行われているため、ここでは省略
-
     // アプリケーション起動
     initializeApp();
 
