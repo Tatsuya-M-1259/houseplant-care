@@ -6,114 +6,194 @@ body {
     padding: 20px;
 }
 
-#plant-card-list {
+header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+#plant-list {
     display: flex;
     flex-wrap: wrap;
     gap: 20px;
+    justify-content: center;
 }
 
 .plant-card {
     background-color: #fff;
     border: 1px solid #e0e0e0;
     border-radius: 12px;
-    padding: 20px;
-    width: 350px; /* 普通サイズのカルテ幅 */
+    padding: 15px;
+    width: 300px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-    position: relative; /* 🌟 修正: 削除ボタン配置用 */
-}
-
-/* 🌟 追加: ドラッグ中のカードの見た目 */
-.dragging {
-    opacity: 0.4;
-    border: 2px dashed #1a535c;
-}
-
-/* 🌟 追加: 削除ボタン */
-.delete-btn {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: #ff6347; /* Tomato */
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 30px;
-    height: 30px;
-    font-size: 16px;
-    line-height: 1;
     cursor: pointer;
-    z-index: 10;
-    transition: background-color 0.2s;
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.delete-btn:hover {
-    background-color: #e5533d;
+.plant-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
 }
 
-/* 🌟 追加: ドラッグハンドル */
-.drag-handle {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    color: #aaa;
-    cursor: move;
-    font-size: 18px;
-    line-height: 1;
-    padding: 5px;
-    z-index: 10;
-}
-
-
-.card-header {
-    text-align: center;
-    margin-bottom: 15px;
-}
-
-.card-header h3 {
-    margin: 0;
-    color: #1a535c;
-}
-
-.card-image {
+.plant-image {
     width: 100%;
-    height: 180px;
-    background-color: #ccc;
+    height: 200px;
+    object-fit: cover;
     border-radius: 8px;
     margin-bottom: 10px;
-    overflow: hidden; 
 }
 
-.card-image img {
+.plant-card h2 {
+    font-size: 1.2em;
+    color: #1a535c;
+    margin-top: 0;
+    margin-bottom: 5px;
+}
+
+.info-group p {
+    margin: 3px 0;
+    font-size: 0.9em;
+}
+
+/* ---------------------------------- */
+/* モーダル共通スタイル */
+/* ---------------------------------- */
+.modal {
+    display: none; /* 初期状態では非表示 */
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
     width: 100%;
     height: 100%;
-    object-fit: cover; 
-    display: block;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.4);
 }
 
-.status-box {
-    background-color: #fce38a;
-    padding: 8px;
-    border-radius: 6px;
-    margin-bottom: 15px;
-    font-weight: bold;
-    color: #a30000;
-}
-
-.season-selector {
-    margin-bottom: 10px;
-    display: flex;
-    gap: 5px;
-}
-
-.season-selector button {
-    padding: 5px 10px;
-    border: 1px solid #1a535c;
+.modal-content {
     background-color: #fff;
-    cursor: pointer;
-    border-radius: 4px;
+    margin: 5% auto; /* 上から5%の位置に配置 */
+    padding: 30px;
+    border: 1px solid #888;
+    width: 90%;
+    max-width: 600px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+    position: relative;
 }
 
-.season-selector button.active {
-    background-color: #1a535c;
-    color: #fff;
+.close-button, .close-button-purchase-date {
+    color: #aaa;
+    float: right;
+    font-size: 32px;
+    font-weight: bold;
+    position: absolute;
+    top: 10px;
+    right: 20px;
+}
+
+.close-button:hover,
+.close-button:focus,
+.close-button-purchase-date:hover,
+.close-button-purchase-date:focus {
+    color: #333;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.detail-image {
+    width: 100%;
+    max-height: 300px;
+    object-fit: contain;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    background-color: #f0f0f0;
+}
+
+.detail-section h3 {
+    color: #4CAF50;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 5px;
+    margin-top: 15px;
+}
+
+.detail-section ul {
+    list-style: disc inside;
+    padding-left: 0;
+}
+
+.detail-section li {
+    margin-bottom: 5px;
+    font-size: 0.95em;
+}
+
+/* ---------------------------------- */
+/* 🌟 追加/修正: マイカルテセクションのスタイル */
+/* ---------------------------------- */
+.user-data-section {
+    margin-top: 20px;
+    padding: 15px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+}
+
+.user-data-section h2 {
+    color: #4CAF50; /* 植物らしい緑色 */
+    margin-top: 0;
+    font-size: 1.2em;
+    border-bottom: 2px solid #e0e0e0;
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+}
+
+.user-data-section strong {
+    font-weight: bold;
+}
+
+/* ---------------------------------- */
+/* 🌟 追加: 購入日入力モーダルのスタイル */
+/* ---------------------------------- */
+
+#purchase-date-modal .modal-content {
+    background-color: #fff;
+    margin: 15% auto; /* 画面中央に配置 */
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%; /* 幅を調整 */
+    max-width: 400px; /* 最大幅 */
+    border-radius: 10px;
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+    position: relative;
+}
+
+#purchase-date-input {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0 20px 0;
+    display: inline-block;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box; /* paddingをwidthに含める */
+}
+
+/* アクションボタン（共通） */
+.action-button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1em;
+    width: 100%;
+}
+
+.action-button:hover {
+    background-color: #45a049;
+}
+
+/* モーダル内のクローズボタンの位置調整 */
+#purchase-date-modal .close-button-purchase-date {
+    top: 10px; 
+    right: 10px;
 }
