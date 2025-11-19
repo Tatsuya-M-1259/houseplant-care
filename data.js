@@ -12,7 +12,7 @@ const SEASONS = {
 const PLANT_DATA = [
     // No. 1: コルジリネ
     {
-        id: 1, species: 'コルジリネ', scientific: 'Cordyline terminalis', minTemp: 5, difficulty: 'やや容易', feature: '鋭い葉、鉢植えが一般的', img: 'Cordyline.jpg',
+        id: 1, species: 'コルジリネ', scientific: 'Cordyline terminalis', minTemp: 5, difficulty: 'やや容易', feature: '鋭い葉、鉢植えが一般的', img: 'コルジリネ.jpg',
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', light: '明るい日なた' },
             SUMMER: { water: '土表面が乾いたらすぐ', light: '明るい日なた' },
@@ -23,7 +23,7 @@ const PLANT_DATA = [
     },
     // No. 2: パキラ
     {
-        id: 2, species: 'パキラ', scientific: 'Pachira glabra/aquatica', minTemp: 5, difficulty: '容易', feature: '乾燥に強く、耐陰性あり', img: 'Pachira.jpg',
+        id: 2, species: 'パキラ', scientific: 'Pachira glabra/aquatica', minTemp: 5, difficulty: '容易', feature: '乾燥に強く、耐陰性あり', img: 'パキラ.jpg',
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', light: '明るい日なた/半日陰' },
             SUMMER: { water: '土表面が乾いたらすぐ', light: '明るい日なた/半日陰' },
@@ -34,7 +34,7 @@ const PLANT_DATA = [
     },
     // No. 3: モンステラ
     {
-        id: 3, species: 'モンステラ', scientific: 'Monstera deliciosa', minTemp: 10, difficulty: '中程度', feature: '多湿を好む、根腐れ注意', img: 'Monstera.jpg',
+        id: 3, species: 'モンステラ', scientific: 'Monstera deliciosa', minTemp: 10, difficulty: '中程度', feature: '多湿を好む、根腐れ注意', img: 'モンステラ.jpg',
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', light: '半日陰 (明るい日陰)' },
             SUMMER: { water: '土表面が乾いたらすぐ', light: '半日陰 (明るい日陰)' },
@@ -45,7 +45,7 @@ const PLANT_DATA = [
     },
     // No. 4: ガジュマル
     {
-        id: 4, species: 'ガジュマル', scientific: 'Ficus microcarpa', minTemp: 5, difficulty: '容易', feature: '強い耐陰性、多幸の木', img: 'Gajumaru.jpg',
+        id: 4, species: 'ガジュマル', scientific: 'Ficus microcarpa', minTemp: 5, difficulty: '容易', feature: '強い耐陰性、多幸の木', img: 'ガジュマル.jpg',
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', light: '半日陰' },
             SUMMER: { water: '土表面が乾いたらすぐ', light: '半日陰' },
@@ -56,7 +56,7 @@ const PLANT_DATA = [
     },
     // No. 5: サンスベリア
     {
-        id: 5, species: 'サンスベリア', scientific: 'Sansevieria trifasciata', minTemp: 5, difficulty: '容易', feature: '極めて乾燥に強い、休眠誘導', img: 'Sansevieria.jpg',
+        id: 5, species: 'サンスベリア', scientific: 'Sansevieria trifasciata', minTemp: 5, difficulty: '容易', feature: '極めて乾燥に強い、休眠誘導', img: 'サンスベリア.jpeg',
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', light: '明るい日なた' },
             SUMMER: { water: '土表面が乾いたらすぐ', light: '明るい日なた' },
@@ -67,7 +67,7 @@ const PLANT_DATA = [
     },
     // No. 6: ドラセナ
     {
-        id: 6, species: 'ドラセナ', scientific: 'Dracaena fragrans', minTemp: 10, difficulty: '中程度', feature: '幸福の木、葉水必須', img: 'Dracaena.jpg',
+        id: 6, species: 'ドラセナ', scientific: 'Dracaena fragrans', minTemp: 10, difficulty: '中程度', feature: '幸福の木、葉水必須', img: 'ドラセナ.jpg',
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', light: '明るい日なた/半日陰' },
             SUMMER: { water: '土表面が乾いたらすぐ', light: '明るい日なた/半日陰' },
@@ -78,7 +78,7 @@ const PLANT_DATA = [
     },
     // No. 7: シェフレラ
     {
-        id: 7, species: 'シェフレラ', scientific: 'Schefflera arboricola', minTemp: 5, difficulty: '容易', feature: '非常に丈夫、耐陰性強い', img: 'Schefflera.jpg',
+        id: 7, species: 'シェフレラ', scientific: 'Schefflera arboricola', minTemp: 5, difficulty: '容易', feature: '非常に丈夫、耐陰性強い', img: 'シェフレラ.jfif',
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', light: '半日陰 (時々日光浴)' },
             SUMMER: { water: '土表面が乾いたらすぐ', light: '半日陰 (時々日光浴)' },
@@ -89,7 +89,7 @@ const PLANT_DATA = [
     },
     // No. 8: ユッカ
     {
-        id: 8, species: 'ユッカ', scientific: 'Yucca', minTemp: -3, difficulty: '容易', feature: '乾燥管理、強い耐寒性', img: 'Yucca.jpg',
+        id: 8, species: 'ユッカ', scientific: 'Yucca', minTemp: -3, difficulty: '容易', feature: '乾燥管理、強い耐寒性', img: 'ユッカ.jfif',
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', light: '明るい日なた' },
             SUMMER: { water: '土表面が乾いたらすぐ', light: '明るい日なた' },
@@ -100,7 +100,7 @@ const PLANT_DATA = [
     },
     // No. 9: アンスリウム
     {
-        id: 9, species: 'アンスリウム', scientific: 'Anthurium', minTemp: 10, difficulty: '中程度', feature: '花を観賞、多湿を好む', img: 'Anthurium.jpg',
+        id: 9, species: 'アンスリウム', scientific: 'Anthurium', minTemp: 10, difficulty: '中程度', feature: '花を観賞、多湿を好む', img: 'アンスリウム.jfif',
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', light: '明るい日陰 (直射日光避)' },
             SUMMER: { water: '土を乾かさないように', light: '明るい日陰 (直射日光避)' },
@@ -111,7 +111,7 @@ const PLANT_DATA = [
     },
     // No. 10: ポトス
     {
-        id: 10, species: 'ポトス', scientific: 'Epipremnum aureum', minTemp: 10, difficulty: '容易', feature: '耐陰性あり、つる性', img: 'Pothos.jpg',
+        id: 10, species: 'ポトス', scientific: 'Epipremnum aureum', minTemp: 10, difficulty: '容易', feature: '耐陰性あり、つる性', img: 'ポトス.jfif',
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', light: '半日陰' },
             SUMMER: { water: '土表面が乾いたらすぐ', light: '半日陰' },
@@ -122,7 +122,7 @@ const PLANT_DATA = [
     },
     // No. 11: アロカシア
     {
-        id: 11, species: 'アロカシア', scientific: 'Alocasia odora', minTemp: 10, difficulty: '中程度', feature: '葉の質感に多様性、休眠管理種あり', img: 'Alocasia.jpg',
+        id: 11, species: 'アロカシア', scientific: 'Alocasia odora', minTemp: 10, difficulty: '中程度', feature: '葉の質感に多様性、休眠管理種あり', img: 'アロカシア.jfif',
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', light: '明るい日なた (緑葉種)' },
             SUMMER: { water: '土を乾かさないように', light: '明るい日なた (緑葉種)' },
@@ -133,7 +133,7 @@ const PLANT_DATA = [
     },
     // No. 12: インドゴムノキ
     {
-        id: 12, species: 'インドゴムノキ', scientific: 'Ficus elastica', minTemp: 5, difficulty: '容易', feature: '日光で樹形が整う、葉が大きい', img: 'FicusElastica.jpg',
+        id: 12, species: 'インドゴムノキ', scientific: 'Ficus elastica', minTemp: 5, difficulty: '容易', feature: '日光で樹形が整う、葉が大きい', img: 'インドゴムノキ.jpg',
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', light: '明るい日なた/半日陰' },
             SUMMER: { water: '土表面が乾いたらすぐ', light: '明るい日なた/夏は遮光' }, // 耐暑性が弱い点を考慮
@@ -144,7 +144,7 @@ const PLANT_DATA = [
     },
     // No. 13: エバーフレッシュ
     {
-        id: 13, species: 'エバーフレッシュ', scientific: 'Cojoba arborea', minTemp: 10, difficulty: '中程度', feature: '夜に葉を閉じる、日陰で育つ', img: 'Everfresh.jpg',
+        id: 13, species: 'エバーフレッシュ', scientific: 'Cojoba arborea', minTemp: 10, difficulty: '中程度', feature: '夜に葉を閉じる、日陰で育つ', img: 'エバーフレッシュ.jpg',
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', light: '明るい日なた/半日陰' },
             SUMMER: { water: '土表面が乾いたらすぐ', light: '明るい日なた/半日陰' },
@@ -155,7 +155,7 @@ const PLANT_DATA = [
     },
     // No. 14: クロトン
     {
-        id: 14, species: 'クロトン', scientific: 'Codiaeum variegatum', minTemp: 10, difficulty: '中程度', feature: '鮮やかな葉色、日光必須', img: 'Croton.jpg',
+        id: 14, species: 'クロトン', scientific: 'Codiaeum variegatum', minTemp: 10, difficulty: '中程度', feature: '鮮やかな葉色、日光必須', img: 'クロトン.jfif',
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', light: '明るい日なた (必須)' },
             SUMMER: { water: '土を乾かさないように', light: '明るい日なた (必須)' },
@@ -166,7 +166,7 @@ const PLANT_DATA = [
     },
     // No. 15: コーヒーノキ
     {
-        id: 15, species: 'コーヒーノキ', scientific: 'Coffea arabica', minTemp: 10, difficulty: '難しい', feature: '日当たりを好む、熱帯植物', img: 'Coffee.jpg',
+        id: 15, species: 'コーヒーノキ', scientific: 'Coffea arabica', minTemp: 10, difficulty: '難しい', feature: '日当たりを好む、熱帯植物', img: 'コーヒーノキ.jfif',
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', light: '明るい日なた' },
             SUMMER: { water: '土表面が乾いたらすぐ', light: '明るい日なた' },
@@ -177,7 +177,7 @@ const PLANT_DATA = [
     },
     // No. 16: トックリラン
     {
-        id: 16, species: 'トックリラン', scientific: 'Beaucarnea recurvata', minTemp: -3, difficulty: '容易', feature: '極めて乾燥に強い、基部肥大化', img: 'Beaucarnea.jpg',
+        id: 16, species: 'トックリラン', scientific: 'Beaucarnea recurvata', minTemp: -3, difficulty: '容易', feature: '極めて乾燥に強い、基部肥大化', img: 'トックリラン.jfif',
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', light: '明るい日なた' },
             SUMMER: { water: '土表面が乾いたらすぐ', light: '明るい日なた' },
@@ -188,7 +188,7 @@ const PLANT_DATA = [
     },
     // No. 17: フィカス・ウンベラータ
     {
-        id: 17, species: 'ウンベラータ', scientific: 'Ficus umbellata', minTemp: 10, difficulty: '中程度', feature: '成長早い、剪定必須', img: 'FicusUmbellata.jpg',
+        id: 17, species: 'ウンベラータ', scientific: 'Ficus umbellata', minTemp: 10, difficulty: '中程度', feature: '成長早い、剪定必須', img: 'フィカス・ウンベラータ.jfif',
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', light: '明るい日なた/半日陰' },
             SUMMER: { water: '土表面が乾いたらすぐ', light: '明るい日なた/半日陰' },
@@ -199,7 +199,7 @@ const PLANT_DATA = [
     },
     // No. 18: オーガスタ
     {
-        id: 18, species: 'オーガスタ', scientific: 'Strelitzia nicolai', minTemp: 5, difficulty: 'やや容易', feature: '極楽鳥花の仲間、大型化', img: 'Strelitzia.jpg',
+        id: 18, species: 'オーガスタ', scientific: 'Strelitzia nicolai', minTemp: 5, difficulty: 'やや容易', feature: '極楽鳥花の仲間、大型化', img: 'オーガスタ.jfif',
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', light: '明るい日なた' },
             SUMMER: { water: '土を乾かさないように', light: '明るい日なた' },
@@ -210,7 +210,7 @@ const PLANT_DATA = [
     },
     // No. 19: ビカクシダ
     {
-        id: 19, species: 'ビカクシダ', scientific: 'Platycerium', minTemp: 10, difficulty: '難しい', feature: '着生植物、水やり方法が特殊', img: 'Platycerium.jpg',
+        id: 19, species: 'ビカクシダ', scientific: 'Platycerium', minTemp: 10, difficulty: '難しい', feature: '着生植物、水やり方法が特殊', img: 'ビカクシダ.jfif',
         management: {
             SPRING: { water: '水苔が乾いたら', light: '明るい日陰' },
             SUMMER: { water: '水苔が乾いたら', light: '明るい日陰' },
@@ -221,7 +221,7 @@ const PLANT_DATA = [
     },
     // No. 20: アローカリア
     {
-        id: 20, species: 'アローカリア', scientific: 'Araucaria heterophylla', minTemp: 0, difficulty: '容易', feature: '強い耐寒性、コニファー', img: 'Araucaria.jpg',
+        id: 20, species: 'アローカリア', scientific: 'Araucaria heterophylla', minTemp: 0, difficulty: '容易', feature: '強い耐寒性、コニファー', img: 'アローカリア.jfif',
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', light: '明るい日なた' },
             SUMMER: { water: '土表面が乾いたらすぐ', light: '明るい日なた' },
