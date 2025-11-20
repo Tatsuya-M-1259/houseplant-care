@@ -1,16 +1,17 @@
 // sw.js
 
-const CACHE_NAME = 'houseplant-care-v1';
+// 🌟 修正点1: キャッシュ名をインクリメントして強制更新
+const CACHE_NAME = 'houseplant-care-v2';
 const urlsToCache = [
     './', // index.html
     'index.html',
     'style.css',
     'app.js',
-    'data.js',
+    'data.js', 
     'manifest.json',
     'icon-192x192.png',
     'icon-512x512.png',
-    // 🌟 修正: すべての画像ファイルをキャッシュ対象に追加 (半角英数字名に統一)
+    // 既存の画像ファイル
     'cordyline.jpg',
     'pachira.jpg',
     'monstera.jpg',
@@ -30,7 +31,10 @@ const urlsToCache = [
     'ficus_umbellata.jpg',
     'augusta.jpg',
     'staghorn_fern.jpg',
-    'araucaria.jpg'
+    'araucaria.jpg',
+    // 🌟 修正点2: 新しい画像ファイルをキャッシュリストに追加
+    'adenium.jpg.jpeg',
+    'echeveria.jpg.jpeg'
 ];
 
 // インストールイベント: キャッシュの作成とコアアセットの追加
