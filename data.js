@@ -229,5 +229,27 @@ const PLANT_DATA = [
             WINTER: { water: '土表面が乾いてから2日後 (少量)', light: '明るい日なた', tempRisk: '管理容易。' }
         },
         maintenance: { fertilizer: '4月, 9月', repotting: '5月〜7月', pruning: '不要' }
+    },
+    // No. 21: アデニウム
+    {
+        id: 21, species: 'アデニウム', scientific: 'Adenium obesum', minTemp: 10, difficulty: 'やや容易', feature: '塊根植物、砂漠のバラ、乾燥に非常に強い', img: 'adenium.jpg.jpeg',
+        management: {
+            SPRING: { water: '土表面が乾いたらすぐ (完全に乾いてから)', light: '明るい日なた (屋外/風通し良く)' },
+            SUMMER: { water: '土表面が乾いたらすぐ (完全に乾いてから)', light: '明るい日なた (屋外/直射日光可)' },
+            AUTUMN: { water: '土表面が乾いてから2-3日後 (徐々に頻度減)', light: '明るい日なた' },
+            WINTER: { water: '**断水** (落葉時)。葉が残る場合は少量。', light: '明るい日なた', tempRisk: '厳重な温度管理（最低10℃確保）' }
+        },
+        maintenance: { fertilizer: '5月, 8月', repotting: '5月〜7月', pruning: '5月〜9月 (樹形維持)' }
+    },
+    // No. 22: エケベリア
+    {
+        id: 22, species: 'エケベリア', scientific: 'Echeveria', minTemp: 5, difficulty: '容易', feature: '春秋型、ロゼット状、紅葉する多肉植物', img: 'echeveria.jpg.jpeg',
+        management: {
+            SPRING: { water: '土表面が乾いたらすぐ', light: '明るい日なた (風通し良く)' },
+            SUMMER: { water: '断水/控えめ (月に1回程度、夕方)', light: '半日陰 (蒸れ注意)' },
+            AUTUMN: { water: '土表面が乾いたらすぐ (紅葉のために控えめ)', light: '明るい日なた (寒さに当てる)' },
+            WINTER: { water: '断水/控えめ (葉にシワが出たら少量)', light: '明るい日なた', tempRisk: '夜間窓際隔離（最低5℃確保）' }
+        },
+        maintenance: { fertilizer: '4月, 9月 (秋は早めに)', repotting: '3月〜5月, 9月〜11月', pruning: '不要 (古葉除去)' }
     }
 ];
