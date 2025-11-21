@@ -13,7 +13,7 @@ const PLANT_DATA = [
     // No. 1: コルジリネ
     {
         id: 1, species: 'コルジリネ', scientific: 'Cordyline terminalis', minTemp: 5, difficulty: 'やや容易', feature: '鋭い葉、鉢植えが一般的', img: 'cordyline.jpg',
-        water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', // 🌟 NEW
+        water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', 
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', light: '明るい日なた' },
             SUMMER: { water: '土表面が乾いたらすぐ', light: '明るい日なた' },
@@ -25,7 +25,7 @@ const PLANT_DATA = [
     // No. 2: パキラ
     {
         id: 2, species: 'パキラ', scientific: 'Pachira glabra/aquatica', minTemp: 5, difficulty: '容易', feature: '乾燥に強く、耐陰性あり', img: 'pachira.jpg',
-        water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', // 🌟 NEW
+        water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', 
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', light: '明るい日なた/半日陰' },
             SUMMER: { water: '土表面が乾いたらすぐ', light: '明るい日なた/半日陰' },
@@ -37,7 +37,7 @@ const PLANT_DATA = [
     // No. 3: モンステラ
     {
         id: 3, species: 'モンステラ', scientific: 'Monstera deliciosa', minTemp: 10, difficulty: '中程度', feature: '多湿を好む、根腐れ注意', img: 'monstera.jpg',
-        water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', // 🌟 NEW
+        water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', 
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', light: '半日陰 (明るい日陰)' },
             SUMMER: { water: '土表面が乾いたらすぐ', light: '半日陰 (明るい日陰)' },
@@ -49,7 +49,7 @@ const PLANT_DATA = [
     // No. 4: ガジュマル
     {
         id: 4, species: 'ガジュマル', scientific: 'Ficus microcarpa', minTemp: 5, difficulty: '容易', feature: '強い耐陰性、多幸の木', img: 'gajumaru.jpg',
-        water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', // 🌟 NEW
+        water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', 
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', light: '半日陰' },
             SUMMER: { water: '土表面が乾いたらすぐ', light: '半日陰' },
@@ -61,7 +61,7 @@ const PLANT_DATA = [
     // No. 5: サンスベリア
     {
         id: 5, species: 'サンスベリア', scientific: 'Sansevieria trifasciata', minTemp: 5, difficulty: '容易', feature: '極めて乾燥に強い、休眠誘導', img: 'sansevieria.jpeg',
-        water_method: '鉢底から水が流れ出るまでたっぷりと。葉のシワや土中の乾燥具合を見て水やりを行う。', // 🌟 NEW
+        water_method: '鉢底から水が流れ出るまでたっぷりと。葉のシワや土中の乾燥具合を見て水やりを行う。', // 🌟 句点で終わるように修正
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', light: '明るい日なた' },
             SUMMER: { water: '土表面が乾いたらすぐ', light: '明るい日なた' },
@@ -73,7 +73,7 @@ const PLANT_DATA = [
     // No. 6: ドラセナ
     {
         id: 6, species: 'ドラセナ', scientific: 'Dracaena fragrans', minTemp: 10, difficulty: '中程度', feature: '幸福の木、葉水必須', img: 'dracaena.jpg',
-        water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', // 🌟 NEW
+        water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', 
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', light: '明るい日なた/半日陰' },
             SUMMER: { water: '土表面が乾いたらすぐ', light: '明るい日なた/半日陰' },
@@ -85,7 +85,7 @@ const PLANT_DATA = [
     // No. 7: シェフレラ
     {
         id: 7, species: 'シェフレラ', scientific: 'Schefflera arboricola', minTemp: 5, difficulty: '容易', feature: '非常に丈夫、耐陰性強い', img: 'schefflera.jpg',
-        water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', // 🌟 NEW
+        water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', 
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', light: '半日陰 (時々日光浴)' },
             SUMMER: { water: '土表面が乾いたらすぐ', light: '半日陰 (時々日光浴)' },
@@ -97,7 +97,7 @@ const PLANT_DATA = [
     // No. 8: ユッカ
     {
         id: 8, species: 'ユッカ', scientific: 'Yucca', minTemp: -3, difficulty: '容易', feature: '乾燥管理、強い耐寒性', img: 'yucca.jpg',
-        water_method: '鉢底から水が流れ出るまでたっぷりと。葉のシワや土中の乾燥具合を見て水やりを行う。', // 🌟 NEW
+        water_method: '鉢底から水が流れ出るまでたっぷりと。葉のシワや土中の乾燥具合を見て水やりを行う。', // 🌟 句点で終わるように修正
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', light: '明るい日なた' },
             SUMMER: { water: '土表面が乾いたらすぐ', light: '明るい日なた' },
@@ -109,7 +109,7 @@ const PLANT_DATA = [
     // No. 9: アンスリウム
     {
         id: 9, species: 'アンスリウム', scientific: 'Anthurium', minTemp: 10, difficulty: '中程度', feature: '花を観賞、多湿を好む', img: 'anthurium.jpg',
-        water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', // 🌟 NEW
+        water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', 
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', light: '明るい日陰 (直射日光避)' },
             SUMMER: { water: '土を乾かさないように', light: '明るい日陰 (直射日光避)' },
@@ -121,7 +121,7 @@ const PLANT_DATA = [
     // No. 10: ポトス
     {
         id: 10, species: 'ポトス', scientific: 'Epipremnum aureum', minTemp: 10, difficulty: '容易', feature: '耐陰性あり、つる性', img: 'pothos.jpg',
-        water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', // 🌟 NEW
+        water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', 
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', light: '半日陰' },
             SUMMER: { water: '土表面が乾いたらすぐ', light: '半日陰' },
@@ -133,7 +133,7 @@ const PLANT_DATA = [
     // No. 11: アロカシア
     {
         id: 11, species: 'アロカシア', scientific: 'Alocasia odora', minTemp: 10, difficulty: '中程度', feature: '葉の質感に多様性、休眠管理種あり', img: 'alocasia.jpg',
-        water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', // 🌟 NEW
+        water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', 
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', light: '明るい日なた (緑葉種)' },
             SUMMER: { water: '土を乾かさないように', light: '明るい日なた (緑葉種)' },
@@ -145,7 +145,7 @@ const PLANT_DATA = [
     // No. 12: インドゴムノキ
     {
         id: 12, species: 'インドゴムノキ', scientific: 'Ficus elastica', minTemp: 5, difficulty: '容易', feature: '日光で樹形が整う、葉が大きい', img: 'indian_rubber.jpg',
-        water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', // 🌟 NEW
+        water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', 
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', light: '明るい日なた/半日陰' },
             SUMMER: { water: '土表面が乾いたらすぐ', light: '明るい日なた/夏は遮光' }, // 耐暑性が弱い点を考慮
@@ -157,7 +157,7 @@ const PLANT_DATA = [
     // No. 13: エバーフレッシュ
     {
         id: 13, species: 'エバーフレッシュ', scientific: 'Cojoba arborea', minTemp: 10, difficulty: '中程度', feature: '夜に葉を閉じる、日陰で育つ', img: 'everfresh.jpg',
-        water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', // 🌟 NEW
+        water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', 
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', light: '明るい日なた/半日陰' },
             SUMMER: { water: '土表面が乾いたらすぐ', light: '明るい日なた/半日陰' },
@@ -169,7 +169,7 @@ const PLANT_DATA = [
     // No. 14: クロトン
     {
         id: 14, species: 'クロトン', scientific: 'Codiaeum variegatum', minTemp: 10, difficulty: '中程度', feature: '鮮やかな葉色、日光必須', img: 'croton.jpg',
-        water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', // 🌟 NEW
+        water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', 
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', light: '明るい日なた (必須)' },
             SUMMER: { water: '土を乾かさないように', light: '明るい日なた (必須)' },
@@ -181,7 +181,7 @@ const PLANT_DATA = [
     // No. 15: コーヒーノキ
     {
         id: 15, species: 'コーヒーノキ', scientific: 'Coffea arabica', minTemp: 10, difficulty: '難しい', feature: '日当たりを好む、熱帯植物', img: 'coffee_tree.jpg',
-        water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', // 🌟 NEW
+        water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', 
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', light: '明るい日なた' },
             SUMMER: { water: '土表面が乾いたらすぐ', light: '明るい日なた' },
@@ -193,7 +193,7 @@ const PLANT_DATA = [
     // No. 16: トックリラン
     {
         id: 16, species: 'トックリラン', scientific: 'Beaucarnea recurvata', minTemp: -3, difficulty: '容易', feature: '極めて乾燥に強い、基部肥大化', img: 'ponytail_palm.jpg',
-        water_method: '鉢底から水が流れ出るまでたっぷりと。葉のシワや土中の乾燥具合を見て水やりを行う。', // 🌟 NEW
+        water_method: '鉢底から水が流れ出るまでたっぷりと。葉のシワや土中の乾燥具合を見て水やりを行う。', // 🌟 句点で終わるように修正
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', light: '明るい日なた' },
             SUMMER: { water: '土表面が乾いたらすぐ', light: '明るい日なた' },
@@ -205,7 +205,7 @@ const PLANT_DATA = [
     // No. 17: フィカス・ウンベラータ
     {
         id: 17, species: 'ウンベラータ', scientific: 'Ficus umbellata', minTemp: 10, difficulty: '中程度', feature: '成長早い、剪定必須', img: 'ficus_umbellata.jpg',
-        water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', // 🌟 NEW
+        water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', 
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', light: '明るい日なた/半日陰' },
             SUMMER: { water: '土表面が乾いたらすぐ', light: '明るい日なた/半日陰' },
@@ -217,7 +217,7 @@ const PLANT_DATA = [
     // No. 18: オーガスタ
     {
         id: 18, species: 'オーガスタ', scientific: 'Strelitzia nicolai', minTemp: 5, difficulty: 'やや容易', feature: '極楽鳥花の仲間、大型化', img: 'augusta.jpg',
-        water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', // 🌟 NEW
+        water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', 
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', light: '明るい日なた' },
             SUMMER: { water: '土を乾かさないように', light: '明るい日なた' },
@@ -229,7 +229,7 @@ const PLANT_DATA = [
     // No. 19: ビカクシダ
     {
         id: 19, species: 'ビカクシダ', scientific: 'Platycerium', minTemp: 10, difficulty: '難しい', feature: '着生植物、水やり方法が特殊', img: 'staghorn_fern.jpg',
-        water_method: '植え込み材（水苔など）全体に水が行き渡るように、シャワーで与えるか、板ごと数分間浸す（ドボン）。', // 🌟 NEW
+        water_method: '植え込み材（水苔など）全体に水が行き渡るように、シャワーで与えるか、板ごと数分間浸す（ドボン）。', 
         management: {
             SPRING: { water: '水苔が乾いたら', light: '明るい日陰' },
             SUMMER: { water: '水苔が乾いたら', light: '明るい日陰' },
@@ -241,7 +241,7 @@ const PLANT_DATA = [
     // No. 20: アローカリア
     {
         id: 20, species: 'アローカリア', scientific: 'Araucaria heterophylla', minTemp: 0, difficulty: '容易', feature: '強い耐寒性、コニファー', img: 'araucaria.jpg',
-        water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', // 🌟 NEW
+        water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', 
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', light: '明るい日なた' },
             SUMMER: { water: '土表面が乾いたらすぐ', light: '明るい日なた' },
@@ -253,7 +253,7 @@ const PLANT_DATA = [
     // No. 21: アデニウム
     {
         id: 21, species: 'アデニウム', scientific: 'Adenium obesum', minTemp: 10, difficulty: 'やや容易', feature: '塊根植物、砂漠のバラ、乾燥に非常に強い', img: 'adenium.jpg.jpeg',
-        water_method: '鉢底から水が流れ出るまでたっぷりと。葉のシワや土中の乾燥具合を見て水やりを行う。', // 🌟 NEW
+        water_method: '鉢底から水が流れ出るまでたっぷりと。葉のシワや土中の乾燥具合を見て水やりを行う。', // 🌟 句点で終わるように修正
         management: {
             SPRING: { water: '土表面が乾いたらすぐ (完全に乾いてから)', light: '明るい日なた (屋外/風通し良く)' },
             SUMMER: { water: '土表面が乾いたらすぐ (完全に乾いてから)', light: '明るい日なた (屋外/直射日光可)' },
@@ -265,7 +265,7 @@ const PLANT_DATA = [
     // No. 22: エケベリア
     {
         id: 22, species: 'エケベリア', scientific: 'Echeveria', minTemp: 5, difficulty: '容易', feature: '春秋型、ロゼット状、紅葉する多肉植物', img: 'echeveria.jpg.jpeg',
-        water_method: '鉢底から水が流れ出るまでたっぷりと。葉のシワや土中の乾燥具合を見て水やりを行う。', // 🌟 NEW
+        water_method: '鉢底から水が流れ出るまでたっぷりと。葉のシワや土中の乾燥具合を見て水やりを行う。', // 🌟 句点で終わるように修正
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', light: '明るい日なた (風通し良く)' },
             SUMMER: { water: '断水/控えめ (月に1回程度、夕方)', light: '半日陰 (蒸れ注意)' },
