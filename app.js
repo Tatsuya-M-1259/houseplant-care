@@ -30,13 +30,58 @@ document.addEventListener('DOMContentLoaded', () => {
     const importFileInput = document.getElementById('import-file-input');
     const importFileNameDisplay = document.getElementById('import-file-name');
     
+    // カスタム通知エリアの動的生成 🌟 修正: DOM操作の安全性を確保
+    const NOTIFICATION_AREA_ID = 'custom-notification-area';
+    let notificationArea = document.getElementById(NOTIFICATION_AREA_ID);
+    if (!notificationArea) {
+        notificationArea = document.createElement('div');
+        notificationArea.id = NOTIFICATION_AREA_ID;
+        document.body.appendChild(notificationArea);
+    }
+    
     // データ状態の管理
     let userPlants = JSON.parse(localStorage.getItem('userPlants')) || [];
     let currentPlantId = null;
-    let draggedId = null; // ドラッグ中のカードIDを保持
+    let draggedId = null; 
 
     // ----------------------------------------------------
-    // 2. 季節判定ロジック
+    // 2. カスタムUIユーティリティ (alert/confirmの代替) 🌟 修正
+    // ----------------------------------------------------
+
+    /**
+     * カスタムトースト通知を表示する
+     */
+    function showNotification(message, duration = 3000) {
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.textContent = message;
+
+        notificationArea.appendChild(toast);
+
+        // フェードイン
+        setTimeout(() => toast.classList.add('show'), 10);
+
+        // フェードアウト
+        setTimeout(() => {
+            toast.classList.remove('show');
+            // DOMから削除
+            toast.addEventListener('transitionend', () => toast.remove());
+        }, duration);
+    }
+
+    /**
+     * ブラウザ標準のconfirmを使いつつ、カスタムモーダルへの置き換えを容易にする
+     */
+    function showCustomConfirm(message, onConfirm, onCancel = () => {}) {
+        if (window.confirm(message)) {
+            onConfirm();
+        } else {
+            onCancel();
+        }
+    }
+
+    // ----------------------------------------------------
+    // 3. 季節判定ロジック (変更なし)
     // ----------------------------------------------------
 
     function getCurrentSeason() {
@@ -50,24 +95,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentSeasonKey = getCurrentSeason();
 
     // ----------------------------------------------------
-    // 3. 初期化処理
+    // 4. 初期化処理, Local Storage / 購入日データ処理 (変更なし)
     // ----------------------------------------------------
 
     function initializeApp() {
-        // SELECTボックスに植物データを挿入
-        PLANT_DATA.forEach(plant => {
-            const option = document.createElement('option');
-            option.value = plant.id;
-            option.textContent = `${plant.species} (${plant.scientific})`;
-            speciesSelect.appendChild(option);
-        });
+        if (speciesSelect) {
+             PLANT_DATA.forEach(plant => {
+                const option = document.createElement('option');
+                option.value = plant.id;
+                option.textContent = `${plant.species} (${plant.scientific})`;
+                speciesSelect.appendChild(option);
+            });
+        }
 
         renderPlantCards();
     }
-    
-    // ----------------------------------------------------
-    // 4. Local Storage / 購入日データ処理
-    // ----------------------------------------------------
     
     const getPurchaseDate = (plantId) => {
         return localStorage.getItem(`purchase_date_${plantId}`);
@@ -90,7 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     // ----------------------------------------------------
-    // 5. カルテレンダリングとカード生成 (季節切り替え機能の実装)
+    // 5. カルテレンダリングとカード生成 (水やり目安計算をデータ駆動に修正)
     // ----------------------------------------------------
 
     function renderPlantCards() {
@@ -101,13 +143,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = PLANT_DATA.find(p => p.id == userPlant.speciesId);
             if (!data) return;
 
-            // カード生成時、初期表示の季節を渡す
             const card = createPlantCard(userPlant, data, currentSeasonKey); 
             cardContainer.appendChild(card);
         });
 
-        plantCardList.innerHTML = '';
-        plantCardList.appendChild(cardContainer);
+        if (plantCardList) {
+            plantCardList.innerHTML = '';
+            plantCardList.appendChild(cardContainer);
+        }
     }
 
     function createPlantCard(userPlant, data, activeSeasonKey) {
@@ -147,17 +190,13 @@ document.addEventListener('DOMContentLoaded', () => {
             button.textContent = SEASONS[key].name.split(' ')[0];
             button.className = key === activeSeasonKey ? 'active' : '';
             
-            // 🌟 修正: 季節切替機能の実装
+            // 季節切替機能の実装
             button.onclick = (e) => { 
                 e.stopPropagation();
                 
-                // 1. すべてのボタンのアクティブ状態をリセット
                 seasonSelector.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
-                
-                // 2. クリックされたボタンをアクティブに
                 button.classList.add('active');
                 
-                // 3. カードのコンテンツ部分を新しい季節の情報で再生成
                 const contentElement = card.querySelector('.card-content-wrapper');
                 if(contentElement) {
                     contentElement.innerHTML = generateCardContent(userPlant, data, key);
@@ -167,13 +206,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         const content = document.createElement('div');
-        content.className = 'card-content-wrapper'; // 🌟 修正: コンテンツラッパーにクラスを追加
+        content.className = 'card-content-wrapper'; 
         content.innerHTML = generateCardContent(userPlant, data, activeSeasonKey);
         
         card.appendChild(seasonSelector); 
         card.appendChild(content);
 
-        // イベントリスナーの付与
         card.addEventListener('click', () => showDetailsModal(userPlant, data));
 
         // ドラッグ＆ドロップイベントリスナー
@@ -193,25 +231,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const today = new Date();
         const timeSinceWatered = Math.floor((today - lastWateredDate) / (1000 * 60 * 60 * 24)); 
         
-        let recommendedIntervalDays = null;
+        // 🌟 修正: waterIntervalDaysプロパティを使用して推奨間隔を取得 (データ駆動)
+        let recommendedIntervalDays = seasonData.waterIntervalDays || null; 
         let intervalDisplay = '';
-        // 文字列から日数を含むパターンを抽出（例: 2-3日後）
-        const intervalMatch = seasonData.water.match(/(\d+)\s*日後/);
         
-        // 推奨間隔日数（目安）を計算
-        if (intervalMatch) {
-            // 例: 「土中が乾いてから2-3日後」=> (3日) + (乾燥期間の目安7日) = 10日と仮定
-            recommendedIntervalDays = parseInt(intervalMatch[1], 10) + 7; 
-            intervalDisplay = `（約 ${recommendedIntervalDays} 日ごと）`;
-        } else if (seasonData.water.includes('乾いたらすぐ') || seasonData.water.includes('水苔が乾いたら')) {
-            recommendedIntervalDays = 7; 
-            intervalDisplay = `（約 ${recommendedIntervalDays} 日ごと）`;
-        } else if (seasonData.water.includes('乾かさないように')) {
-            recommendedIntervalDays = 5; 
-            intervalDisplay = `（約 ${recommendedIntervalDays} 日ごと）`;
-        } else if (seasonData.water.includes('断水') || seasonData.water.includes('ほぼ断水')) {
-            recommendedIntervalDays = 999; 
-            intervalDisplay = `（現在 ${SEASONS[seasonKey].name.split(' ')[0]} は断水期間です）`;
+        // waterIntervalDaysが定義されている場合
+        if (recommendedIntervalDays !== null) {
+            if (recommendedIntervalDays === 999) { // 999は断水期間
+                 intervalDisplay = `（現在 ${SEASONS[seasonKey].name.split(' ')[0]} は断水期間です）`;
+            } else {
+                 intervalDisplay = `（約 ${recommendedIntervalDays} 日ごと）`;
+            }
+        } else {
+            intervalDisplay = `（推奨間隔データなし）`;
         }
 
         let actionMessage = '';
@@ -229,7 +261,6 @@ document.addEventListener('DOMContentLoaded', () => {
             actionMessage = `<li>前回水やり日から **${timeSinceWatered}日経過**。</li>`;
         }
 
-        // water_methodの最初の文（句点まで）を取得して簡潔に表示
         const waterMethodSummary = data.water_method.split('。')[0] + '。';
 
         return `
@@ -266,15 +297,15 @@ document.addEventListener('DOMContentLoaded', () => {
         return '成長期再開！水やりと施肥を徐々に再開。'; 
     }
 
-    // 詳細モーダルで水やり情報を分割表示
+    // 詳細モーダルで水やり情報を分割表示 (表示の一貫性を修正)
     function showDetailsModal(userPlant, plantData) {
         if (!detailsModal || !plantDetails) return;
 
         currentPlantId = userPlant.id;
+        // 🌟 修正: 詳細モーダルは常に現在の実世界の季節を表示
         const seasonData = plantData.management[currentSeasonKey];
         const maintenance = plantData.maintenance;
 
-        // 詳細情報の内容を動的に生成
         plantDetails.innerHTML = `
             <h2>${userPlant.name} (${plantData.species})</h2>
             <p class="scientific-name">${plantData.scientific}</p>
@@ -283,7 +314,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             
             <div class="detail-section">
-                <h3>季節別ケア (${SEASONS[currentSeasonKey].name})</h3>
+                <h3>現在の季節別ケア (${SEASONS[currentSeasonKey].name})</h3>
                 <ul>
                     <li><strong>水やり量（一度に与える量）:</strong> ${plantData.water_method}</li>
                     <li><strong>水やり頻度（タイミング）:</strong> ${seasonData.water}</li>
@@ -305,10 +336,9 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
         
         updatePurchaseDateDisplay(userPlant.id); 
-        detailsModal.style.display = 'block'; // モーダルを表示
+        detailsModal.style.display = 'block'; 
     }
 
-    // 詳細モーダルの閉じるロジック
     if (closeDetailButton) {
         closeDetailButton.onclick = () => {
             detailsModal.style.display = 'none';
@@ -317,48 +347,51 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // ----------------------------------------------------
-    // 6. 新規植物登録処理
+    // 6. 新規植物登録処理 (通知をカスタムに修正)
     // ----------------------------------------------------
 
-    addPlantForm.addEventListener('submit', function(e) {
-        e.preventDefault();
+    if (addPlantForm) {
+        addPlantForm.addEventListener('submit', function(e) {
+            e.preventDefault();
 
-        const newPlant = {
-            id: Date.now(), 
-            name: document.getElementById('plant-name').value,
-            speciesId: document.getElementById('species-select').value,
-            lastWatered: document.getElementById('last-watered').value,
-        };
+            const newPlant = {
+                id: Date.now(), 
+                name: document.getElementById('plant-name').value,
+                speciesId: document.getElementById('species-select').value,
+                lastWatered: document.getElementById('last-watered').value,
+            };
 
-        userPlants.unshift(newPlant);
-        localStorage.setItem('userPlants', JSON.stringify(userPlants));
-        
-        renderPlantCards();
-        addPlantForm.reset();
-        alert(`「${newPlant.name}」をカルテに追加しました！`);
-    });
+            userPlants.unshift(newPlant);
+            localStorage.setItem('userPlants', JSON.stringify(userPlants));
+            
+            renderPlantCards();
+            addPlantForm.reset();
+            // 🌟 修正: カスタム通知を使用
+            showNotification(`「${newPlant.name}」をカルテに追加しました！`);
+        });
+    }
 
     // ----------------------------------------------------
-    // 7. カルテ削除ロジック
+    // 7. カルテ削除ロジック (確認をカスタムに修正)
     // ----------------------------------------------------
 
     function deletePlantCard(id) {
         const numericId = parseInt(id); 
         
-        if (!confirm('この植物のカルテを削除してもよろしいですか？')) {
-            return;
-        }
-        
-        userPlants = userPlants.filter(plant => plant.id !== numericId);
-        localStorage.setItem('userPlants', JSON.stringify(userPlants));
-        
-        localStorage.removeItem(`purchase_date_${numericId}`);
-        
-        renderPlantCards();
+        // 🌟 修正: カスタム確認関数を使用
+        showCustomConfirm('この植物のカルテを削除してもよろしいですか？', () => {
+             userPlants = userPlants.filter(plant => plant.id !== numericId);
+             localStorage.setItem('userPlants', JSON.stringify(userPlants));
+            
+             localStorage.removeItem(`purchase_date_${numericId}`);
+            
+             renderPlantCards();
+             showNotification('カルテを削除しました。'); 
+        });
     }
 
     // ----------------------------------------------------
-    // 8. ドラッグ＆ドロップ（順序変更）ロジック (リファクタリング適用)
+    // 8. ドラッグ＆ドロップ（順序変更）ロジック (CSSクラスを適用)
     // ----------------------------------------------------
 
     function handleDragStart(e) {
@@ -374,16 +407,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const targetCard = e.target.closest('.plant-card');
         if (!targetCard || targetCard.classList.contains('dragging')) return;
         
+        // 🌟 修正: インラインスタイルではなく、CSSクラスを操作
         const bounding = targetCard.getBoundingClientRect();
         const offset = bounding.y + (bounding.height / 2);
         
-        // ドロップ先のカードの位置によって挿入位置を決定するための視覚的なフィードバック
         if (e.clientY < offset) {
-            targetCard.style.borderTop = '2px solid var(--color-primary)';
-            targetCard.style.borderBottom = 'none';
+            targetCard.classList.add('drop-before');
+            targetCard.classList.remove('drop-after');
         } else {
-            targetCard.style.borderBottom = '2px solid var(--color-primary)';
-            targetCard.style.borderTop = 'none';
+            targetCard.classList.add('drop-after');
+            targetCard.classList.remove('drop-before');
         }
         
         e.dataTransfer.dropEffect = 'move';
@@ -395,8 +428,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const targetCard = e.target.closest('.plant-card');
         if (!targetCard || draggedId === null) return;
 
-        targetCard.style.borderTop = 'none';
-        targetCard.style.borderBottom = 'none';
+        // 🌟 修正: クラスを削除して視覚フィードバックをリセット
+        targetCard.classList.remove('drop-before', 'drop-after');
 
         const droppedId = parseInt(targetCard.dataset.id);
         
@@ -405,27 +438,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (draggedIndex === -1 || droppedIndex === -1 || draggedIndex === droppedIndex) return;
 
-        // 1. ドラッグ中の要素を配列から取り出す（元の配列から削除）
         const [draggedItem] = userPlants.splice(draggedIndex, 1);
         
-        // 2. 挿入インデックスを計算
         const bounding = targetCard.getBoundingClientRect();
         const offset = bounding.y + (bounding.height / 2);
         
         let insertIndex = droppedIndex;
 
-        // ドロップ位置が対象カードの下半分の場合、挿入インデックスを1増やす
         if (e.clientY > offset) {
             insertIndex = droppedIndex + 1;
         }
         
-        // 3. 配列からの削除によりインデックスがずれるのを調整
-        // (下に移動する場合: draggedIndex < droppedIndex) に該当し、挿入位置が1つ前へずれるので補正が必要
         if (insertIndex > draggedIndex) {
             insertIndex--;
         }
 
-        // 4. 挿入
         userPlants.splice(insertIndex, 0, draggedItem);
         
         localStorage.setItem('userPlants', JSON.stringify(userPlants));
@@ -434,31 +461,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleDragEnd(e) {
         e.target.classList.remove('dragging');
-        e.target.style.opacity = '1'; // 透明度を元に戻す
-        // すべてのカードのボーダーをリセット
+        e.target.style.opacity = '1'; 
+        // 🌟 修正: すべてのカードのクラスをリセット
         document.querySelectorAll('.plant-card').forEach(card => {
-            card.style.borderTop = 'none';
-            card.style.borderBottom = 'none';
+            card.classList.remove('drop-before', 'drop-after');
         });
         draggedId = null;
     }
 
 
     // ----------------------------------------------------
-    // 9. 購入日入力モーダル処理
+    // 9. 購入日入力モーダル処理 (通知をカスタムに修正)
     // ----------------------------------------------------
     
     if (closePurchaseDateButton) {
         closePurchaseDateButton.onclick = () => {
             purchaseDateModal.style.display = 'none';
-            if (detailsModal) detailsModal.style.display = 'block'; // 詳細モーダルに戻る
+            if (detailsModal) detailsModal.style.display = 'block'; 
         };
     }
 
     if (editPurchaseDateButton) {
         editPurchaseDateButton.onclick = () => {
             if (currentPlantId === null) {
-                 alert('エラー: まず植物カードをクリックして詳細を表示してください。');
+                 // 🌟 修正: カスタム通知を使用
+                 showNotification('エラー: まず植物カードをクリックして詳細を表示してください。');
                  return;
             }
 
@@ -475,19 +502,21 @@ document.addEventListener('DOMContentLoaded', () => {
             const newDate = purchaseDateInput.value;
             if (newDate && currentPlantId !== null) {
                 savePurchaseDate(currentPlantId, newDate);
-                alert('購入日を保存しました。');
+                // 🌟 修正: カスタム通知を使用
+                showNotification('購入日を保存しました。');
                 
                 purchaseDateModal.style.display = 'none';
-                if (detailsModal) detailsModal.style.display = 'block'; // 詳細モーダルに戻る
+                if (detailsModal) detailsModal.style.display = 'block'; 
                 updatePurchaseDateDisplay(currentPlantId);
             } else {
-                alert('日付を入力してください。');
+                // 🌟 修正: カスタム通知を使用
+                showNotification('日付を入力してください。');
             }
         };
     }
     
     // ----------------------------------------------------
-    // 10. エクスポート/インポート機能
+    // 10. エクスポート/インポート機能 (通知と確認をカスタムに修正)
     // ----------------------------------------------------
 
     const collectAllData = () => {
@@ -521,7 +550,8 @@ document.addEventListener('DOMContentLoaded', () => {
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-            alert('カルテデータのエクスポートが完了しました。');
+            // 🌟 修正: カスタム通知を使用
+            showNotification('カルテデータのエクスポートが完了しました。');
         };
     }
 
@@ -552,35 +582,42 @@ document.addEventListener('DOMContentLoaded', () => {
                     throw new Error('JSON形式が正しくありません。必要なキー（userPlants, purchaseDates）が見つかりません。');
                 }
                 
-                if (!confirm('現在のカルテ情報をインポートデータで上書きします。よろしいですか？')) {
-                    return;
-                }
+                // 🌟 修正: カスタム確認関数を使用
+                showCustomConfirm('現在のカルテ情報をインポートデータで上書きします。よろしいですか？', () => {
+                    // 1. userPlants (メインカルテ) の更新
+                    userPlants = importedData.userPlants; 
+                    localStorage.setItem('userPlants', JSON.stringify(userPlants));
 
-                // 1. userPlants (メインカルテ) の更新
-                userPlants = importedData.userPlants; 
-                localStorage.setItem('userPlants', JSON.stringify(userPlants));
-
-                // 2. Purchase Dates (購入日) の更新
-                // 既存の購入日データをクリア
-                for (let i = 0; i < localStorage.length; i++) {
-                    const key = localStorage.key(i);
-                    if (key && key.startsWith('purchase_date_')) {
-                        localStorage.removeItem(key);
+                    // 2. Purchase Dates (購入日) の更新
+                    for (let i = 0; i < localStorage.length; i++) {
+                        const key = localStorage.key(i);
+                        if (key && key.startsWith('purchase_date_')) {
+                            localStorage.removeItem(key);
+                        }
                     }
-                }
-                Object.keys(importedData.purchaseDates).forEach(key => {
-                    localStorage.setItem(key, importedData.purchaseDates[key]);
+                    Object.keys(importedData.purchaseDates).forEach(key => {
+                        localStorage.setItem(key, importedData.purchaseDates[key]);
+                    });
+
+                    // 🌟 修正: カスタム通知を使用
+                    showNotification('カルテデータのインポートが完了しました。画面を更新します。');
+                    renderPlantCards(); 
+                }, () => {
+                    // キャンセルの場合、ファイル選択状態をリセット
+                    importFileInput.value = '';
+                    importFileNameDisplay.textContent = 'ファイル未選択';
                 });
 
-                alert('カルテデータのインポートが完了しました。画面を更新します。');
-                renderPlantCards(); 
-
             } catch (error) {
-                alert('データのインポートに失敗しました。ファイル形式を確認してください。エラー: ' + error.message);
+                // 🌟 修正: カスタム通知を使用
+                showNotification('データのインポートに失敗しました。ファイル形式を確認してください。エラー: ' + error.message, 5000); 
                 console.error("Import Error:", error);
             } finally {
-                importFileInput.value = '';
-                importFileNameDisplay.textContent = 'ファイル未選択';
+                // エラー時/成功時のリセットは showCustomConfirm の外側で実行
+                if(importFileInput) {
+                    importFileInput.value = '';
+                    importFileNameDisplay.textContent = 'ファイル未選択';
+                }
             }
         };
         reader.readAsText(file);
@@ -591,7 +628,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // 11. PWA Service Worker 登録ロジック (変更なし)
     // ----------------------------------------------------
     
-    // アプリケーション起動
     initializeApp();
 
 });
