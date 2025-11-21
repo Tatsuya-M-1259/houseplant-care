@@ -4,78 +4,83 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>観葉植物管理カルテ</title>
+    <!-- Google Fonts: Inter and Noto Sans JP for modern aesthetics -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
 </head>
 <body>
 
-    <h1>🪴 My Plant Care - 観葉植物管理カルテ</h1>
+    <header>
+        <h1>🪴 My Plant Care - 観葉植物管理カルテ</h1>
+    </header>
 
-    <section id="plant-registration">
-        <h2>🌱 新規植物の登録</h2>
-        <form id="add-plant-form">
-            <label for="plant-name">植物名 (ニックネーム):</label>
-            <input type="text" id="plant-name" required>
-            
-            <label for="species-select">植物種 (20種リストから):</label>
-            <select id="species-select" required>
-            </select>
-            
-            <label for="last-watered">直近の水やり日:</label>
-            <input type="date" id="last-watered" required>
-            
-            <button type="submit" class="action-button">カルテに追加</button>
-        </form>
-    </section>
+    <main class="container">
+        <!-- 新規植物の登録セクション -->
+        <section id="plant-registration" class="card primary-section">
+            <h2>🌱 新規植物の登録</h2>
+            <form id="add-plant-form">
+                <label for="plant-name">植物名 (ニックネーム):</label>
+                <input type="text" id="plant-name" required>
+                
+                <label for="species-select">植物種 (リストから選択):</label>
+                <select id="species-select" required>
+                </select>
+                
+                <label for="last-watered">直近の水やり日:</label>
+                <input type="date" id="last-watered" required>
+                
+                <button type="submit" class="action-button primary">カルテに追加</button>
+            </form>
+        </section>
 
-    <hr>
-    
-    <section id="data-management">
-        <h2>データ管理 (エクスポート/インポート)</h2>
-        <div class="data-controls">
-            <button id="export-data-button" class="action-button secondary">📤 データエクスポート</button>
-            <div class="import-control">
-                <input type="file" id="import-file-input" accept=".json" style="display: none;">
-                <button id="import-data-button" class="action-button primary">📥 データインポート</button>
-                <span id="import-file-name" class="file-name-display">ファイル未選択</span>
+        <hr class="separator">
+        
+        <!-- データ管理セクション -->
+        <section id="data-management" class="card secondary-section">
+            <h2>データ管理</h2>
+            <div class="data-controls">
+                <button id="export-data-button" class="action-button secondary">📤 データエクスポート</button>
+                <div class="import-control">
+                    <input type="file" id="import-file-input" accept=".json" style="display: none;">
+                    <button id="import-data-button" class="action-button primary-outline">📥 データインポート</button>
+                    <span id="import-file-name" class="file-name-display">ファイル未選択</span>
+                </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <section id="plant-card-list">
-        <h2>📝 登録済みの植物 (カルテ)</h2>
-    </section>
+        <!-- 登録済みの植物リスト -->
+        <section id="plant-card-list">
+            <h2>📝 登録済みの植物 (カルテ)</h2>
+        </section>
+    </main>
     
-    <!-- 🌟 修正: 詳細モーダル（details-modal）を復元 -->
+    <!-- 詳細モーダル -->
     <div id="details-modal" class="modal">
         <div class="modal-content">
             <span class="close-button">&times;</span>
-            <!-- 🌟 詳細情報表示エリア -->
             <div id="plant-details">
                 <!-- ここに植物の詳細情報が動的に挿入されます -->
             </div>
             
-            <!-- 購入日関連の要素をここに配置 -->
             <div class="user-data-section">
                 <h2>マイカルテ情報</h2>
                 <p><strong>購入日:</strong> <span id="purchase-date-display">未設定</span></p>
-                <button id="edit-purchase-date-button" class="action-button">購入日を記録/変更</button>
+                <button id="edit-purchase-date-button" class="action-button tertiary">購入日を記録/変更</button>
             </div>
         </div>
     </div>
     
-    <!-- 購入日入力モーダル (idはそのまま) -->
+    <!-- 購入日入力モーダル -->
     <div id="purchase-date-modal" class="modal">
         <div class="modal-content">
             <span class="close-button-purchase-date">&times;</span>
             <h2>購入日の記録</h2>
             <label for="purchase-date-input">日付:</label>
             <input type="date" id="purchase-date-input" required>
-            <button id="save-purchase-date-button" class="action-button">保存</button>
+            <button id="save-purchase-date-button" class="action-button primary">保存</button>
         </div>
     </div>
-    
-    <!-- 🌟 修正: ダミー要素は不要になりました。 -->
     
     <script src="data.js"></script>
     <script src="app.js"></script>
