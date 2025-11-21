@@ -205,6 +205,15 @@ form select {
     text-align: center;
     border-bottom: none;
 }
+/* 空の状態のメッセージ */
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    background-color: #f0f8ff;
+    border: 1px dashed #b3e0ff;
+    border-radius: var(--border-radius);
+    color: var(--color-text-mid);
+}
 
 /* app.jsで生成されるコンテナ */
 .plant-card-container {
@@ -504,7 +513,6 @@ form select {
 }
 
 .toast {
-    background-color: var(--color-primary);
     color: white;
     padding: 12px 20px;
     border-radius: var(--border-radius);
@@ -515,6 +523,18 @@ form select {
     transform: translateY(100%); 
     min-width: 250px;
 }
+/* 🌟 修正: タイプ別の背景色 */
+.toast-success {
+    background-color: var(--color-primary); /* Teal */
+}
+.toast-warning {
+    background-color: var(--color-warning); /* Yellow */
+    color: var(--color-text-dark); /* テキストを黒に */
+}
+.toast-error {
+    background-color: var(--color-alert); /* Red */
+}
+
 .toast.show {
     opacity: 1;
     transform: translateY(0); 
