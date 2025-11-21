@@ -68,6 +68,12 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('userPlants', JSON.stringify(userPlants));
             renderPlantCards();
             showNotification(`${userPlants[plantIndex].name} の水やり日を今日に更新しました！`);
+            
+            // 詳細モーダルが開いている場合は表示を更新
+            if (currentPlantId === numericId && detailsModal.style.display === 'block') {
+                const plantData = PLANT_DATA.find(p => p.id == userPlants[plantIndex].speciesId);
+                showDetailsModal(userPlants[plantIndex], plantData);
+            }
         }
     }
 
@@ -94,6 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 詳細モーダル内の要素
     const purchaseDateDisplay = document.getElementById('purchase-date-display');
     const editPurchaseDateButton = document.getElementById('edit-purchase-date-button');
+    const waterDoneInDetailContainer = document.getElementById('water-done-in-detail'); // 🌟 追加
     
     // 購入日入力モーダル
     const purchaseDateModal = document.getElementById('purchase-date-modal');
@@ -177,6 +184,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // ----------------------------------------------------
 
     function renderPlantCards() {
+        if (!plantCardList) return;
+
+        // 🌟 改善 2-3: 空のカルテリストに対するフィードバック
+        if (userPlants.length === 0) {
+            plantCardList.innerHTML = `
+                <div class="empty-state">
+                    <p>カルテに植物がまだ登録されていません。</p>
+                    <p>上の「🌱 新規植物の登録」セクションから、育てている植物を登録しましょう！</p>
+                </div>
+            `;
+            return; 
+        }
+
         const cardContainer = document.createElement('div');
         cardContainer.className = 'plant-card-container';
         
@@ -188,10 +208,8 @@ document.addEventListener('DOMContentLoaded', () => {
             cardContainer.appendChild(card);
         });
 
-        if (plantCardList) {
-            plantCardList.innerHTML = '';
-            plantCardList.appendChild(cardContainer);
-        }
+        plantCardList.innerHTML = '';
+        plantCardList.appendChild(cardContainer);
     }
 
     function createPlantCard(userPlant, data, activeSeasonKey) {
@@ -253,7 +271,7 @@ document.addEventListener('DOMContentLoaded', () => {
         card.appendChild(seasonSelector); 
         card.appendChild(content);
         
-        // 🌟 改善 2-2: 水やり完了ボタンの追加
+        // 🌟 水やり完了ボタンの追加
         const waterButton = document.createElement('button');
         waterButton.className = 'action-button tertiary water-done-btn';
         waterButton.textContent = '💧 水やり完了 (今日)';
@@ -355,12 +373,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return '成長期再開！水やりと施肥を徐々に再開。'; 
     }
 
-    // 詳細モーダルで水やり情報を分割表示 (表示の一貫性を修正)
+    // 詳細モーダルで水やり情報を分割表示
     function showDetailsModal(userPlant, plantData) {
         if (!detailsModal || !plantDetails) return;
 
         currentPlantId = userPlant.id;
-        // 詳細モーダルは常に現在の実世界の季節を表示
         const seasonData = plantData.management[currentSeasonKey];
         const maintenance = plantData.maintenance;
 
@@ -397,6 +414,19 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
         
         updatePurchaseDateDisplay(userPlant.id); 
+        
+        // 🌟 改善 2-2: 詳細モーダルに水やり完了ボタンを追加
+        if (waterDoneInDetailContainer) {
+            waterDoneInDetailContainer.innerHTML = ''; // 一旦クリア
+            const waterButton = document.createElement('button');
+            waterButton.className = 'action-button water-done-btn'; // スタイルはCSSで調整
+            waterButton.textContent = '💧 水やり完了 (今日)';
+            waterButton.onclick = () => {
+                updateLastWatered(userPlant.id);
+            };
+            waterDoneInDetailContainer.appendChild(waterButton);
+        }
+
         detailsModal.style.display = 'block'; 
     }
 
