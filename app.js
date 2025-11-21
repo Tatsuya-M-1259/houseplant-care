@@ -94,15 +94,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // ----------------------------------------------------
 
     function renderPlantCards() {
-        plantCardList.innerHTML = '';
+        const cardContainer = document.createElement('div');
+        cardContainer.className = 'plant-card-container';
         
         userPlants.forEach(userPlant => {
             const data = PLANT_DATA.find(p => p.id == userPlant.speciesId);
             if (!data) return;
 
             const card = createPlantCard(userPlant, data, currentSeasonKey);
-            plantCardList.appendChild(card);
+            cardContainer.appendChild(card);
         });
+
+        plantCardList.innerHTML = '';
+        plantCardList.appendChild(cardContainer);
     }
 
     function createPlantCard(userPlant, data, activeSeasonKey) {
@@ -114,6 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // コントロールボタンコンテナ
         const controls = document.createElement('div');
+        controls.className = 'controls';
         
         // ドラッグハンドル
         const dragHandle = document.createElement('span');
@@ -140,6 +145,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const button = document.createElement('button');
             button.textContent = SEASONS[key].name.split(' ')[0];
             button.className = key === activeSeasonKey ? 'active' : '';
+            // 季節切替機能は未実装のため、現状はクリックしても何も起こらないダミーです
+            button.onclick = (e) => { 
+                e.stopPropagation();
+                // 本来であれば、ここでカードのコンテンツを切り替えるロジックを実装します
+                // renderPlantCardContent(card, userPlant, data, key);
+            };
             seasonSelector.appendChild(button);
         });
 
@@ -173,16 +184,20 @@ document.addEventListener('DOMContentLoaded', () => {
         let intervalDisplay = '';
         const intervalMatch = seasonData.water.match(/(\d+)\s*日後/);
         
+        // 推奨間隔日数（目安）を計算
         if (intervalMatch) {
+            // 例: 「土中が乾いてから2-3日後」=> 3日+7日(乾燥期間を考慮) = 10日と仮定 (ざっくりとした目安)
             recommendedIntervalDays = parseInt(intervalMatch[1]) + 7; 
             intervalDisplay = `（約 ${recommendedIntervalDays} 日ごと）`;
         } else if (seasonData.water.includes('乾いたらすぐ') || seasonData.water.includes('水苔が乾いたら')) {
+            // 週1回程度
             recommendedIntervalDays = 7; 
             intervalDisplay = `（約 ${recommendedIntervalDays} 日ごと）`;
         } else if (seasonData.water.includes('乾かさないように')) {
-            recommendedIntervalDays = 4; 
+            // 4-5日ごと
+            recommendedIntervalDays = 5; 
             intervalDisplay = `（約 ${recommendedIntervalDays} 日ごと）`;
-        } else if (seasonData.water.includes('断水')) {
+        } else if (seasonData.water.includes('断水') || seasonData.water.includes('ほぼ断水')) {
             recommendedIntervalDays = 999; 
             intervalDisplay = `（現在 ${SEASONS[seasonKey].name.split(' ')[0]} は断水期間です）`;
         }
@@ -192,9 +207,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const daysUntilNext = recommendedIntervalDays - timeSinceWatered;
             
             if (daysUntilNext <= 0) {
-                actionMessage = `<li style="color:#d9534f; font-weight:bold;">🚨 水やり目安日を**${Math.abs(daysUntilNext)}日超過**！</li>`;
+                actionMessage = `<li class="risk-message">🚨 <span class="risk-alert danger">水やり目安日を**${Math.abs(daysUntilNext)}日超過**！</span></li>`;
             } else if (daysUntilNext <= 3) {
-                actionMessage = `<li style="color:#f0ad4e; font-weight:bold;">⚠️ あと**${daysUntilNext}日**で水やり目安日です。</li>`;
+                actionMessage = `<li class="risk-message">⚠️ <span class="risk-alert warning">あと**${daysUntilNext}日**で水やり目安日です。</span></li>`;
             } else {
                 actionMessage = `<li>次回目安まで、あと **${daysUntilNext}日** です。</li>`;
             }
@@ -251,7 +266,10 @@ document.addEventListener('DOMContentLoaded', () => {
         plantDetails.innerHTML = `
             <h2>${userPlant.name} (${plantData.species})</h2>
             <p class="scientific-name">${plantData.scientific}</p>
-            <img src="${plantData.img}" alt="${plantData.species}" class="detail-image">
+            <div style="text-align:center; margin-bottom: 20px;">
+                <img src="${plantData.img}" alt="${plantData.species}" class="detail-image" style="max-width: 100%; height: auto;">
+            </div>
+            
             <div class="detail-section">
                 <h3>季節別ケア (${SEASONS[currentSeasonKey].name})</h3>
                 <ul>
@@ -337,6 +355,8 @@ document.addEventListener('DOMContentLoaded', () => {
         draggedId = parseInt(e.target.dataset.id);
         e.target.classList.add('dragging');
         e.dataTransfer.effectAllowed = 'move';
+        // ドラッグ中のカードは一時的に見えなくする
+        setTimeout(() => e.target.style.opacity = '0.4', 0);
     }
 
     function handleDragOver(e) {
@@ -344,6 +364,18 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const targetCard = e.target.closest('.plant-card');
         if (!targetCard || targetCard.classList.contains('dragging')) return;
+        
+        // ドロップ先のカードの位置によって挿入位置を決定
+        const bounding = targetCard.getBoundingClientRect();
+        const offset = bounding.y + (bounding.height / 2);
+        
+        if (e.clientY < offset) {
+            targetCard.style.borderTop = '2px solid var(--color-primary)';
+            targetCard.style.borderBottom = 'none';
+        } else {
+            targetCard.style.borderBottom = '2px solid var(--color-primary)';
+            targetCard.style.borderTop = 'none';
+        }
         
         e.dataTransfer.dropEffect = 'move';
     }
@@ -354,6 +386,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const targetCard = e.target.closest('.plant-card');
         if (!targetCard || draggedId === null) return;
 
+        targetCard.style.borderTop = 'none';
+        targetCard.style.borderBottom = 'none';
+
         const droppedId = parseInt(targetCard.dataset.id);
         
         const draggedIndex = userPlants.findIndex(p => p.id === draggedId);
@@ -362,7 +397,24 @@ document.addEventListener('DOMContentLoaded', () => {
         if (draggedIndex === -1 || droppedIndex === -1 || draggedIndex === droppedIndex) return;
 
         const [draggedItem] = userPlants.splice(draggedIndex, 1);
-        userPlants.splice(droppedIndex, 0, draggedItem);
+        
+        // ドロップ位置に応じて挿入位置を調整
+        const bounding = targetCard.getBoundingClientRect();
+        const offset = bounding.y + (bounding.height / 2);
+        
+        let newIndex = droppedIndex;
+        if (e.clientY > offset && droppedIndex < userPlants.length) {
+            // 下半分にドロップした場合、挿入インデックスを+1
+            newIndex = droppedIndex + (draggedIndex < droppedIndex ? 0 : 1);
+        } else if (e.clientY < offset && droppedIndex > 0) {
+            // 上半分にドロップした場合、挿入インデックスをそのまま
+            newIndex = droppedIndex - (draggedIndex > droppedIndex ? 0 : 1);
+        } else {
+            // 端の処理
+            newIndex = droppedIndex;
+        }
+        
+        userPlants.splice(newIndex, 0, draggedItem);
         
         localStorage.setItem('userPlants', JSON.stringify(userPlants));
         renderPlantCards();
@@ -370,6 +422,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleDragEnd(e) {
         e.target.classList.remove('dragging');
+        e.target.style.opacity = '1'; // 透明度を元に戻す
+        // すべてのカードのボーダーをリセット
+        document.querySelectorAll('.plant-card').forEach(card => {
+            card.style.borderTop = 'none';
+            card.style.borderBottom = 'none';
+        });
         draggedId = null;
     }
 
@@ -487,6 +545,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // 2. Purchase Dates (購入日) の更新
                 // 既存の購入日データをクリア
+                // 注意: localStorageに購入日以外のデータがある場合、それもクリアされます。
+                // 実際にはキーをチェックして削除するのが望ましいですが、ここではpurchase_date_のみを対象としています。
                 for (let i = 0; i < localStorage.length; i++) {
                     const key = localStorage.key(i);
                     if (key && key.startsWith('purchase_date_')) {
