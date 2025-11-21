@@ -135,6 +135,19 @@ form select {
 .action-button.tertiary:hover {
     background-color: #5a6268;
 }
+/* 🌟 追加: 水やり完了ボタン */
+.action-button.water-done-btn {
+    background-color: #5cb85c; /* Green shade for completion */
+    color: white;
+    font-size: 1rem;
+    padding: 10px 15px;
+    width: 90%;
+    margin: 10px auto;
+    display: block; /* 中央寄せ用 */
+}
+.action-button.water-done-btn:hover {
+    background-color: #449d44;
+}
 
 /* データ管理セクション */
 .secondary-section {
@@ -302,6 +315,13 @@ form select {
     color: var(--color-text-mid);
     margin: 0;
 }
+/* 🌟 追加: カードフッター（水やりボタン用）*/
+.card-footer {
+    padding: 0 10px 10px 10px;
+    border-top: 1px solid #f0f0f0;
+    text-align: center;
+}
+
 
 .status-box {
     background-color: #fff3cd;
