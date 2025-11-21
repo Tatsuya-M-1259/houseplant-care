@@ -1,6 +1,60 @@
 // app.js
 
 document.addEventListener('DOMContentLoaded', () => {
+    
+    // ----------------------------------------------------
+    // 2. カスタムUIユーティリティ (alert/confirmの代替)
+    // ----------------------------------------------------
+
+    /**
+     * カスタムトースト通知を表示する
+     */
+    function showNotification(message, duration = 3000) {
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.textContent = message;
+
+        notificationArea.appendChild(toast);
+
+        // フェードイン
+        setTimeout(() => toast.classList.add('show'), 10);
+
+        // フェードアウト
+        setTimeout(() => {
+            toast.classList.remove('show');
+            // DOMから削除
+            toast.addEventListener('transitionend', () => toast.remove());
+        }, duration);
+    }
+
+    /**
+     * ブラウザ標準のconfirmを使いつつ、カスタムモーダルへの置き換えを容易にする
+     */
+    function showCustomConfirm(message, onConfirm, onCancel = () => {}) {
+        if (window.confirm(message)) {
+            onConfirm();
+        } else {
+            onCancel();
+        }
+    }
+
+    /**
+     * 🌟 改善: ユーザー入力のHTMLをエスケープし、XSSを防ぐ
+     */
+    function escapeHTML(str) {
+        if (typeof str !== 'string') return str;
+        return str.replace(/[&<>"']/g, function(match) {
+            switch (match) {
+                case '&': return '&amp;';
+                case '<': return '&lt;';
+                case '>': return '&gt;';
+                case '"': return '&quot;';
+                case "'": return '&#39;';
+                default: return match;
+            }
+        });
+    }
+
     // ----------------------------------------------------
     // 1. DOM要素の定義
     // ----------------------------------------------------
@@ -49,42 +103,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let userPlants = JSON.parse(localStorage.getItem('userPlants')) || [];
     let currentPlantId = null;
     let draggedId = null; 
-
-    // ----------------------------------------------------
-    // 2. カスタムUIユーティリティ (alert/confirmの代替)
-    // ----------------------------------------------------
-
-    /**
-     * カスタムトースト通知を表示する
-     */
-    function showNotification(message, duration = 3000) {
-        const toast = document.createElement('div');
-        toast.className = 'toast';
-        toast.textContent = message;
-
-        notificationArea.appendChild(toast);
-
-        // フェードイン
-        setTimeout(() => toast.classList.add('show'), 10);
-
-        // フェードアウト
-        setTimeout(() => {
-            toast.classList.remove('show');
-            // DOMから削除
-            toast.addEventListener('transitionend', () => toast.remove());
-        }, duration);
-    }
-
-    /**
-     * ブラウザ標準のconfirmを使いつつ、カスタムモーダルへの置き換えを容易にする
-     */
-    function showCustomConfirm(message, onConfirm, onCancel = () => {}) {
-        if (window.confirm(message)) {
-            onConfirm();
-        } else {
-            onCancel();
-        }
-    }
 
     // ----------------------------------------------------
     // 3. 季節判定ロジック (変更なし)
@@ -368,7 +386,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // フォームのバリデーションはHTMLのrequiredとmax属性に任せる
             const newPlant = {
                 id: Date.now(), 
-                name: document.getElementById('plant-name').value,
+                // 🌟 改善: 植物名をサニタイズしてXSSを防止
+                name: escapeHTML(document.getElementById('plant-name').value),
                 speciesId: document.getElementById('species-select').value,
                 lastWatered: document.getElementById('last-watered').value,
             };
