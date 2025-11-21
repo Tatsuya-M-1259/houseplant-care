@@ -11,6 +11,7 @@ const SEASONS = {
 // 全22種の観葉植物データセット
 const PLANT_DATA = [
     // 🌟 修正: 各季節に waterIntervalDays (日数目安) を追加
+    // waterIntervalDays: 推奨される水やり頻度の日数。999は断水期間を意味します。
 
     // No. 1: コルジリネ
     {
@@ -68,7 +69,7 @@ const PLANT_DATA = [
             SPRING: { water: '土表面が乾いたらすぐ', waterIntervalDays: 10, light: '明るい日なた' },
             SUMMER: { water: '土表面が乾いたらすぐ', waterIntervalDays: 10, light: '明るい日なた' },
             AUTUMN: { water: '土表面が乾いてから2日後', waterIntervalDays: 14, light: '明るい日なた' },
-            WINTER: { water: 'ほぼ断水', waterIntervalDays: 999, light: '明るい日なた', tempRisk: '夜間窓際隔離（最低5℃確保）' } // 999は断水期間を意味
+            WINTER: { water: 'ほぼ断水', waterIntervalDays: 999, light: '明るい日なた', tempRisk: '夜間窓際隔離（最低5℃確保）' }
         },
         maintenance: { fertilizer: '施肥不要 (または5月)', repotting: '5月〜7月', pruning: '不要' }
     },
@@ -114,7 +115,7 @@ const PLANT_DATA = [
         water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', 
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', waterIntervalDays: 7, light: '明るい日陰 (直射日光避)' },
-            SUMMER: { water: '土を乾かさないように', waterIntervalDays: 5, light: '明るい日陰 (直射日光避)' }, // 多湿を好むため短めに設定
+            SUMMER: { water: '土を乾かさないように', waterIntervalDays: 5, light: '明るい日陰 (直射日光避)' }, 
             AUTUMN: { water: '土表面が乾いてから1日後', waterIntervalDays: 10, light: '明るい日陰' },
             WINTER: { water: '土中が乾いてから2日後', waterIntervalDays: 14, light: '明るい日陰', tempRisk: '厳重な温度管理（最低10℃確保）' }
         },
@@ -260,7 +261,7 @@ const PLANT_DATA = [
             SPRING: { water: '土表面が乾いたらすぐ (完全に乾いてから)', waterIntervalDays: 10, light: '明るい日なた (屋外/風通し良く)' },
             SUMMER: { water: '土表面が乾いたらすぐ (完全に乾いてから)', waterIntervalDays: 7, light: '明るい日なた (屋外/直射日光可)' },
             AUTUMN: { water: '土表面が乾いてから2-3日後 (徐々に頻度減)', waterIntervalDays: 14, light: '明るい日なた' },
-            WINTER: { water: '**断水** (落葉時)。葉が残る場合は少量。', waterIntervalDays: 999, light: '明るい日なた', tempRisk: '厳重な温度管理（最低10℃確保）' } // 999は断水期間を意味
+            WINTER: { water: '**断水** (落葉時)。葉が残る場合は少量。', waterIntervalDays: 999, light: '明るい日なた', tempRisk: '厳重な温度管理（最低10℃確保）' }
         },
         maintenance: { fertilizer: '5月, 8月', repotting: '5月〜7月', pruning: '5月〜9月 (樹形維持)' }
     },
