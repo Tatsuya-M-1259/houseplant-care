@@ -1,67 +1,69 @@
 // sw.js
 
-// 🌟 修正点1: キャッシュ名をインクリメントして強制更新
-const CACHE_NAME = 'houseplant-care-v2';
-const urlsToCache = [
+const CACHE_NAME = 'houseplant-care-v3'; // キャッシュバージョンを更新
+const CORE_ASSETS = [
     './', // index.html
     'index.html',
     'style.css',
     'app.js',
-    'data.js', 
     'manifest.json',
     'icon-192x192.png',
     'icon-512x512.png',
-    // 既存の画像ファイル
-    'cordyline.jpg',
-    'pachira.jpg',
-    'monstera.jpg',
-    'gajumaru.jpg',
-    'sansevieria.jpeg',
-    'dracaena.jpg',
-    'schefflera.jpg',
-    'yucca.jpg',
-    'anthurium.jpg',
-    'pothos.jpg',
-    'alocasia.jpg',
-    'indian_rubber.jpg',
-    'everfresh.jpg',
-    'croton.jpg',
-    'coffee_tree.jpg',
-    'ponytail_palm.jpg',
-    'ficus_umbellata.jpg',
-    'augusta.jpg',
-    'staghorn_fern.jpg',
-    'araucaria.jpg',
-    // 🌟 修正点2: 新しい画像ファイルをキャッシュリストに追加
-    'adenium.jpg.jpeg',
-    'echeveria.jpg.jpeg'
+    // 画像ファイル...
+    'cordyline.jpg', 'pachira.jpg', 'monstera.jpg', 'gajumaru.jpg', 'sansevieria.jpeg', 'dracaena.jpg', 
+    'schefflera.jpg', 'yucca.jpg', 'anthurium.jpg', 'pothos.jpg', 'alocasia.jpg', 'indian_rubber.jpg', 
+    'everfresh.jpg', 'croton.jpg', 'coffee_tree.jpg', 'ponytail_palm.jpg', 'ficus_umbellata.jpg', 
+    'augusta.jpg', 'staghorn_fern.jpg', 'araucaria.jpg', 'adenium.jpg.jpeg', 'echeveria.jpg.jpeg'
 ];
+const DATA_ASSETS = ['data.js'];
 
-// インストールイベント: キャッシュの作成とコアアセットの追加
+// インストールイベント: コアアセットのプリロード
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then((cache) => {
-                console.log('Service Worker: キャッシュを開き、コアファイルをプリロードしました。');
-                return cache.addAll(urlsToCache);
+                console.log('Service Worker: コアアセットをプリロードしました。');
+                return cache.addAll(CORE_ASSETS);
             })
     );
 });
 
-// フェッチイベント: キャッシュからリソースを提供 (Cache-First戦略)
+// フェッチイベント: キャッシュ戦略の適用
 self.addEventListener('fetch', (event) => {
-    event.respondWith(
-        caches.match(event.request)
-            .then((response) => {
-                // キャッシュに見つかったらそれを返す
-                if (response) {
-                    return response;
-                }
-                // キャッシュになければネットワークから取得
-                return fetch(event.request);
-            })
-    );
+    const url = new URL(event.request.url);
+    const path = url.pathname.substring(url.pathname.lastIndexOf('/') + 1);
+
+    if (DATA_ASSETS.includes(path)) {
+        // 🌟 SWR (Stale-While-Revalidate) 戦略を data.js に適用
+        event.respondWith(staleWhileRevalidate(event.request));
+    } else {
+        // Cache-First戦略をコアアセットと画像に適用
+        event.respondWith(caches.match(event.request).then((response) => {
+            return response || fetch(event.request);
+        }));
+    }
 });
+
+// SWR戦略のヘルパー関数
+function staleWhileRevalidate(request) {
+    return caches.match(request).then((cacheResponse) => {
+        // ネットワークリクエストを開始
+        const fetchPromise = fetch(request).then((networkResponse) => {
+            // ネットワークレスポンスをキャッシュに保存
+            caches.open(CACHE_NAME).then((cache) => {
+                // clone() はレスポンスを消費せずにキャッシュするための必須処理
+                cache.put(request, networkResponse.clone());
+            });
+            return networkResponse;
+        }).catch(error => {
+            console.warn('SWR: ネットワークリクエスト失敗。', error);
+            // ネットワーク失敗時も、キャッシュがあればそれを返すため、ここではエラーを無視
+        });
+
+        // キャッシュがあればそれを即座に返す
+        return cacheResponse || fetchPromise;
+    });
+}
 
 // アクティベートイベント: 古いキャッシュのクリーンアップ
 self.addEventListener('activate', (event) => {
@@ -71,7 +73,6 @@ self.addEventListener('activate', (event) => {
             return Promise.all(
                 cacheNames.map((cacheName) => {
                     if (cacheWhitelist.indexOf(cacheName) === -1) {
-                        // 不要なキャッシュを削除
                         return caches.delete(cacheName);
                     }
                 })
