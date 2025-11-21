@@ -221,7 +221,7 @@ form select {
     background-color: var(--color-card-bg);
     border: 1px solid #e0e0e0;
     border-radius: var(--border-radius);
-    padding: 0; /* paddingを内部のdivに移動 */
+    padding: 0; 
     box-shadow: var(--shadow-light);
     cursor: pointer;
     transition: transform 0.2s, box-shadow 0.2s;
@@ -233,6 +233,15 @@ form select {
     transform: translateY(-4px);
     box-shadow: var(--shadow-hover);
 }
+
+/* 🌟 修正: ドラッグ＆ドロップ時のフィードバック用クラス */
+.plant-card.drop-before { 
+    border-top: 2px solid var(--color-primary) !important; 
+}
+.plant-card.drop-after { 
+    border-bottom: 2px solid var(--color-primary) !important; 
+}
+
 
 .plant-card .controls {
     position: absolute;
@@ -272,7 +281,7 @@ form select {
 
 .card-image img {
     width: 100%;
-    height: 150px; /* 画像の高さを固定 */
+    height: 150px; 
     object-fit: cover;
     border-radius: var(--border-radius) var(--border-radius) 0 0;
 }
@@ -327,7 +336,7 @@ form select {
 /* 水やりアラートの色強調 */
 .risk-message {
     font-weight: bold;
-    list-style: none; /* リスト記号を非表示にする */
+    list-style: none; 
     margin: 5px 0 !important;
 }
 
@@ -390,18 +399,18 @@ form select {
     width: 100%;
     height: 100%;
     overflow: auto;
-    background-color: rgba(0,0,0,0.6); /* 背景を濃くして視認性向上 */
+    background-color: rgba(0,0,0,0.6); 
 }
 
 .modal-content {
     background-color: var(--color-card-bg);
     margin: 20px auto; 
     padding: 20px;
-    border: none; /* 枠線を削除 */
+    border: none; 
     width: 95%;
     max-width: 650px;
     border-radius: 10px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3); /* 影を強調 */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3); 
     position: relative;
 }
 @media (min-width: 600px) {
@@ -443,7 +452,7 @@ form select {
 }
 
 .user-data-section {
-    background-color: #e6f7f2; /* Light primary color background */
+    background-color: #e6f7f2; 
     border: 1px solid #b2dfdb;
     padding: 15px;
     border-radius: 8px;
@@ -459,4 +468,34 @@ form select {
 #purchase-date-modal .modal-content {
     margin: 15% auto; 
     max-width: 400px; 
+}
+
+/* ---------------------------------- */
+/* Custom Notification/Toast Styles */
+/* ---------------------------------- */
+#custom-notification-area {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1100;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.toast {
+    background-color: var(--color-primary);
+    color: white;
+    padding: 12px 20px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-hover);
+    font-weight: 600;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out; 
+    transform: translateY(100%); 
+    min-width: 250px;
+}
+.toast.show {
+    opacity: 1;
+    transform: translateY(0); 
 }
