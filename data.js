@@ -10,7 +10,6 @@ const SEASONS = {
 
 // 全22種の観葉植物データセット
 const PLANT_DATA = [
-    // 🌟 修正: 各季節に waterIntervalDays (日数目安) を追加
     // waterIntervalDays: 推奨される水やり頻度の日数。999は断水期間を意味します。
 
     // No. 1: コルジリネ
