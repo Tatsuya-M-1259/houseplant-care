@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /**
-     * 🌟 改善: ユーザー入力のHTMLをエスケープし、XSSを防ぐ
+     * ユーザー入力のHTMLをエスケープし、XSSを防ぐ
      */
     function escapeHTML(str) {
         if (typeof str !== 'string') return str;
@@ -54,6 +54,23 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+    
+    /**
+     * 🌟 新機能: 水やり日を今日の日付に更新する
+     */
+    function updateLastWatered(plantId) {
+        const numericId = parseInt(plantId);
+        const plantIndex = userPlants.findIndex(p => p.id === numericId);
+        
+        if (plantIndex !== -1) {
+            const todayDate = new Date().toISOString().split('T')[0];
+            userPlants[plantIndex].lastWatered = todayDate;
+            localStorage.setItem('userPlants', JSON.stringify(userPlants));
+            renderPlantCards();
+            showNotification(`${userPlants[plantIndex].name} の水やり日を今日に更新しました！`);
+        }
+    }
+
 
     // ----------------------------------------------------
     // 1. DOM要素の定義
@@ -62,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const speciesSelect = document.getElementById('species-select');
     const addPlantForm = document.getElementById('add-plant-form');
 
-    // 🌟 改善: 日付入力の最大値を今日に設定し、未来日の入力を防止
+    // 日付入力の最大値を今日に設定し、未来日の入力を防止
     const today = new Date().toISOString().split('T')[0];
     const lastWateredInput = document.getElementById('last-watered');
     if (lastWateredInput) {
@@ -235,6 +252,21 @@ document.addEventListener('DOMContentLoaded', () => {
         
         card.appendChild(seasonSelector); 
         card.appendChild(content);
+        
+        // 🌟 改善 2-2: 水やり完了ボタンの追加
+        const waterButton = document.createElement('button');
+        waterButton.className = 'action-button tertiary water-done-btn';
+        waterButton.textContent = '💧 水やり完了 (今日)';
+        waterButton.onclick = (e) => {
+            e.stopPropagation();
+            updateLastWatered(userPlant.id);
+        };
+        
+        const cardFooter = document.createElement('div');
+        cardFooter.className = 'card-footer';
+        cardFooter.appendChild(waterButton);
+        card.appendChild(cardFooter);
+
 
         card.addEventListener('click', () => showDetailsModal(userPlant, data));
 
