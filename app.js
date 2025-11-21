@@ -8,10 +8,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /**
      * カスタムトースト通知を表示する
+     * @param {string} message - 表示するメッセージ
+     * @param {string} type - 通知のタイプ ('success', 'warning', 'error')
+     * @param {number} duration - 表示時間 (ms)
      */
-    function showNotification(message, duration = 3000) {
+    function showNotification(message, type = 'success', duration = 3000) {
         const toast = document.createElement('div');
-        toast.className = 'toast';
+        toast.className = `toast toast-${type}`; // タイプ別のクラスを適用
         toast.textContent = message;
 
         notificationArea.appendChild(toast);
@@ -56,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     /**
-     * 🌟 新機能: 水やり日を今日の日付に更新する
+     * 水やり日を今日の日付に更新する
      */
     function updateLastWatered(plantId) {
         const numericId = parseInt(plantId);
@@ -67,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
             userPlants[plantIndex].lastWatered = todayDate;
             localStorage.setItem('userPlants', JSON.stringify(userPlants));
             renderPlantCards();
-            showNotification(`${userPlants[plantIndex].name} の水やり日を今日に更新しました！`);
+            showNotification(`${userPlants[plantIndex].name} の水やり日を今日に更新しました！`, 'success');
             
             // 詳細モーダルが開いている場合は表示を更新
             if (currentPlantId === numericId && detailsModal.style.display === 'block') {
@@ -90,6 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const lastWateredInput = document.getElementById('last-watered');
     if (lastWateredInput) {
         lastWateredInput.setAttribute('max', today);
+        lastWateredInput.value = today; // 🌟 改善: 初期値を今日に設定
     }
 
     // モーダル要素
@@ -100,7 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 詳細モーダル内の要素
     const purchaseDateDisplay = document.getElementById('purchase-date-display');
     const editPurchaseDateButton = document.getElementById('edit-purchase-date-button');
-    const waterDoneInDetailContainer = document.getElementById('water-done-in-detail'); // 🌟 追加
+    const waterDoneInDetailContainer = document.getElementById('water-done-in-detail'); 
     
     // 購入日入力モーダル
     const purchaseDateModal = document.getElementById('purchase-date-modal');
@@ -186,7 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderPlantCards() {
         if (!plantCardList) return;
 
-        // 🌟 改善 2-3: 空のカルテリストに対するフィードバック
+        // 🌟 改善: 空のカルテリストに対するフィードバック
         if (userPlants.length === 0) {
             plantCardList.innerHTML = `
                 <div class="empty-state">
@@ -460,7 +464,7 @@ document.addEventListener('DOMContentLoaded', () => {
             renderPlantCards();
             addPlantForm.reset();
             // 🌟 修正: カスタム通知を使用
-            showNotification(`「${newPlant.name}」をカルテに追加しました！`);
+            showNotification(`「${newPlant.name}」をカルテに追加しました！`, 'success');
         });
     }
 
@@ -479,7 +483,7 @@ document.addEventListener('DOMContentLoaded', () => {
              localStorage.removeItem(`purchase_date_${numericId}`);
             
              renderPlantCards();
-             showNotification('カルテを削除しました。'); 
+             showNotification('カルテを削除しました。', 'success'); 
         });
     }
 
@@ -578,7 +582,7 @@ document.addEventListener('DOMContentLoaded', () => {
         editPurchaseDateButton.onclick = () => {
             if (currentPlantId === null) {
                  // 🌟 修正: カスタム通知を使用
-                 showNotification('エラー: まず植物カードをクリックして詳細を表示してください。');
+                 showNotification('エラー: まず植物カードをクリックして詳細を表示してください。', 'error');
                  return;
             }
 
@@ -596,14 +600,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (newDate && currentPlantId !== null) {
                 savePurchaseDate(currentPlantId, newDate);
                 // 🌟 修正: カスタム通知を使用
-                showNotification('購入日を保存しました。');
+                showNotification('購入日を保存しました。', 'success');
                 
                 purchaseDateModal.style.display = 'none';
                 if (detailsModal) detailsModal.style.display = 'block'; 
                 updatePurchaseDateDisplay(currentPlantId);
             } else {
                 // 🌟 修正: カスタム通知を使用
-                showNotification('日付を入力してください。');
+                showNotification('日付を入力してください。', 'warning');
             }
         };
     }
@@ -644,7 +648,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
             // 🌟 修正: カスタム通知を使用
-            showNotification('カルテデータのエクスポートが完了しました。');
+            showNotification('カルテデータのエクスポートが完了しました。', 'success');
         };
     }
 
@@ -693,7 +697,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
 
                     // 🌟 修正: カスタム通知を使用
-                    showNotification('カルテデータのインポートが完了しました。画面を更新します。');
+                    showNotification('カルテデータのインポートが完了しました。画面を更新します。', 'success');
                     renderPlantCards(); 
                 }, () => {
                     // キャンセルの場合、処理なし（finally でファイル入力をリセットする）
@@ -701,7 +705,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             } catch (error) {
                 // 🌟 修正: カスタム通知を使用
-                showNotification('データのインポートに失敗しました。ファイル形式を確認してください。エラー: ' + error.message, 5000); 
+                showNotification('データのインポートに失敗しました。ファイル形式を確認してください。エラー: ' + error.message, 'error', 5000); 
                 console.error("Import Error:", error);
             } finally {
                 // 🌟 修正: 成功/エラー/キャンセルにかかわらず、ファイル選択はここで必ずリセットする (堅牢化)
