@@ -8,9 +8,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const speciesSelect = document.getElementById('species-select');
     const addPlantForm = document.getElementById('add-plant-form');
 
+    // 🌟 改善: 日付入力の最大値を今日に設定し、未来日の入力を防止
+    const today = new Date().toISOString().split('T')[0];
+    const lastWateredInput = document.getElementById('last-watered');
+    if (lastWateredInput) {
+        lastWateredInput.setAttribute('max', today);
+    }
+
     // モーダル要素
     const detailsModal = document.getElementById('details-modal'); // 詳細モーダル
-    // close-buttonが存在するか確認して取得
     const closeDetailButton = detailsModal ? detailsModal.querySelector('.close-button') : null; 
     const plantDetails = document.getElementById('plant-details'); // 詳細情報の挿入エリア
     
@@ -30,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const importFileInput = document.getElementById('import-file-input');
     const importFileNameDisplay = document.getElementById('import-file-name');
     
-    // カスタム通知エリアの動的生成 🌟 修正: DOM操作の安全性を確保
+    // カスタム通知エリアの動的生成
     const NOTIFICATION_AREA_ID = 'custom-notification-area';
     let notificationArea = document.getElementById(NOTIFICATION_AREA_ID);
     if (!notificationArea) {
@@ -45,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let draggedId = null; 
 
     // ----------------------------------------------------
-    // 2. カスタムUIユーティリティ (alert/confirmの代替) 🌟 修正
+    // 2. カスタムUIユーティリティ (alert/confirmの代替)
     // ----------------------------------------------------
 
     /**
@@ -132,7 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     // ----------------------------------------------------
-    // 5. カルテレンダリングとカード生成 (水やり目安計算をデータ駆動に修正)
+    // 5. カルテレンダリングとカード生成 
     // ----------------------------------------------------
 
     function renderPlantCards() {
@@ -231,7 +237,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const today = new Date();
         const timeSinceWatered = Math.floor((today - lastWateredDate) / (1000 * 60 * 60 * 24)); 
         
-        // 🌟 修正: waterIntervalDaysプロパティを使用して推奨間隔を取得 (データ駆動)
+        // waterIntervalDaysプロパティを使用して推奨間隔を取得 (データ駆動)
         let recommendedIntervalDays = seasonData.waterIntervalDays || null; 
         let intervalDisplay = '';
         
@@ -265,7 +271,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         return `
             <div class="card-image">
-                <img src="${data.img}" alt="${data.species}">
+                <!-- 🌟 改善: 画像がロードできなかった場合の代替処理を追加 -->
+                <img src="${data.img}" alt="${data.species}" 
+                     onerror="this.onerror=null; this.src='https://placehold.co/150x150/e9ecef/495057?text=No+Image'; this.style.objectFit='contain';">
             </div>
             <div class="card-header">
                 <h3>${userPlant.name}</h3>
@@ -302,7 +310,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!detailsModal || !plantDetails) return;
 
         currentPlantId = userPlant.id;
-        // 🌟 修正: 詳細モーダルは常に現在の実世界の季節を表示
+        // 詳細モーダルは常に現在の実世界の季節を表示
         const seasonData = plantData.management[currentSeasonKey];
         const maintenance = plantData.maintenance;
 
@@ -310,7 +318,10 @@ document.addEventListener('DOMContentLoaded', () => {
             <h2>${userPlant.name} (${plantData.species})</h2>
             <p class="scientific-name">${plantData.scientific}</p>
             <div style="text-align:center; margin-bottom: 20px;">
-                <img src="${plantData.img}" alt="${plantData.species}" class="detail-image" style="max-width: 100%; height: auto;">
+                <!-- 🌟 改善: 画像がロードできなかった場合の代替処理を追加 -->
+                <img src="${plantData.img}" alt="${plantData.species}" class="detail-image" 
+                     style="max-width: 100%; height: auto;"
+                     onerror="this.onerror=null; this.src='https://placehold.co/250x250/e9ecef/495057?text=No+Image'; this.style.objectFit='contain';">
             </div>
             
             <div class="detail-section">
@@ -354,6 +365,7 @@ document.addEventListener('DOMContentLoaded', () => {
         addPlantForm.addEventListener('submit', function(e) {
             e.preventDefault();
 
+            // フォームのバリデーションはHTMLのrequiredとmax属性に任せる
             const newPlant = {
                 id: Date.now(), 
                 name: document.getElementById('plant-name').value,
@@ -407,7 +419,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const targetCard = e.target.closest('.plant-card');
         if (!targetCard || targetCard.classList.contains('dragging')) return;
         
-        // 🌟 修正: インラインスタイルではなく、CSSクラスを操作
+        // CSSクラスを操作
         const bounding = targetCard.getBoundingClientRect();
         const offset = bounding.y + (bounding.height / 2);
         
@@ -428,7 +440,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const targetCard = e.target.closest('.plant-card');
         if (!targetCard || draggedId === null) return;
 
-        // 🌟 修正: クラスを削除して視覚フィードバックをリセット
+        // クラスを削除して視覚フィードバックをリセット
         targetCard.classList.remove('drop-before', 'drop-after');
 
         const droppedId = parseInt(targetCard.dataset.id);
@@ -462,7 +474,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleDragEnd(e) {
         e.target.classList.remove('dragging');
         e.target.style.opacity = '1'; 
-        // 🌟 修正: すべてのカードのクラスをリセット
+        // すべてのカードのクラスをリセット
         document.querySelectorAll('.plant-card').forEach(card => {
             card.classList.remove('drop-before', 'drop-after');
         });
@@ -516,7 +528,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // ----------------------------------------------------
-    // 10. エクスポート/インポート機能 (通知と確認をカスタムに修正)
+    // 10. エクスポート/インポート機能 (通知と確認をカスタムに修正 + 堅牢化)
     // ----------------------------------------------------
 
     const collectAllData = () => {
@@ -603,9 +615,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     showNotification('カルテデータのインポートが完了しました。画面を更新します。');
                     renderPlantCards(); 
                 }, () => {
-                    // キャンセルの場合、ファイル選択状態をリセット
-                    importFileInput.value = '';
-                    importFileNameDisplay.textContent = 'ファイル未選択';
+                    // キャンセルの場合、処理なし（finally でファイル入力をリセットする）
                 });
 
             } catch (error) {
@@ -613,7 +623,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 showNotification('データのインポートに失敗しました。ファイル形式を確認してください。エラー: ' + error.message, 5000); 
                 console.error("Import Error:", error);
             } finally {
-                // エラー時/成功時のリセットは showCustomConfirm の外側で実行
+                // 🌟 修正: 成功/エラー/キャンセルにかかわらず、ファイル選択はここで必ずリセットする (堅牢化)
                 if(importFileInput) {
                     importFileInput.value = '';
                     importFileNameDisplay.textContent = 'ファイル未選択';
