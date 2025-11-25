@@ -11,6 +11,12 @@ document.addEventListener('DOMContentLoaded', () => {
         WaterAndActivator: { name: '水と活性剤', class: 'activator' },
         WaterFertilizerAndActivator: { name: '水・液肥・活性剤', class: 'complex' }
     };
+    
+    // 🌟 ソート/フィルタリングの状態管理
+    // Local Storageから前回の設定を読み込む。なければデフォルト値を使用。
+    let currentSort = localStorage.getItem('sort-select') || 'nextWateringDate';
+    let currentFilter = localStorage.getItem('filter-select') || 'all';
+
 
     // ----------------------------------------------------
     // 2. カスタムUIユーティリティ
@@ -63,20 +69,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     /**
-     * 🌟 水やりログに記録を追加する関数
-     * @param {number} plantId - 植物のID
-     * @param {string} type - 水やり内容のキー ('WaterOnly', 'WaterAndFertilizer', etc.)
-     * @param {string} [date] - 更新日 (デフォルトは今日)
+     * 水やりログに記録を追加する関数
      */
     function updateLastWatered(plantId, type, date = new Date().toISOString().split('T')[0]) {
         const numericId = parseInt(plantId);
         const plantIndex = userPlants.findIndex(p => p.id === numericId);
         
         if (plantIndex !== -1) {
-            // waterLog配列の先頭に新しい記録を追加
             const newLogEntry = { date: date, type: type };
             
-            // waterLog が配列であることを保証
             if (!Array.isArray(userPlants[plantIndex].waterLog)) {
                 userPlants[plantIndex].waterLog = [];
             }
@@ -86,9 +87,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!isDuplicate) {
                 userPlants[plantIndex].waterLog.unshift(newLogEntry);
             }
+            
+            // 最新ログが先頭になるようにソート
+            userPlants[plantIndex].waterLog.sort((a, b) => new Date(b.date) - new Date(a.date));
+
 
             localStorage.setItem('userPlants', JSON.stringify(userPlants));
-            renderPlantCards();
+            renderPlantCards(); // カードを再描画（ソート/予定日更新のため）
             showNotification(`${userPlants[plantIndex].name} の水やり日と内容を記録しました！(${WATER_TYPES[type].name})`, 'success');
             
             waterTypeModal.style.display = 'none';
@@ -99,6 +104,37 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    /**
+     * 🌟 水やり履歴から特定のエントリを削除する関数 (今回はUIから呼ばれないがロジックは保持)
+     */
+    function deleteWaterHistoryEntry(plantId, date, type) {
+        const numericId = parseInt(plantId);
+        const plantIndex = userPlants.findIndex(p => p.id === numericId);
+        
+        if (plantIndex !== -1) {
+            showCustomConfirm('この水やり記録を削除してもよろしいですか？', () => {
+                
+                const initialLength = userPlants[plantIndex].waterLog.length;
+                userPlants[plantIndex].waterLog = userPlants[plantIndex].waterLog.filter((log, index, arr) => {
+                    if (log.date === date && log.type === type && arr.length === initialLength) {
+                        arr.length--; 
+                        return false; 
+                    }
+                    return true; 
+                });
+                
+                userPlants[plantIndex].waterLog.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                localStorage.setItem('userPlants', JSON.stringify(userPlants));
+                renderPlantCards();
+                showNotification(`水やり記録 (${formatJapaneseDate(date)}) を削除しました。`, 'success');
+                
+                const plantData = PLANT_DATA.find(p => p.id == userPlants[plantIndex].speciesId);
+                showDetailsModal(userPlants[plantIndex], plantData);
+            });
+        }
+    }
+
 
     // ----------------------------------------------------
     // 1. DOM要素の定義
@@ -106,6 +142,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const plantCardList = document.getElementById('plant-card-list'); 
     const speciesSelect = document.getElementById('species-select');
     const addPlantForm = document.getElementById('add-plant-form');
+    // 🌟 新規: ソート/フィルタリングのDOM要素
+    const sortSelect = document.getElementById('sort-select');
+    const filterSelect = document.getElementById('filter-select');
 
     const today = new Date().toISOString().split('T')[0];
     const lastWateredInput = document.getElementById('last-watered');
@@ -127,7 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const repottingDateDisplay = document.getElementById('repotting-date-display');
     const editRepottingDateButton = document.getElementById('edit-repotting-date-button'); 
     
-    // 🌟 新規: 水やり履歴リスト要素
+    // 水やり履歴リスト要素
     const waterHistoryList = document.getElementById('water-history-list');
 
     // 購入日入力モーダル
@@ -188,11 +227,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentSeasonKey = getCurrentSeason();
 
     // ----------------------------------------------------
-    // 4. 初期化処理, Local Storage / 日付データ処理 
+    // 4. 初期化処理, 日付データ処理 
     // ----------------------------------------------------
 
     /**
-     * 🌟 既存データを新しい waterLog 形式に変換する（マイグレーション）
+     * 🌟 新規: 次回水やり予定日を計算する
+     * @param {string} lastDateString - 前回の水やり日 ('YYYY-MM-DD')
+     * @param {number} intervalDays - 推奨間隔日数
+     * @returns {string} - 次回予定日 ('YYYY-MM-DD')
+     */
+    function calculateNextWateringDate(lastDateString, intervalDays) {
+        if (!lastDateString || intervalDays === 999) return null;
+
+        const lastDate = new Date(lastDateString);
+        // Dateオブジェクトは日数を加算すると自動で月を繰り上げてくれる
+        lastDate.setDate(lastDate.getDate() + intervalDays);
+        
+        return lastDate.toISOString().split('T')[0];
+    }
+    
+    /**
+     * 既存データを新しい waterLog 形式に変換する（マイグレーション）
      */
     function normalizePlantData(plants) {
         const normalizedPlants = plants.map(p => {
@@ -200,6 +255,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!p.entryDate) {
                 if (p.lastWatered) {
                     p.entryDate = p.lastWatered;
+                } else if (p.waterLog && p.waterLog.length > 0) {
+                    p.entryDate = p.waterLog[0].date;
                 } else if (p.lastWatering && p.lastWatering.date) {
                     p.entryDate = p.lastWatering.date;
                 } else {
@@ -253,8 +310,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 speciesSelect.appendChild(option);
             });
         }
+        
+        // 🌟 ソート/フィルタの初期値をUIに反映
+        if (sortSelect) sortSelect.value = currentSort;
+        if (filterSelect) filterSelect.value = currentFilter;
 
         renderPlantCards();
+        
+        // 🌟 新規: ソート/フィルタのイベントリスナー
+        if (sortSelect) {
+            sortSelect.addEventListener('change', (e) => {
+                currentSort = e.target.value;
+                localStorage.setItem('sort-select', currentSort);
+                // ドラッグ＆ドロップ機能を無効化（自動ソート時はD&Dは混乱を招くため）
+                // 実際にはドラッグ可能な状態のままなので、D&Dロジック内でソート時を無視すべきだが、ここではrenderPlantCards()で対応
+                renderPlantCards();
+            });
+        }
+        if (filterSelect) {
+            filterSelect.addEventListener('change', (e) => {
+                currentFilter = e.target.value;
+                localStorage.setItem('filter-select', currentFilter);
+                renderPlantCards();
+            });
+        }
     }
     
     // 日付表示ユーティリティ関数
@@ -301,15 +380,67 @@ document.addEventListener('DOMContentLoaded', () => {
     // ----------------------------------------------------
     // 5. カルテレンダリングとカード生成 
     // ----------------------------------------------------
+    
+    /**
+     * 🌟 新規: ソートとフィルタリングを適用した植物リストを返す
+     */
+    function sortAndFilterPlants() {
+        let filteredPlants = userPlants.map(p => {
+            const data = PLANT_DATA.find(pd => pd.id == p.speciesId);
+            const lastLog = p.waterLog && p.waterLog.length > 0 ? p.waterLog[0] : { date: p.entryDate, type: 'WaterOnly' };
+            const seasonData = data.management[currentSeasonKey];
+            const nextWateringDate = calculateNextWateringDate(lastLog.date, seasonData.waterIntervalDays);
+            
+            // ソート/フィルタリングに必要なメタデータをオブジェクトに追加
+            return {
+                ...p,
+                data,
+                nextWateringDate: nextWateringDate,
+                minTemp: data.minTemp
+            };
+        });
+        
+        // 1. フィルタリングの適用
+        if (currentFilter !== 'all') {
+            const tempMap = { 'temp10': 10, 'temp5': 5, 'temp0': 0 };
+            const minTempThreshold = tempMap[currentFilter];
+            filteredPlants = filteredPlants.filter(p => p.minTemp >= minTempThreshold);
+        }
+
+        // 2. ソートの適用
+        filteredPlants.sort((a, b) => {
+            if (currentSort === 'name') {
+                return a.name.localeCompare(b.name);
+            } else if (currentSort === 'entryDate') {
+                return new Date(b.entryDate) - new Date(a.entryDate); // 新しい順
+            } else if (currentSort === 'minTemp') {
+                return a.minTemp - b.minTemp; // 低い順
+            } else if (currentSort === 'nextWateringDate') {
+                // null (断水期間) のものを後回しにする
+                const aDate = a.nextWateringDate ? new Date(a.nextWateringDate).getTime() : Infinity;
+                const bDate = b.nextWateringDate ? new Date(b.nextWateringDate).getTime() : Infinity;
+                
+                // 日付が古い（近い）順に並べる
+                return aDate - bDate;
+            }
+            return 0;
+        });
+
+        return filteredPlants;
+    }
+
 
     function renderPlantCards() {
         if (!plantCardList) return;
 
-        if (userPlants.length === 0) {
+        // 🌟 ソートとフィルタリングを適用したリストを取得
+        const sortedAndFilteredPlants = sortAndFilterPlants();
+        
+        if (sortedAndFilteredPlants.length === 0) {
             plantCardList.innerHTML = `
                 <div class="empty-state">
-                    <p>カルテに植物がまだ登録されていません。</p>
-                    <p>上の「🌱 新規植物の登録」セクションから、育てている植物を登録しましょう！</p>
+                    <p>現在のフィルタ条件に一致する植物はありません。</p>
+                    <p>または、カルテに植物がまだ登録されていません。</p>
                 </div>
             `;
             return; 
@@ -318,10 +449,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const cardContainer = document.createElement('div');
         cardContainer.className = 'plant-card-container';
         
-        userPlants.forEach(userPlant => {
-            const data = PLANT_DATA.find(p => p.id == userPlant.speciesId);
-            if (!data) return;
-
+        sortedAndFilteredPlants.forEach(userPlant => {
+            const data = userPlant.data; // sortAndFilterPlantsで追加したメタデータを使用
             const card = createPlantCard(userPlant, data, currentSeasonKey); 
             cardContainer.appendChild(card);
         });
@@ -362,7 +491,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const card = document.createElement('div');
         card.className = 'plant-card';
         card.setAttribute('data-id', userPlant.id);
-        card.setAttribute('draggable', true);
+        
+        // ソート/フィルタリング中はドラッグ機能を無効化（手動ソート時のみ有効）
+        if (currentSort === 'nextWateringDate') {
+             card.setAttribute('draggable', false);
+        } else {
+             card.setAttribute('draggable', true);
+        }
         
         const controls = document.createElement('div');
         controls.className = 'controls';
@@ -397,7 +532,7 @@ document.addEventListener('DOMContentLoaded', () => {
             };
             seasonSelector.appendChild(button);
         });
-
+        
         const content = document.createElement('div');
         content.className = 'card-content-wrapper'; 
         content.innerHTML = generateCardContent(userPlant, data, activeSeasonKey);
@@ -405,7 +540,6 @@ document.addEventListener('DOMContentLoaded', () => {
         card.appendChild(seasonSelector); 
         card.appendChild(content);
         
-        // 水やり完了ボタンの変更: カスタムモーダル表示に変更
         const waterButton = document.createElement('button');
         waterButton.className = 'action-button tertiary water-done-btn';
         waterButton.textContent = '💧 水やり完了 (内容選択)';
@@ -420,10 +554,16 @@ document.addEventListener('DOMContentLoaded', () => {
         card.appendChild(cardFooter);
 
         card.addEventListener('click', () => showDetailsModal(userPlant, data));
-        card.addEventListener('dragstart', handleDragStart);
-        card.addEventListener('dragover', handleDragOver);
-        card.addEventListener('drop', handleDrop);
-        card.addEventListener('dragend', handleDragEnd);
+        
+        // ソート/フィルタリングが適用されていない場合のみ、ドラッグイベントをバインド
+        if (currentSort === 'nextWateringDate') {
+            // 自動ソートが適用されている場合はD&Dイベントを無効化
+        } else {
+             card.addEventListener('dragstart', handleDragStart);
+             card.addEventListener('dragover', handleDragOver);
+             card.addEventListener('drop', handleDrop);
+             card.addEventListener('dragend', handleDragEnd);
+        }
 
         return card;
     }
@@ -477,8 +617,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const seasonData = data.management[seasonKey];
         const riskText = getSeasonRisk(seasonKey, data);
         
-        // 🌟 waterLogの最新エントリを使用
-        const lastLog = userPlant.waterLog && userPlant.waterLog.length > 0 ? userPlant.waterLog[0] : { date: today, type: 'WaterOnly' };
+        // waterLogの最新エントリを使用
+        const lastLog = userPlant.waterLog && userPlant.waterLog.length > 0 ? userPlant.waterLog[0] : { date: userPlant.entryDate, type: 'WaterOnly' };
         
         const lastWateringDate = new Date(lastLog.date);
         const todayDate = new Date();
@@ -487,6 +627,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const timeSinceWatered = Math.floor((todayDate - lastWateringDate) / (1000 * 60 * 60 * 24)); 
         
         let recommendedIntervalDays = seasonData.waterIntervalDays || null; 
+        
+        // 🌟 次回予定日を計算
+        const nextWateringDateString = calculateNextWateringDate(lastLog.date, recommendedIntervalDays);
+        
         let intervalDisplay = '';
         
         if (recommendedIntervalDays !== null) {
@@ -500,11 +644,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         let actionMessage = '';
-        if (recommendedIntervalDays && recommendedIntervalDays <= 30) { 
-            const daysUntilNext = recommendedIntervalDays - timeSinceWatered;
+        if (nextWateringDateString && recommendedIntervalDays <= 30) { 
+            // 予定日と今日の日数の差を計算
+            const daysUntilNext = Math.ceil((new Date(nextWateringDateString) - todayDate) / (1000 * 60 * 60 * 24));
             
             if (daysUntilNext <= 0) {
-                actionMessage = `<li class="risk-message">🚨 <span class="risk-alert danger">水やり目安日を**${Math.abs(daysUntilNext)}日超過**！</span></li>`;
+                // 予定日を過ぎた場合 (daysUntilNext <= 0 は当日の深夜0時を過ぎた瞬間をカバー)
+                actionMessage = `<li class="risk-message">🚨 <span class="risk-alert danger">水やり目安日を**${Math.abs(daysUntilNext) + 1}日超過**！</span></li>`;
             } else if (daysUntilNext <= 3) {
                 actionMessage = `<li class="risk-message">⚠️ <span class="risk-alert warning">あと**${daysUntilNext}日**で水やり目安日です。</span></li>`;
             } else {
@@ -513,6 +659,12 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             actionMessage = `<li>前回水やり日から **${timeSinceWatered}日経過**。</li>`;
         }
+        
+        // 🌟 次回予定日の情報表示
+        const nextWateringInfo = nextWateringDateString && recommendedIntervalDays !== 999
+            ? `<li><strong>次回予定日:</strong> <span style="color: ${nextWateringDateString <= today ? 'var(--color-alert)' : 'var(--color-primary)'}; font-weight: 700;">${formatJapaneseDate(nextWateringDateString)}</span></li>`
+            : `<li><strong>次回予定日:</strong> ${recommendedIntervalDays === 999 ? '断水中' : '算出不可'}</li>`;
+
 
         const waterMethodSummary = data.water_method.split('。')[0] + '。';
         
@@ -549,6 +701,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         </span>
                     </strong>
                 </li>
+                ${nextWateringInfo}
                 ${actionMessage}
                 <li>**光量要求:** ${seasonData.light}</li>
             </ul>
@@ -571,9 +724,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /**
-     * 🌟 水やり履歴をレンダリングする関数
+     * 水やり履歴をレンダリングする関数
      */
-    function renderWaterHistory(waterLog) {
+    function renderWaterHistory(waterLog, plantId) {
         if (!waterHistoryList) return;
         waterHistoryList.innerHTML = '';
         
@@ -586,10 +739,23 @@ document.addEventListener('DOMContentLoaded', () => {
             const logItem = document.createElement('li');
             const typeData = WATER_TYPES[log.type] || WATER_TYPES.WaterOnly;
             
-            logItem.innerHTML = `
+            const contentSpan = document.createElement('span');
+            contentSpan.className = 'log-content';
+            contentSpan.innerHTML = `
                 <span class="date">${formatJapaneseDate(log.date)}</span>
                 <span class="water-type-badge ${typeData.class}">${typeData.name}</span>
             `;
+            
+            // 削除ボタン (ロジックは見送りなので、今回は単に非活性化)
+            const deleteButton = document.createElement('button');
+            deleteButton.className = 'delete-log-btn';
+            deleteButton.innerHTML = '🗑️';
+            deleteButton.title = 'この記録を削除';
+            // 削除ロジックは今回見送りのため、イベントリスナーは省略
+            // deleteButton.onclick = (e) => { e.stopPropagation(); deleteWaterHistoryEntry(plantId, log.date, log.type); }; 
+
+            logItem.appendChild(contentSpan);
+            logItem.appendChild(deleteButton);
             waterHistoryList.appendChild(logItem);
         });
     }
@@ -645,8 +811,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updatePurchaseDateDisplay(userPlant.id); 
         updateRepottingDateDisplay(userPlant.id); 
         
-        // 🌟 水やり履歴のレンダリング
-        renderWaterHistory(userPlant.waterLog);
+        renderWaterHistory(userPlant.waterLog, userPlant.id);
         
         // 水やり完了ボタンの変更: カスタムモーダル表示に変更
         if (waterDoneInDetailContainer) {
@@ -693,7 +858,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 name: escapeHTML(document.getElementById('plant-name').value),
                 speciesId: document.getElementById('species-select').value,
                 entryDate: lastWateredDate,
-                // 🌟 構造変更: waterLogを初期化し、最初の記録を格納
+                // 構造変更: waterLogを初期化し、最初の記録を格納
                 waterLog: [{
                     date: lastWateredDate,
                     type: waterType
@@ -737,75 +902,84 @@ document.addEventListener('DOMContentLoaded', () => {
     // ----------------------------------------------------
 
     function handleDragStart(e) {
-        draggedId = parseInt(e.target.dataset.id);
-        e.target.classList.add('dragging');
-        e.dataTransfer.effectAllowed = 'move';
-        setTimeout(() => e.target.style.opacity = '0.4', 0);
+        // 自動ソートが適用されている場合はD&Dを無視
+        if (currentSort !== 'nextWateringDate') {
+            draggedId = parseInt(e.target.dataset.id);
+            e.target.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            setTimeout(() => e.target.style.opacity = '0.4', 0);
+        }
     }
 
     function handleDragOver(e) {
-        e.preventDefault(); 
-        
-        const targetCard = e.target.closest('.plant-card');
-        if (!targetCard || targetCard.classList.contains('dragging')) return;
-        
-        const bounding = targetCard.getBoundingClientRect();
-        const offset = bounding.y + (bounding.height / 2);
-        
-        if (e.clientY < offset) {
-            targetCard.classList.add('drop-before');
-            targetCard.classList.remove('drop-after');
-        } else {
-            targetCard.classList.add('drop-after');
-            targetCard.classList.remove('drop-before');
+        if (currentSort !== 'nextWateringDate') {
+            e.preventDefault(); 
+            
+            const targetCard = e.target.closest('.plant-card');
+            if (!targetCard || targetCard.classList.contains('dragging')) return;
+            
+            const bounding = targetCard.getBoundingClientRect();
+            const offset = bounding.y + (bounding.height / 2);
+            
+            if (e.clientY < offset) {
+                targetCard.classList.add('drop-before');
+                targetCard.classList.remove('drop-after');
+            } else {
+                targetCard.classList.add('drop-after');
+                targetCard.classList.remove('drop-before');
+            }
+            
+            e.dataTransfer.dropEffect = 'move';
         }
-        
-        e.dataTransfer.dropEffect = 'move';
     }
 
     function handleDrop(e) {
-        e.preventDefault();
-        
-        const targetCard = e.target.closest('.plant-card');
-        if (!targetCard || draggedId === null) return;
+        if (currentSort !== 'nextWateringDate') {
+            e.preventDefault();
+            
+            const targetCard = e.target.closest('.plant-card');
+            if (!targetCard || draggedId === null) return;
 
-        targetCard.classList.remove('drop-before', 'drop-after');
+            targetCard.classList.remove('drop-before', 'drop-after');
 
-        const droppedId = parseInt(targetCard.dataset.id);
-        
-        const draggedIndex = userPlants.findIndex(p => p.id === draggedId);
-        let droppedIndex = userPlants.findIndex(p => p.id === droppedId);
+            const droppedId = parseInt(targetCard.dataset.id);
+            
+            const draggedIndex = userPlants.findIndex(p => p.id === draggedId);
+            let droppedIndex = userPlants.findIndex(p => p.id === droppedId);
 
-        if (draggedIndex === -1 || droppedIndex === -1 || draggedIndex === droppedIndex) return;
+            if (draggedIndex === -1 || droppedIndex === -1 || draggedIndex === droppedIndex) return;
 
-        const [draggedItem] = userPlants.splice(draggedIndex, 1);
-        
-        const bounding = targetCard.getBoundingClientRect();
-        const offset = bounding.y + (bounding.height / 2);
-        
-        let insertIndex = droppedIndex;
+            const [draggedItem] = userPlants.splice(draggedIndex, 1);
+            
+            const bounding = targetCard.getBoundingClientRect();
+            const offset = bounding.y + (bounding.height / 2);
+            
+            let insertIndex = droppedIndex;
 
-        if (e.clientY > offset) {
-            insertIndex = droppedIndex + 1;
+            if (e.clientY > offset) {
+                insertIndex = droppedIndex + 1;
+            }
+            
+            if (insertIndex > draggedIndex) {
+                insertIndex--;
+            }
+
+            userPlants.splice(insertIndex, 0, draggedItem);
+            
+            localStorage.setItem('userPlants', JSON.stringify(userPlants));
+            renderPlantCards();
         }
-        
-        if (insertIndex > draggedIndex) {
-            insertIndex--;
-        }
-
-        userPlants.splice(insertIndex, 0, draggedItem);
-        
-        localStorage.setItem('userPlants', JSON.stringify(userPlants));
-        renderPlantCards();
     }
 
     function handleDragEnd(e) {
-        e.target.classList.remove('dragging');
-        e.target.style.opacity = '1'; 
-        document.querySelectorAll('.plant-card').forEach(card => {
-            card.classList.remove('drop-before', 'drop-after');
-        });
-        draggedId = null;
+        if (currentSort !== 'nextWateringDate') {
+            e.target.classList.remove('dragging');
+            e.target.style.opacity = '1'; 
+            document.querySelectorAll('.plant-card').forEach(card => {
+                card.classList.remove('drop-before', 'drop-after');
+            });
+            draggedId = null;
+        }
     }
 
 
