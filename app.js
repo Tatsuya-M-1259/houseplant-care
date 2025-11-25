@@ -1,7 +1,8 @@
 // app.js
 
 // 🌟 データのインポート
-import { PLANT_DATA } from './data.js';
+// 🌟 修正: 定数をインポート
+import { PLANT_DATA, INTERVAL_WATER_STOP } from './data.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     
@@ -236,8 +237,8 @@ document.addEventListener('DOMContentLoaded', () => {
      * 次回水やり予定日を計算する
      */
     function calculateNextWateringDate(lastDateString, intervalDays) {
-        // 999 (断水) または無効な値の場合は null を返す
-        if (!lastDateString || intervalDays === 999 || intervalDays == null || isNaN(intervalDays)) {
+        // 🌟 修正: 定数 INTERVAL_WATER_STOP を使用して判定
+        if (!lastDateString || intervalDays === INTERVAL_WATER_STOP || intervalDays == null || isNaN(intervalDays)) {
             return null;
         }
 
@@ -929,7 +930,8 @@ document.addEventListener('DOMContentLoaded', () => {
         let intervalDisplay = '';
         
         if (recommendedIntervalDays !== null) {
-            if (recommendedIntervalDays === 999) { 
+            // 🌟 修正: 定数 INTERVAL_WATER_STOP を使用して判定
+            if (recommendedIntervalDays === INTERVAL_WATER_STOP) { 
                  intervalDisplay = `（${SEASONS[seasonKey].name.split(' ')[0]}は断水期間）`;
             } else {
                  intervalDisplay = `（${recommendedIntervalDays}日目安）`;
@@ -953,9 +955,10 @@ document.addEventListener('DOMContentLoaded', () => {
             actionMessage = `<li>前回水やり日から **${timeSinceWatered}日経過**。</li>`;
         }
         
-        const nextWateringInfo = nextWateringDateString && recommendedIntervalDays !== 999
+        // 🌟 修正: 定数 INTERVAL_WATER_STOP を使用して判定
+        const nextWateringInfo = nextWateringDateString && recommendedIntervalDays !== INTERVAL_WATER_STOP
             ? `<li><strong>次回予定日:</strong> <span style="color: ${nextWateringDateString <= today ? 'var(--color-alert)' : 'var(--color-primary)'}; font-weight: 700;">${formatJapaneseDate(nextWateringDateString)}</span></li>`
-            : `<li><strong>次回予定日:</strong> ${recommendedIntervalDays === 999 ? '断水中' : '算出不可'}</li>`;
+            : `<li><strong>次回予定日:</strong> ${recommendedIntervalDays === INTERVAL_WATER_STOP ? '断水中' : '算出不可'}</li>`;
 
 
         // 🌟 修正: 安全にwater_methodを取得（クラッシュ防止）
