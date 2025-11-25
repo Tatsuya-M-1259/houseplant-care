@@ -438,6 +438,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // 🌟 アプリ起動時に当日の通知をチェック
         checkDailyNotifications();
         
+        // 🌟 修正: アプリがアクティブになった時（バックグラウンドから戻った時）にも通知をチェック
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                checkDailyNotifications();
+            }
+        });
+        
         if (setTodayButton && lastWateredInput) {
             setTodayButton.onclick = () => {
                 lastWateredInput.value = today;
