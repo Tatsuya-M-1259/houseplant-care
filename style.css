@@ -934,3 +934,10 @@ form select {
         font-size: 2rem;
     }
 }
+
+/* 🌟 追加: SortableJS ドラッグ中のプレースホルダースタイル */
+.sortable-ghost {
+    opacity: 0.4;
+    background-color: #e0f7fa; /* 薄い水色 */
+    border: 2px dashed var(--color-primary);
+}
