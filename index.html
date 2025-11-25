@@ -101,6 +101,7 @@
         <div class="modal-content">
             <span class="close-button">&times;</span>
             
+            <!-- 🌟 モーダルナビゲーションボタンの追加 -->
             <button id="prev-plant-btn" class="modal-nav-btn prev-btn" title="前の植物へ">◀</button>
             <button id="next-plant-btn" class="modal-nav-btn next-btn" title="次の植物へ">▶</button>
             
@@ -120,16 +121,30 @@
                 </div>
             </div>
             
+            <!-- 🌟 改善: アコーディオン化のためのラッパー -->
+            <div id="season-care-wrapper" class="accordion-item">
+                <button class="accordion-header" data-target="season-care-content"><h3>現在の季節別ケア</h3></button>
+                <div id="season-care-content" class="accordion-content">
+                    <!-- contents are dynamically loaded -->
+                </div>
+            </div>
+            
+            <div id="basic-maintenance-wrapper" class="accordion-item">
+                <button class="accordion-header collapsed" data-target="basic-maintenance-content"><h3>基本情報・年間メンテナンス</h3></button>
+                <div id="basic-maintenance-content" class="accordion-content">
+                    <!-- contents are dynamically loaded -->
+                </div>
+            </div>
+            
             <div id="water-history-section" class="detail-section">
-                <h3>💧 水やり履歴 (ログ)</h3>
-                <ul id="water-history-list" class="water-history-list">
+                <button class="accordion-header collapsed" data-target="water-history-list"><h3>💧 水やり履歴 (ログ)</h3></button>
+                <ul id="water-history-list" class="water-history-list accordion-content">
                     </ul>
             </div>
             
-            <!-- 植え替え履歴セクションの追加 -->
             <div id="repotting-history-section" class="detail-section">
-                <h3>🪴 植え替え履歴</h3>
-                <ul id="repotting-history-list" class="water-history-list">
+                <button class="accordion-header collapsed" data-target="repotting-history-list"><h3>🪴 植え替え履歴</h3></button>
+                <ul id="repotting-history-list" class="water-history-list accordion-content">
                     </ul>
             </div>
 
