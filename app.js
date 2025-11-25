@@ -1016,6 +1016,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return '成長期再開！水やりと施肥を徐々に再開。'; 
     }
 
+    // 🌟 修正: 削除ボタン機能を追加したレンダリング関数
     function renderWaterHistory(waterLog, plantId) {
         if (!waterHistoryList) return;
         waterHistoryList.innerHTML = '';
@@ -1025,10 +1026,12 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        waterLog.forEach(log => {
+        // indexを利用して削除対象を特定
+        waterLog.forEach((log, index) => {
             const logItem = document.createElement('li');
             const typeData = WATER_TYPES[log.type] || WATER_TYPES.WaterOnly;
             
+            // ログ内容
             const contentSpan = document.createElement('span');
             contentSpan.className = 'log-content';
             contentSpan.innerHTML = `
@@ -1036,9 +1039,43 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span class="water-type-badge ${typeData.class}">${typeData.name}</span>
             `;
             
+            // 🌟 追加: 削除ボタンの実装
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-log-btn';
+            deleteBtn.textContent = '×';
+            deleteBtn.title = 'この記録を削除';
+            deleteBtn.setAttribute('aria-label', `${formatJapaneseDate(log.date)}の記録を削除`); // A11y
+            deleteBtn.onclick = (e) => {
+                e.stopPropagation(); // アコーディオンの開閉を防ぐ
+                deleteWaterLog(plantId, index);
+            };
+
             logItem.appendChild(contentSpan);
+            logItem.appendChild(deleteBtn); // ボタンを追加
             waterHistoryList.appendChild(logItem);
         });
+    }
+
+    // 🌟 新規追加: 履歴削除ロジック
+    function deleteWaterLog(plantId, logIndex) {
+        const plantIndex = userPlants.findIndex(p => p.id === plantId);
+        if (plantIndex === -1) return;
+
+        if (window.confirm('この水やり記録を削除しますか？\n（削除すると元に戻せません）')) {
+            userPlants[plantIndex].waterLog.splice(logIndex, 1); // 指定のログを削除
+            
+            // データを保存
+            saveUserPlants(userPlants);
+            
+            // 現在表示中の詳細モーダルも更新
+            const plantData = PLANT_DATA.find(p => p.id == userPlants[plantIndex].speciesId);
+            showDetailsModal(userPlants[plantIndex], plantData);
+            
+            // カードの表示も更新（前回水やり日が変わる可能性があるため）
+            renderPlantCards(); 
+            
+            showNotification('記録を削除しました。', 'success');
+        }
     }
 
     function renderRepottingHistory(repottingLog) {
@@ -1252,6 +1289,12 @@ document.addEventListener('DOMContentLoaded', () => {
              showNotification('カルテを削除しました。', 'success'); 
         });
     }
+
+    // 🌟 修正: 以下のドラッグハンドラ関数は削除されました
+    // function handleDragStart(e) ...
+    // function handleDragOver(e) ...
+    // function handleDrop(e) ...
+    // function handleDragEnd(e) ...
 
     if (closeRepottingDateButton) {
         closeRepottingDateButton.onclick = () => {
