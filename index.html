@@ -53,6 +53,30 @@
                 </div>
             </div>
         </section>
+        
+        <section id="plant-controls" class="card secondary-section control-card">
+            <h2>🗂️ カルテ表示設定</h2>
+            <div class="control-group-container">
+                <div class="control-group">
+                    <label for="sort-select">並び替え:</label>
+                    <select id="sort-select">
+                        <option value="nextWateringDate">💧 次回水やりが近い順 (デフォルト)</option>
+                        <option value="name">🌱 名前順</option>
+                        <option value="entryDate">📅 登録日（新しい順）</option>
+                        <option value="minTemp">🌡️ 最低越冬温度が低い順</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="filter-select">フィルタリング (最低越冬温度):</label>
+                    <select id="filter-select">
+                        <option value="all">すべて表示</option>
+                        <option value="temp10">最低10℃以上</option>
+                        <option value="temp5">最低5℃以上</option>
+                        <option value="temp0">最低0℃以上 (耐寒性あり)</option>
+                    </select>
+                </div>
+            </div>
+        </section>
 
         <section id="plant-card-list">
             <h2>📝 登録済みの植物 (カルテ)</h2>
