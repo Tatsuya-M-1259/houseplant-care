@@ -50,8 +50,10 @@
         <section id="data-management" class="card secondary-section">
             <h2>データ管理</h2>
             <div id="notification-control-container" class="control-group">
-                <!-- PWA通知設定UIがここに動的に挿入されます -->
             </div>
+            
+            <p id="last-update-display" class="file-name-display" style="text-align: left; margin-bottom: 15px;"></p>
+            
             <div class="data-controls">
                 <button id="export-data-button" class="action-button secondary">📤 データエクスポート</button>
                 <div class="import-control">
@@ -62,9 +64,7 @@
             </div>
         </section>
         
-        <!-- 🌟 改善: クイックソートボタンの追加エリア -->
         <div id="quick-sort-buttons" class="quick-sort-buttons">
-            <!-- ボタンが動的に挿入されます -->
         </div>
 
         <section id="plant-controls" class="card secondary-section control-card">
@@ -101,7 +101,6 @@
         <div class="modal-content">
             <span class="close-button">&times;</span>
             
-            <!-- 🌟 改善: モーダルナビゲーションボタンの追加 -->
             <button id="prev-plant-btn" class="modal-nav-btn prev-btn" title="前の植物へ">◀</button>
             <button id="next-plant-btn" class="modal-nav-btn next-btn" title="次の植物へ">▶</button>
             
@@ -112,13 +111,11 @@
                 <h2>マイカルテ情報</h2>
                 <p><strong>登録日:</strong> <span id="entry-date-display">未設定</span> (<span id="time-since-entry-display"></span>)</p>
                 <p><strong>購入日:</strong> <span id="purchase-date-display">未設定</span></p>
-                <!-- 🌟 修正: 植え替え日表示を履歴に対応させる -->
                 <p><strong>直近の植え替え日:</strong> <span id="repotting-date-display">未設定</span></p>
                 
                 <div id="water-done-in-detail"></div>
                 <div class="detail-actions">
                     <button id="edit-purchase-date-button" class="action-button tertiary">購入日を記録/変更</button>
-                    <!-- 🌟 修正: 植え替え日ボタンを「記録を追加」に変更 -->
                     <button id="edit-repotting-date-button" class="action-button tertiary">植え替え記録を追加</button>
                 </div>
             </div>
@@ -129,7 +126,7 @@
                     </ul>
             </div>
             
-            <!-- 🌟 改善: 植え替え履歴セクションの追加 -->
+            <!-- 植え替え履歴セクションの追加 -->
             <div id="repotting-history-section" class="detail-section">
                 <h3>🪴 植え替え履歴</h3>
                 <ul id="repotting-history-list" class="water-history-list">
@@ -150,7 +147,7 @@
         </div>
     </div>
     
-    <!-- 🌟 修正: 植え替え日入力モーダルを記録追加用に変更 -->
+    <!-- 植え替え日入力モーダル (変更なし) -->
     <div id="repotting-date-modal" class="modal">
         <div class="modal-content">
             <span class="close-button-repotting-date">&times;</span>
