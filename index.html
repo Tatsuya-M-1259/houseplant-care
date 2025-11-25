@@ -27,6 +27,7 @@
                 
                 <label for="last-watered">直近の水やり日:</label>
                 <input type="date" id="last-watered" required>
+                
                 <label for="water-type-select">水やり内容:</label>
                 <select id="water-type-select" required>
                     <option value="WaterOnly">水のみ</option>
@@ -96,6 +97,17 @@
             <label for="repotting-date-input">日付:</label>
             <input type="date" id="repotting-date-input" required>
             <button id="save-repotting-date-button" class="action-button primary">保存</button>
+        </div>
+    </div>
+    
+    <div id="water-type-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button-water-type">&times;</span>
+            <h2 id="water-type-modal-title">「植物名」の水やり内容</h2>
+            <p><strong>日付: </strong><span id="water-date-display">今日</span></p>
+            <div id="water-type-options" class="water-type-options-container">
+                </div>
+            <p style="margin-top: 20px;">※水やり日を変更したい場合は、カルテ新規登録フォームから設定してください。</p>
         </div>
     </div>
     
