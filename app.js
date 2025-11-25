@@ -887,7 +887,9 @@ document.addEventListener('DOMContentLoaded', () => {
             isRecommendedTime = (currentMonth >= startMonth || currentMonth <= endMonth);
         }
         
-        const lastRepottingDateString = getLatestRepottingDate(userPlantId);
+        const userPlant = userPlants.find(p => p.id === userPlantId);
+        const lastRepottingDateString = getLatestRepottingDate(userPlant);
+        
         let isOverOneYear = true;
         
         if (lastRepottingDateString) {
