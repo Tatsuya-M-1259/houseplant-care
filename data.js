@@ -47,9 +47,9 @@ const PLANT_DATA = [
         id: 4, species: 'ガジュマル', scientific: 'Ficus microcarpa', minTemp: 5, difficulty: '容易', feature: '強い耐陰性、多幸の木', img: 'gajumaru.jpg',
         water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', 
         management: {
-            SPRING: { water: '土表面が乾いたらすぐ', waterIntervalDays: 7, light: '半日陰' },
+            SPRING: { water: '土表面が乾いたらすぐ', waterIntervalDays: 7, light: 'half-day-sun' },
             SUMMER: { water: '土表面が乾いたらすぐ', waterIntervalDays: 7, light: 'half-day-sun' },
-            AUTUMN: { water: '土表面が乾いてから1日後', waterIntervalDays: 10, light: '半日陰' },
+            AUTUMN: { water: '土表面が乾いてから1日後', waterIntervalDays: 10, light: 'half-day-sun' },
             WINTER: { water: '土中が乾いてから2-3日後 (少量)', waterIntervalDays: 14, light: 'half-day-sun', tempRisk: '夜間窓際隔離（最低5℃確保）' }
         },
         maintenance: { fertilizer: '5月, 9月', repotting: '5月〜8月', pruning: '5月〜9月 (徒長枝剪定)' }
@@ -59,9 +59,9 @@ const PLANT_DATA = [
         id: 5, species: 'サンスベリア', scientific: 'Sansevieria trifasciata', minTemp: 5, difficulty: '容易', feature: '極めて乾燥に強い、休眠誘導', img: 'sansevieria.jpeg',
         water_method: '鉢底から水が流れ出るまでたっぷりと。葉のシワや土中の乾燥具合を見て水やりを行う。',
         management: {
-            SPRING: { water: '土表面が乾いたらすぐ', waterIntervalDays: 10, light: '明るい日なた' },
+            SPRING: { water: '土表面が乾いたらすぐ', waterIntervalDays: 10, light: 'bright-sun' },
             SUMMER: { water: '土表面が乾いたらすぐ', waterIntervalDays: 10, light: 'bright-sun' },
-            AUTUMN: { water: '土表面が乾いてから2日後', waterIntervalDays: 14, light: '明るい日なた' },
+            AUTUMN: { water: '土表面が乾いてから2日後', waterIntervalDays: 14, light: 'bright-sun' },
             WINTER: { water: 'ほぼ断水', waterIntervalDays: 999, light: 'bright-sun', tempRisk: '夜間窓際隔離（最低5℃確保）' }
         },
         maintenance: { fertilizer: '施肥不要 (または5月)', repotting: '5月〜7月', pruning: '不要' }
@@ -83,7 +83,7 @@ const PLANT_DATA = [
         id: 7, species: 'シェフレラ', scientific: 'Schefflera arboricola', minTemp: 5, difficulty: '容易', feature: '非常に丈夫、耐陰性強い', img: 'schefflera.jpg',
         water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', 
         management: {
-            SPRING: { water: '土表面が乾いたらすぐ', waterIntervalDays: 7, light: '半日陰 (時々日光浴)' },
+            SPRING: { water: '土表面が乾いたらすぐ', waterIntervalDays: 7, light: 'half-day-sun (時々日光浴)' },
             SUMMER: { water: '土表面が乾いたらすぐ', waterIntervalDays: 7, light: 'half-day-sun (時々日光浴)' },
             AUTUMN: { water: '土表面が乾いてから1日後', waterIntervalDays: 10, light: 'half-day-sun' },
             WINTER: { water: '土表面が乾いたら少量', waterIntervalDays: 14, light: 'half-day-sun', tempRisk: '夜間窓際隔離（最低5℃確保）' }
