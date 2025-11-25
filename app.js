@@ -203,7 +203,39 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     let userPlants = JSON.parse(localStorage.getItem('userPlants')) || [];
+    
+    // 🌟 新規: データ構造の自動移行ロジック
+    function migrateOldData(plants) {
+        let hasChanges = false;
+        plants.forEach(p => {
+            // 購入日の移行
+            const oldPurchaseDate = localStorage.getItem(`purchase_date_${p.id}`);
+            if (oldPurchaseDate) {
+                p.purchaseDate = oldPurchaseDate;
+                localStorage.removeItem(`purchase_date_${p.id}`);
+                hasChanges = true;
+            }
+            // 植え替え日の移行（古い個別キー形式の場合）
+            const oldRepottingDate = localStorage.getItem(`repotting_date_${p.id}`);
+            if (oldRepottingDate) {
+                if (!Array.isArray(p.repottingLog)) p.repottingLog = [];
+                if (!p.repottingLog.some(l => l.date === oldRepottingDate)) {
+                    p.repottingLog.push({ date: oldRepottingDate });
+                    p.repottingLog.sort((a, b) => new Date(b.date) - new Date(a.date));
+                }
+                localStorage.removeItem(`repotting_date_${p.id}`);
+                hasChanges = true;
+            }
+        });
+        
+        if (hasChanges) {
+            saveUserPlants(plants);
+            console.log('Data migration completed.');
+        }
+    }
+
     userPlants = normalizePlantData(userPlants);
+    migrateOldData(userPlants);
     saveUserPlants(userPlants);
     
     let currentPlantId = null;
@@ -288,12 +320,9 @@ document.addEventListener('DOMContentLoaded', () => {
                  p.waterLog.sort((a, b) => new Date(b.date) - new Date(a.date));
             }
             
-            const repottingDateStr = localStorage.getItem(`repotting_date_${p.id}`);
+            // リファクタリング: 個別キーチェックはmigrateOldDataで行うため、ここではnormalizeのみ
             if (!Array.isArray(p.repottingLog)) {
                 p.repottingLog = [];
-            }
-            if (repottingDateStr && p.repottingLog.length === 0) {
-                p.repottingLog.push({ date: repottingDateStr });
             }
             p.repottingLog.sort((a, b) => new Date(b.date) - new Date(a.date));
 
@@ -598,11 +627,20 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${diffDays} 日`;
     }
     
-    const getPurchaseDate = (plantId) => localStorage.getItem(`purchase_date_${plantId}`);
-    const savePurchaseDate = (plantId, date) => { 
-        localStorage.setItem(`purchase_date_${plantId}`, date);
-        renderLastUpdateTime(); 
+    // 🌟 修正: PurchaseDateの取得・保存をuserPlantsオブジェクト内に統合
+    const getPurchaseDate = (plantId) => {
+        const plant = userPlants.find(p => p.id === parseInt(plantId));
+        return plant ? plant.purchaseDate : null;
     };
+    
+    const savePurchaseDate = (plantId, date) => { 
+        const plantIndex = userPlants.findIndex(p => p.id === parseInt(plantId));
+        if (plantIndex !== -1) {
+            userPlants[plantIndex].purchaseDate = date;
+            saveUserPlants(userPlants);
+        }
+    };
+    
     const updatePurchaseDateDisplay = (plantId) => {
         const date = getPurchaseDate(plantId);
         if (purchaseDateDisplay) purchaseDateDisplay.textContent = formatJapaneseDate(date);
@@ -1220,9 +1258,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }, { passive: true });
 
 
-        // 🌟 修正: History API でモーダル状態を管理
-        history.pushState({ modal: 'details' }, null, '');
-        detailsModal.style.display = 'block'; 
+        // 🌟 修正: History API でモーダル状態を管理 (重複履歴の防止)
+        if (detailsModal.style.display === 'block') {
+            history.replaceState({ modal: 'details' }, null, '');
+        } else {
+            history.pushState({ modal: 'details' }, null, '');
+            detailsModal.style.display = 'block';
+        }
     }
 
     if (closeDetailButton) {
@@ -1285,6 +1327,8 @@ document.addEventListener('DOMContentLoaded', () => {
              userPlants = userPlants.filter(plant => plant.id !== numericId);
              saveUserPlants(userPlants); 
             
+             // 🌟 リファクタリング: 個別キーの削除は不要になりましたが、
+             // 万が一ゴミが残っていた場合のために念のため削除
              localStorage.removeItem(`purchase_date_${numericId}`);
              localStorage.removeItem(`repotting_date_${numericId}`); 
             
@@ -1292,12 +1336,6 @@ document.addEventListener('DOMContentLoaded', () => {
              showNotification('カルテを削除しました。', 'success'); 
         });
     }
-
-    // 🌟 修正: 以下のドラッグハンドラ関数は削除されました
-    // function handleDragStart(e) ...
-    // function handleDragOver(e) ...
-    // function handleDrop(e) ...
-    // function handleDragEnd(e) ...
 
     if (closeRepottingDateButton) {
         closeRepottingDateButton.onclick = () => {
@@ -1338,8 +1376,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     userPlants[userPlantIndex].repottingLog.sort((a, b) => new Date(b.date) - new Date(a.date));
 
                     saveUserPlants(userPlants); 
-                    
-                    localStorage.removeItem(`repotting_date_${currentPlantId}`);
                 }
                 
                 showNotification('植え替え記録を追加しました。', 'success');
@@ -1357,19 +1393,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const collectAllData = () => {
-        const userPlantsRaw = localStorage.getItem('userPlants');
-        const purchaseDates = {};
-        
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key && key.startsWith('purchase_date_')) {
-                purchaseDates[key] = localStorage.getItem(key);
-            }
-        }
-
+        // リファクタリング: シンプルにuserPlantsだけを返せばよくなりましたが、
+        // 互換性のためオブジェクト形式で返します。
         return {
-            userPlants: userPlantsRaw ? JSON.parse(userPlantsRaw) : [],
-            purchaseDates: purchaseDates,
+            userPlants: userPlants
         };
     };
 
@@ -1382,7 +1409,17 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const a = document.createElement('a');
             a.href = url;
-            a.download = `houseplant_care_backup_${new Date().toISOString().slice(0, 10)}.json`;
+            
+            // 🌟 修正: Windowsファイル名禁則文字対策 (YYYYMMDD_HHmm形式)
+            const now = new Date();
+            const y = now.getFullYear();
+            const m = String(now.getMonth() + 1).padStart(2, '0');
+            const d = String(now.getDate()).padStart(2, '0');
+            const h = String(now.getHours()).padStart(2, '0');
+            const min = String(now.getMinutes()).padStart(2, '0');
+            
+            a.download = `houseplant_care_backup_${y}${m}${d}_${h}${min}.json`;
+            
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -1418,24 +1455,32 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const importedData = JSON.parse(e.target.result);
 
-                if (!Array.isArray(importedData.userPlants) || typeof importedData.purchaseDates !== 'object') {
-                    throw new Error('JSON形式が正しくありません。必要なキー（userPlants, purchaseDates）が見つかりません。');
+                // 互換性チェック: userPlantsキーがあるか、あるいはトップレベルが配列か
+                let loadedPlants = [];
+                if (Array.isArray(importedData.userPlants)) {
+                    loadedPlants = importedData.userPlants;
+                } else if (Array.isArray(importedData)) {
+                    loadedPlants = importedData; // 古いバックアップの可能性
+                } else {
+                    throw new Error('JSON形式が正しくありません。データが見つかりません。');
                 }
                 
                 showCustomConfirm('現在のカルテ情報をインポートデータで上書きします。よろしいですか？', () => {
-                    userPlants = normalizePlantData(importedData.userPlants); 
-                    saveUserPlants(userPlants); 
-
-                    for (let i = 0; i < localStorage.length; i++) {
-                        const key = localStorage.key(i);
-                        if (key && (key.startsWith('purchase_date_') || key.startsWith('repotting_date_') || key === 'userPlants' || key === 'purchaseDates')) {
-                            localStorage.removeItem(key);
-                        }
-                    }
+                    userPlants = normalizePlantData(loadedPlants); 
                     
-                    Object.keys(importedData.purchaseDates).forEach(key => {
-                        localStorage.setItem(key, importedData.purchaseDates[key]);
-                    });
+                    // 🌟 インポートデータの移行処理 (古いバックアップファイルからの復元対応)
+                    if (importedData.purchaseDates) {
+                        Object.keys(importedData.purchaseDates).forEach(key => {
+                            const idMatch = key.match(/purchase_date_(\d+)/);
+                            if (idMatch) {
+                                const plantId = parseInt(idMatch[1]);
+                                const plant = userPlants.find(p => p.id === plantId);
+                                if (plant) {
+                                    plant.purchaseDate = importedData.purchaseDates[key];
+                                }
+                            }
+                        });
+                    }
                     
                     if (importedData.repottingDates) {
                         Object.keys(importedData.repottingDates).forEach(key => {
@@ -1452,7 +1497,16 @@ document.addEventListener('DOMContentLoaded', () => {
                                 }
                             }
                         });
-                        saveUserPlants(userPlants); 
+                    }
+
+                    saveUserPlants(userPlants); 
+
+                    // 古い個別キーをクリーンアップ
+                    for (let i = 0; i < localStorage.length; i++) {
+                        const key = localStorage.key(i);
+                        if (key && (key.startsWith('purchase_date_') || key.startsWith('repotting_date_'))) {
+                            localStorage.removeItem(key);
+                        }
                     }
 
                     showNotification('カルテデータのインポートが完了しました。画面を更新します。', 'success');
