@@ -80,3 +80,35 @@ self.addEventListener('activate', (event) => {
         })
     );
 });
+
+// 🌟 PWA通知: pushイベントのリスナー (通知を受け取った際の処理)
+// サーバーからのプッシュ通知を待機するロジックを実装します。
+// 今回はサーバーロジックがないため、空のリスナーのみ設定し、
+// 通知が許可されている状態を維持できるようにします。
+self.addEventListener('push', (event) => {
+    // 実際の通知データ処理はここで行われます
+    const title = '水やりリマインダー';
+    const options = {
+        body: event.data ? event.data.text() : '水やりの時間です。カルテを確認してください。',
+        icon: 'icon-192x192.png',
+        badge: 'icon-192x192.png'
+    };
+    event.waitUntil(self.registration.showNotification(title, options));
+});
+
+// 🌟 PWA通知: notificationclickイベントのリスナー (通知をクリックした際の処理)
+self.addEventListener('notificationclick', (event) => {
+    event.notification.close();
+    event.waitUntil(
+        clients.matchAll({ type: 'window' }).then(clientList => {
+            for (const client of clientList) {
+                if (client.url === self.location.origin + self.location.pathname && 'focus' in client) {
+                    return client.focus();
+                }
+            }
+            if (clients.openWindow) {
+                return clients.openWindow(self.location.origin + self.location.pathname);
+            }
+        })
+    );
+});
