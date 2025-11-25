@@ -152,6 +152,15 @@ form select {
 .action-button.secondary:hover {
     background-color: #00a8b9;
 }
+/* 🌟 改善: バックアップ警告時のエクスポートボタン強調 */
+.action-button.secondary.backup-warning {
+    background-color: var(--color-warning);
+    color: var(--color-text-dark);
+    font-weight: 700;
+}
+.action-button.secondary.backup-warning:hover {
+    background-color: #ffda6a;
+}
 
 .action-button.primary-outline {
     background-color: white;
@@ -213,6 +222,12 @@ form select {
     text-align: center;
     padding: 5px 0;
 }
+/* 🌟 改善: 最終更新日時の警告スタイル */
+#last-update-display.warning-text {
+    color: var(--color-alert);
+    font-weight: 700;
+}
+
 @media (min-width: 600px) {
     .data-controls {
         flex-direction: row;
@@ -351,7 +366,7 @@ form select {
     transition: transform 0.2s, box-shadow 0.2s;
     position: relative;
     overflow: hidden;
-    /* 🌟 新規: カードの左ボーダー (ハイライト用) */
+    /* カードの左ボーダー (ハイライト用) */
     border-left: 5px solid #e0e0e0; 
 }
 
