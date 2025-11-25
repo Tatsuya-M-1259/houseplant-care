@@ -543,6 +543,25 @@ document.addEventListener('DOMContentLoaded', () => {
              updatePreview(); // 初期実行
         }
         
+        // 🌟 アコーディオンのイベントリスナー設定
+        document.querySelectorAll('.modal-content').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target.classList.contains('accordion-header') || e.target.closest('.accordion-header')) {
+                    const header = e.target.closest('.accordion-header');
+                    const targetId = header.getAttribute('data-target');
+                    const content = document.getElementById(targetId);
+
+                    if (content) {
+                        const isExpanded = content.classList.contains('expanded');
+                        
+                        // 開閉状態をトグル
+                        content.classList.toggle('expanded', !isExpanded);
+                        header.classList.toggle('collapsed', isExpanded);
+                    }
+                }
+            });
+        });
+        
         renderQuickSortButtons();
     }
     
@@ -1087,8 +1106,8 @@ document.addEventListener('DOMContentLoaded', () => {
                      onerror="this.onerror=null; this.src='https://placehold.co/250x250/e9ecef/495057?text=No+Image'; this.style.objectFit='contain';">
             </div>
             
-            <div class="detail-section">
-                <h3>現在の季節別ケア (${SEASONS[currentSeasonKey].name})</h3>
+            <!-- 季節別ケアの内容 -->
+            <div id="season-care-content" class="accordion-content expanded">
                 <ul>
                     <li><strong>水やり量（一度に与える量）:</strong> ${plantData.water_method}</li>
                     <li><strong>水やり頻度（タイミング）:</strong> ${seasonData.water}</li>
@@ -1096,8 +1115,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     ${seasonData.tempRisk ? `<li><strong>寒さ対策:</strong> ${seasonData.tempRisk}</li>` : ''}
                 </ul>
             </div>
-            <div class="detail-section">
-                <h3>基本情報・年間メンテナンス</h3>
+            
+            <!-- 基本情報の内容 -->
+            <div id="basic-maintenance-content" class="accordion-content">
                 <ul>
                     <li><strong>難易度:</strong> ${plantData.difficulty}</li>
                     <li><strong>特徴:</strong> ${plantData.feature}</li>
@@ -1106,17 +1126,24 @@ document.addEventListener('DOMContentLoaded', () => {
                     <li><strong>植え替え:</strong> ${maintenance.repotting}</li>
                     <li><strong>剪定:</strong> ${maintenance.pruning}</li>
                 </ul>
-            </div>
-            
-            <div class="detail-section" style="padding: 10px 0; border-top: 1px solid #e9ecef;">
-                ${repottingReminderMessage}
+                <div class="detail-section" style="padding: 10px 0; border-top: 1px solid #e9ecef;">
+                    ${repottingReminderMessage}
+                </div>
             </div>
         `;
         
         updatePurchaseDateDisplay(userPlant.id); 
         
+        // 🌟 改善: アコーディオンコンテンツを動的に挿入した後、クラスを更新
+        const seasonCareContent = document.getElementById('season-care-content');
+        const basicMaintenanceContent = document.getElementById('basic-maintenance-content');
+        
+        // 初期状態で基本情報と履歴を閉じる
+        if (seasonCareContent) seasonCareContent.classList.add('expanded');
+        if (basicMaintenanceContent) basicMaintenanceContent.classList.remove('expanded');
+        
         renderWaterHistory(userPlant.waterLog, userPlant.id);
-        renderRepottingHistory(userPlant.repottingLog); // 🌟 植え替え履歴のレンダリング
+        renderRepottingHistory(userPlant.repottingLog); 
         
         // 水やり完了ボタンの変更: カスタムモーダル表示に変更
         if (waterDoneInDetailContainer) {
@@ -1152,8 +1179,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 showDetailsModal(nextPlant, nextPlantData);
             }
         };
-
-
+        
         detailsModal.style.display = 'block'; 
     }
 
