@@ -1,6 +1,6 @@
 // sw.js
 
-const CACHE_NAME = 'houseplant-care-v3'; // キャッシュバージョンを更新
+const CACHE_NAME = 'houseplant-care-v4'; // 🌟 キャッシュバージョンを更新
 const CORE_ASSETS = [
     './', // index.html
     'index.html',
@@ -9,13 +9,9 @@ const CORE_ASSETS = [
     'manifest.json',
     'icon-192x192.png',
     'icon-512x512.png',
-    // 画像ファイル...
-    'cordyline.jpg', 'pachira.jpg', 'monstera.jpg', 'gajumaru.jpg', 'sansevieria.jpeg', 'dracaena.jpg', 
-    'schefflera.jpg', 'yucca.jpg', 'anthurium.jpg', 'pothos.jpg', 'alocasia.jpg', 'indian_rubber.jpg', 
-    'everfresh.jpg', 'croton.jpg', 'coffee_tree.jpg', 'ponytail_palm.jpg', 'ficus_umbellata.jpg', 
-    'augusta.jpg', 'staghorn_fern.jpg', 'araucaria.jpg', 'adenium.jpg.jpeg', 'echeveria.jpg.jpeg'
+    // 🌟 コア画像（アセットとして必須なもののみ残す、他は動的キャッシュ）
+    // 必要に応じてデフォルト画像やアイコンを追加
 ];
-const DATA_ASSETS = ['data.js'];
 
 // インストールイベント: コアアセットのプリロード
 self.addEventListener('install', (event) => {
@@ -31,13 +27,30 @@ self.addEventListener('install', (event) => {
 // フェッチイベント: キャッシュ戦略の適用
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
-    const path = url.pathname.substring(url.pathname.lastIndexOf('/') + 1);
+    const path = url.pathname;
 
-    if (DATA_ASSETS.includes(path)) {
-        // 🌟 SWR (Stale-While-Revalidate) 戦略を data.js に適用
+    // 🌟 画像ファイル（.jpg, .jpeg, .png）の動的キャッシュ戦略
+    if (path.match(/\.(jpg|jpeg|png)$/i)) {
+        event.respondWith(
+            caches.open(CACHE_NAME).then((cache) => {
+                return cache.match(event.request).then((response) => {
+                    // キャッシュにあればそれを返す
+                    // なければネットワークから取得してキャッシュに保存
+                    return response || fetch(event.request).then((networkResponse) => {
+                        cache.put(event.request, networkResponse.clone());
+                        return networkResponse;
+                    });
+                });
+            })
+        );
+        return; // 処理終了
+    }
+
+    // data.js の SWR 戦略 (モジュール化してもファイル名が変わらなければ有効)
+    if (path.includes('data.js')) {
         event.respondWith(staleWhileRevalidate(event.request));
     } else {
-        // Cache-First戦略をコアアセットと画像に適用
+        // Cache-First戦略をコアアセットに適用
         event.respondWith(caches.match(event.request).then((response) => {
             return response || fetch(event.request);
         }));
@@ -47,20 +60,14 @@ self.addEventListener('fetch', (event) => {
 // SWR戦略のヘルパー関数
 function staleWhileRevalidate(request) {
     return caches.match(request).then((cacheResponse) => {
-        // ネットワークリクエストを開始
         const fetchPromise = fetch(request).then((networkResponse) => {
-            // ネットワークレスポンスをキャッシュに保存
             caches.open(CACHE_NAME).then((cache) => {
-                // clone() はレスポンスを消費せずにキャッシュするための必須処理
                 cache.put(request, networkResponse.clone());
             });
             return networkResponse;
         }).catch(error => {
             console.warn('SWR: ネットワークリクエスト失敗。', error);
-            // ネットワーク失敗時も、キャッシュがあればそれを返すため、ここではエラーを無視
         });
-
-        // キャッシュがあればそれを即座に返す
         return cacheResponse || fetchPromise;
     });
 }
@@ -81,20 +88,9 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// 🌟 PWA通知: pushイベントのリスナー (通知を受け取った際の処理)
-// サーバーからのプッシュ通知を待機するロジックを実装します。
-self.addEventListener('push', (event) => {
-    // 実際の通知データ処理はここで行われます
-    const title = '水やりリマインダー';
-    const options = {
-        body: event.data ? event.data.text() : '水やりの時間です。カルテを確認してください。',
-        icon: 'icon-192x192.png',
-        badge: 'icon-192x192.png'
-    };
-    event.waitUntil(self.registration.showNotification(title, options));
-});
+// 🌟 プッシュ通知イベントリスナーは、サーバーレス環境では発火しないため削除しました。
+// 通知ロジックは app.js のクライアント側処理に移行しました。
 
-// 🌟 PWA通知: notificationclickイベントのリスナー (通知をクリックした際の処理)
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
     event.waitUntil(
