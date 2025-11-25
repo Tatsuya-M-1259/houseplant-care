@@ -368,6 +368,10 @@ form select {
     overflow: hidden;
     /* カードの左ボーダー (ハイライト用) */
     border-left: 5px solid #e0e0e0; 
+    /* 🌟 改善: ロングタップの視覚フィードバックを無効化 */
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
 }
 
 /* 🌟 新規: 水やり緊急警告（超過） */
@@ -612,12 +616,93 @@ form select {
     border: 1px solid #f0f0f0;
 }
 
+/* ---------------------------------- */
+/* 🌟 改善: アコーディオン UI のスタイル */
+/* ---------------------------------- */
+
+.accordion-item {
+    margin-top: 15px;
+    border: 1px solid #e9ecef;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+
+.accordion-header {
+    width: 100%;
+    background-color: #f7f7f7;
+    border: none;
+    text-align: left;
+    padding: 15px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+}
+
+.accordion-header h3 {
+    color: var(--color-primary);
+    font-size: 1.1rem;
+    margin: 0;
+    padding-right: 20px; /* アイコンのためのスペース */
+    border-bottom: none;
+}
+
+.accordion-header::after {
+    content: '▼';
+    font-size: 0.8rem;
+    color: var(--color-text-mid);
+    transition: transform 0.3s;
+    position: absolute;
+    right: 15px;
+}
+
+.accordion-header.collapsed::after {
+    transform: rotate(-90deg);
+}
+.accordion-header:not(.collapsed) {
+    border-bottom: 1px solid #e9ecef;
+}
+
+.accordion-content {
+    padding: 0 15px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease-in-out, padding 0.4s ease-in-out;
+}
+
+/* 展開時のスタイル */
+.accordion-content.expanded {
+    max-height: 500px; /* 適当な最大高さを設定 */
+    padding: 15px;
+}
+
+.accordion-content ul {
+    list-style: disc;
+    padding-left: 25px;
+    margin: 0;
+}
+.accordion-content ul li {
+    font-size: 0.95rem;
+    margin-bottom: 5px;
+}
+/* water-history-list の場合は padding をリセット */
+.accordion-content.water-history-list.expanded {
+    padding: 0;
+}
+
+/* 詳細セクション（アコーディオン化されていない部分） */
 .detail-section h3 {
     color: var(--color-primary);
     border-bottom: 2px solid #e9ecef;
     padding-bottom: 5px;
     margin-top: 20px;
 }
+.detail-section ul {
+    list-style: none;
+    padding-left: 0;
+}
+
 
 .user-data-section {
     background-color: #e6f7f2; 
@@ -765,7 +850,7 @@ form select {
     padding: 0;
     margin: 0;
     max-height: 200px; /* スクロール可能にするための制限 */
-    overflow-y: auto;
+    /* overflow-y: auto; /* アコーディオン内で制御 */
     border: 1px solid #e9ecef;
     border-radius: var(--border-radius);
 }
