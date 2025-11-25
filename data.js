@@ -1,12 +1,6 @@
 // data.js
 
-// 季節区分の定義
-const SEASONS = {
-    SPRING: { name: '春 (3月〜5月)', startMonth: 3, endMonth: 5 },
-    SUMMER: { name: '夏 (6月〜8月)', startMonth: 6, endMonth: 8 },
-    AUTUMN: { name: '秋 (9月〜11月)', startMonth: 9, endMonth: 11 },
-    WINTER: { name: '冬 (12月〜2月)', startMonth: 12, endMonth: 2 }
-};
+// 季節区分の定義 (SEASONS定義はapp.jsに移動しました)
 
 // 全22種の観葉植物データセット
 const PLANT_DATA = [
