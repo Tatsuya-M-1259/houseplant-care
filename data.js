@@ -93,7 +93,7 @@ const PLANT_DATA = [
     // No. 8: ユッカ
     {
         id: 8, species: 'ユッカ', scientific: 'Yucca', minTemp: -3, difficulty: '容易', feature: '乾燥管理、強い耐寒性', img: 'yucca.jpg',
-        water_method: '鉢底から水が流れ出るまでたっぷりと。葉のシワや土中の乾燥具合を見て水やりを行う。',
+        water_method: '鉢底から水が流れ出るまでたっぷりと。葉のシワや土中の乾燥具合を見て水やりを行う。', 
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', waterIntervalDays: 7, light: '明るい日なた' },
             SUMMER: { water: '土表面が乾いたらすぐ', waterIntervalDays: 7, light: '明るい日なた' },
