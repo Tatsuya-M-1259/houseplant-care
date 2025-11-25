@@ -96,12 +96,10 @@
         </section>
     </main>
     
-    <!-- 詳細モーダル -->
     <div id="details-modal" class="modal">
         <div class="modal-content">
             <span class="close-button">&times;</span>
             
-            <!-- 🌟 モーダルナビゲーションボタンの追加 -->
             <button id="prev-plant-btn" class="modal-nav-btn prev-btn" title="前の植物へ">◀</button>
             <button id="next-plant-btn" class="modal-nav-btn next-btn" title="次の植物へ">▶</button>
             
@@ -121,19 +119,16 @@
                 </div>
             </div>
             
-            <!-- 🌟 改善: アコーディオン化のためのラッパー -->
             <div id="season-care-wrapper" class="accordion-item">
                 <button class="accordion-header" data-target="season-care-content"><h3>現在の季節別ケア</h3></button>
                 <div id="season-care-content" class="accordion-content">
-                    <!-- contents are dynamically loaded -->
-                </div>
+                    </div>
             </div>
             
             <div id="basic-maintenance-wrapper" class="accordion-item">
                 <button class="accordion-header collapsed" data-target="basic-maintenance-content"><h3>基本情報・年間メンテナンス</h3></button>
                 <div id="basic-maintenance-content" class="accordion-content">
-                    <!-- contents are dynamically loaded -->
-                </div>
+                    </div>
             </div>
             
             <div id="water-history-section" class="detail-section">
@@ -151,7 +146,6 @@
         </div>
     </div>
     
-    <!-- 購入日入力モーダル (変更なし) -->
     <div id="purchase-date-modal" class="modal">
         <div class="modal-content">
             <span class="close-button-purchase-date">&times;</span>
@@ -162,7 +156,6 @@
         </div>
     </div>
     
-    <!-- 植え替え日入力モーダル (変更なし) -->
     <div id="repotting-date-modal" class="modal">
         <div class="modal-content">
             <span class="close-button-repotting-date">&times;</span>
@@ -173,7 +166,6 @@
         </div>
     </div>
     
-    <!-- 水やり内容選択モーダル (変更なし) -->
     <div id="water-type-modal" class="modal">
         <div class="modal-content">
             <span class="close-button-water-type">&times;</span>
@@ -185,8 +177,7 @@
         </div>
     </div>
     
-    <script src="data.js"></script>
-    <script src="app.js"></script>
+    <script type="module" src="app.js"></script>
     <script src="sw.js"></script>
 </body>
 </html>
