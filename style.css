@@ -86,6 +86,23 @@ form select {
     font-size: 1rem;
 }
 
+/* 🌟 新規: フォームプレビューメッセージ */
+.form-preview-message {
+    margin: -10px 0 15px 0;
+    padding: 8px;
+    border-radius: var(--border-radius);
+    font-size: 0.9rem;
+    font-weight: 600;
+    background-color: #f7f7f7;
+    color: var(--color-text-mid);
+    border-left: 3px solid #ced4da;
+}
+.form-preview-message.alert-date {
+    border-left-color: var(--color-alert);
+    background-color: #fff3f3;
+}
+
+
 /* ---------------------------------- */
 /* ボタン共通スタイル (強化) */
 /* ---------------------------------- */
@@ -286,7 +303,19 @@ form select {
     transition: transform 0.2s, box-shadow 0.2s;
     position: relative;
     overflow: hidden;
+    /* 🌟 新規: カードの左ボーダー (ハイライト用) */
+    border-left: 5px solid #e0e0e0; 
 }
+
+/* 🌟 新規: 水やり緊急警告（超過） */
+.plant-card.alert-danger {
+    border-left: 5px solid var(--color-alert);
+}
+/* 🌟 新規: 水やり優先警告（3日以内） */
+.plant-card.alert-warning {
+    border-left: 5px solid var(--color-warning);
+}
+
 
 .plant-card:hover {
     transform: translateY(-4px);
@@ -319,7 +348,7 @@ form select {
     padding: 3px 8px;
     border-radius: 5px;
     cursor: grab;
-    /* 🌟 改善: D&D無効化時の見た目を調整 */
+    /* D&D無効化時の見た目を調整 */
     transition: opacity 0.2s; 
 }
 
