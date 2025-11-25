@@ -189,7 +189,7 @@ const PLANT_DATA = [
     // No. 16: トックリラン
     {
         id: 16, species: 'トックリラン', scientific: 'Beaucarnea recurvata', minTemp: -3, difficulty: '容易', feature: '極めて乾燥に強い、基部肥大化', img: 'ponytail_palm.jpg',
-        water_method: '鉢底から水が流れ出るまでたっぷりと。葉のシワや土中の乾燥具合を見て水やりを行う。',
+        water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', 
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', waterIntervalDays: 10, light: 'bright-sun' },
             SUMMER: { water: '土表面が乾いたらすぐ', waterIntervalDays: 10, light: 'bright-sun' },
