@@ -182,7 +182,7 @@ const PLANT_DATA = [
             SPRING: { water: '土表面が乾いたらすぐ', waterIntervalDays: 7, light: '明るい日なた' },
             SUMMER: { water: '土表面が乾いたらすぐ', waterIntervalDays: 7, light: '明るい日なた' },
             AUTUMN: { water: '土表面が乾いたらすぐ', waterIntervalDays: 7, light: '明るい日なた' },
-            WINTER: { water: '土表面が乾いたら少量', waterIntervalDays: 14, light: '明るい日なた', tempRisk: '厳重な温度管理（最低10℃確保）' }
+            WINTER: { water: '土表面が乾いたら少量', waterIntervalDays: 14, light: 'bright-sun', tempRisk: '厳重な温度管理（最低10℃確保）' }
         },
         maintenance: { fertilizer: '5月, 8月', repotting: '5月〜8月', pruning: '5月〜8月 (徒長枝剪定)' }
     },
@@ -192,7 +192,7 @@ const PLANT_DATA = [
         water_method: '鉢底から水が流れ出るまでたっぷりと。葉のシワや土中の乾燥具合を見て水やりを行う。',
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', waterIntervalDays: 10, light: '明るい日なた' },
-            SUMMER: { water: '土表面が乾いたらすぐ', waterIntervalDays: 10, light: '明るい日なた' },
+            SUMMER: { water: '土表面が乾いたらすぐ', waterIntervalDays: 10, light: 'bright-sun' },
             AUTUMN: { water: '土表面が乾いてから2日後', waterIntervalDays: 14, light: '明るい日なた' },
             WINTER: { water: '土中が乾いてから3日後 (少量)', waterIntervalDays: 14, light: '明るい日なた', tempRisk: '断水で休眠誘導。管理容易。' }
         },
@@ -241,7 +241,7 @@ const PLANT_DATA = [
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', waterIntervalDays: 7, light: '明るい日なた' },
             SUMMER: { water: '土表面が乾いたらすぐ', waterIntervalDays: 7, light: '明るい日なた' },
-            AUTUMN: { water: '土表面が乾いたらすぐ', waterIntervalDays: 7, light: '明るい日なた' },
+            AUTUMN: { water: '土表面が乾いたらすぐ', waterIntervalDays: 7, light: 'bright-sun' },
             WINTER: { water: '土表面が乾いてから2日後 (少量)', waterIntervalDays: 10, light: '明るい日なた', tempRisk: '管理容易。' }
         },
         maintenance: { fertilizer: '4月, 9月', repotting: '5月〜7月', pruning: '不要' }
