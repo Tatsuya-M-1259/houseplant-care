@@ -86,6 +86,25 @@ form select {
     font-size: 1rem;
 }
 
+/* 🌟 新規: 日付入力フィールドとボタンのコンテナ */
+.input-with-button {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+.input-with-button input[type="date"] {
+    flex-grow: 1;
+    margin-bottom: 0;
+}
+.input-with-button .action-button.tertiary {
+    width: auto;
+    flex-shrink: 0;
+    padding: 0 15px;
+    line-height: 40px; /* inputの高さに合わせる */
+    height: 40px;
+    margin-top: 0;
+}
+
 /* 🌟 新規: フォームプレビューメッセージ */
 .form-preview-message {
     margin: -10px 0 15px 0;
