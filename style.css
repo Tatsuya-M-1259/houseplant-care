@@ -131,6 +131,7 @@ form select {
     color: white;
     font-size: 0.9rem;
     padding: 8px 12px;
+    margin-top: 0; /* flex内の調整 */
 }
 .action-button.tertiary:hover {
     background-color: #5a6268;
@@ -449,7 +450,7 @@ form select {
     }
 }
 
-.close-button, .close-button-purchase-date {
+.close-button, .close-button-purchase-date, .close-button-repotting-date { /* 🌟 植え替え日ボタンのクラスを追加 */
     color: var(--color-text-dark);
     font-size: 32px;
     font-weight: 300;
@@ -462,7 +463,9 @@ form select {
 .close-button:hover,
 .close-button:focus,
 .close-button-purchase-date:hover,
-.close-button-purchase-date:focus {
+.close-button-purchase-date:focus,
+.close-button-repotting-date:hover,
+.close-button-repotting-date:focus {
     opacity: 1;
     text-decoration: none;
     cursor: pointer;
@@ -493,8 +496,28 @@ form select {
     font-size: 1.2rem;
 }
 
-/* 購入日入力モーダル */
-#purchase-date-modal .modal-content {
+/* 🌟 新規: 詳細モーダル内のボタン配置 */
+.detail-actions {
+    display: flex;
+    flex-wrap: wrap; 
+    gap: 10px;
+    margin-top: 15px;
+}
+.detail-actions .action-button.tertiary {
+    flex-grow: 1; 
+    width: auto; 
+    margin: 0;
+}
+@media (min-width: 600px) {
+    .detail-actions .action-button.tertiary {
+        width: 48%; /* 2つ並べる */
+    }
+}
+
+
+/* 購入日/植え替え日入力モーダル */
+#purchase-date-modal .modal-content,
+#repotting-date-modal .modal-content { /* 🌟 植え替え日モーダルも同じスタイルを適用 */
     margin: 15% auto; 
     max-width: 400px; 
 }
@@ -538,4 +561,35 @@ form select {
 .toast.show {
     opacity: 1;
     transform: translateY(0); 
+}
+
+/* 🌟 新規: 水やり内容表示バッジ */
+.water-type-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    margin-left: 5px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: white;
+}
+
+.water-type-badge.water {
+    background-color: #007bff; /* Blue */
+}
+.water-type-badge.fertilizer {
+    background-color: #28a745; /* Green */
+}
+.water-type-badge.activator {
+    background-color: #ffc107; /* Yellow */
+    color: var(--color-text-dark);
+}
+.water-type-badge.complex {
+    background-color: var(--color-primary); /* Teal (Primary color) */
+}
+
+/* 🌟 改善: カード内の水やり情報にバッジを適用するための調整 */
+.plant-card ul li strong.last-watered-type {
+    font-weight: normal;
+    font-size: 1em;
 }
