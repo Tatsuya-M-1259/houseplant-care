@@ -105,7 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /**
-     * 🌟 水やり履歴から特定のエントリを削除する関数 (今回はUIから呼ばれないがロジックは保持)
+     * 水やり履歴から特定のエントリを削除する関数 (今回はUIから呼ばれないがロジックは保持)
      */
     function deleteWaterHistoryEntry(plantId, date, type) {
         const numericId = parseInt(plantId);
@@ -145,6 +145,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // 🌟 新規: ソート/フィルタリングのDOM要素
     const sortSelect = document.getElementById('sort-select');
     const filterSelect = document.getElementById('filter-select');
+    // 🌟 修正: 新規登録フォームの要素
+    const nextWateringPreview = document.getElementById('next-watering-preview');
+
 
     const today = new Date().toISOString().split('T')[0];
     const lastWateredInput = document.getElementById('last-watered');
@@ -232,15 +235,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /**
      * 🌟 新規: 次回水やり予定日を計算する
-     * @param {string} lastDateString - 前回の水やり日 ('YYYY-MM-DD')
-     * @param {number} intervalDays - 推奨間隔日数
-     * @returns {string} - 次回予定日 ('YYYY-MM-DD')
      */
     function calculateNextWateringDate(lastDateString, intervalDays) {
-        if (!lastDateString || intervalDays === 999) return null;
+        if (!lastDateString || intervalDays === 999 || intervalDays === null) return null;
 
         const lastDate = new Date(lastDateString);
-        // Dateオブジェクトは日数を加算すると自動で月を繰り上げてくれる
         lastDate.setDate(lastDate.getDate() + intervalDays);
         
         return lastDate.toISOString().split('T')[0];
@@ -267,14 +266,13 @@ document.addEventListener('DOMContentLoaded', () => {
             // 2. waterLog の設定（重要）
             if (!Array.isArray(p.waterLog)) {
                 p.waterLog = [];
-                // lastWatering（旧々形式）が存在すれば、それを最初のログエントリとして追加
+                // 優先度順に旧データをログとして変換
                 if (p.lastWatering && p.lastWatering.date && p.lastWatering.type) {
                     p.waterLog.push({ 
                         date: p.lastWatering.date, 
                         type: p.lastWatering.type 
                     });
                 } 
-                // lastWatered（旧形式）が存在すれば、それを WaterOnly でログとして追加
                 else if (p.lastWatered) {
                     if (p.waterLog.length === 0 || p.waterLog.every(log => log.date !== p.lastWatered)) {
                          p.waterLog.push({ 
@@ -283,11 +281,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         });
                     }
                 } else if (p.waterLog.length === 0) {
-                    // ログが全くない場合、初期の登録日を水のみログとして追加
                     p.waterLog.push({ date: p.entryDate, type: 'WaterOnly' });
                 }
             } else {
-                 // 配列が存在する場合は、新しい形式のログであることを確認し、ソート
                  p.waterLog.sort((a, b) => new Date(b.date) - new Date(a.date));
             }
 
@@ -331,6 +327,46 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.setItem('filter-select', currentFilter);
                 renderPlantCards();
             });
+        }
+        
+        // 🌟 改善 1: 新規登録フォームのリアルタイム予定日プレビュー
+        if (lastWateredInput && speciesSelect) {
+             const updatePreview = () => {
+                const speciesId = speciesSelect.value;
+                const lastDate = lastWateredInput.value;
+                
+                if (!speciesId || !lastDate) {
+                    nextWateringPreview.textContent = '植物種と水やり日を選択してください。';
+                    nextWateringPreview.classList.remove('alert-date');
+                    return;
+                }
+                
+                const plantData = PLANT_DATA.find(p => p.id == speciesId);
+                if (!plantData) return;
+
+                const intervalDays = plantData.management[currentSeasonKey].waterIntervalDays;
+                const nextDateString = calculateNextWateringDate(lastDate, intervalDays);
+                
+                if (nextDateString === null) {
+                    nextWateringPreview.textContent = `次回予定日: ${PLANT_DATA.management[currentSeasonKey].water}（断水期間）`;
+                    nextWateringPreview.classList.remove('alert-date');
+                    return;
+                }
+                
+                nextWateringPreview.textContent = `次回水やり予定日 (目安): ${formatJapaneseDate(nextDateString)}`;
+                
+                // 過去の日付でないかチェック
+                if (nextDateString < today) {
+                    nextWateringPreview.textContent += ' ⚠️ (計算結果が過去日になっています。水やり日を確認してください)';
+                    nextWateringPreview.classList.add('alert-date');
+                } else {
+                    nextWateringPreview.classList.remove('alert-date');
+                }
+             };
+
+             lastWateredInput.addEventListener('change', updatePreview);
+             speciesSelect.addEventListener('change', updatePreview);
+             updatePreview(); // 初期実行
         }
     }
     
@@ -380,7 +416,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ----------------------------------------------------
     
     /**
-     * 🌟 新規: ソートとフィルタリングを適用した植物リストを返す
+     * ソートとフィルタリングを適用した植物リストを返す
      */
     function sortAndFilterPlants() {
         let filteredPlants = userPlants.map(p => {
@@ -563,6 +599,21 @@ document.addEventListener('DOMContentLoaded', () => {
              card.addEventListener('dragover', handleDragOver);
              card.addEventListener('drop', handleDrop);
              card.addEventListener('dragend', handleDragEnd);
+        }
+        
+        // 🌟 改善 1: カードにハイライトクラスを追加
+        const lastLog = userPlant.waterLog && userPlant.waterLog.length > 0 ? userPlant.waterLog[0] : { date: userPlant.entryDate, type: 'WaterOnly' };
+        const seasonData = data.management[currentSeasonKey];
+        const nextWateringDateString = calculateNextWateringDate(lastLog.date, seasonData.waterIntervalDays);
+        
+        if (nextWateringDateString && recommendedIntervalDays !== 999) {
+            const daysUntilNext = Math.ceil((new Date(nextWateringDateString) - new Date(today)) / (1000 * 60 * 60 * 24));
+            
+            if (daysUntilNext <= 0) {
+                card.classList.add('alert-danger'); // 超過
+            } else if (daysUntilNext <= 3) {
+                card.classList.add('alert-warning'); // 3日以内
+            }
         }
 
         return card;
@@ -876,6 +927,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 lastWateredInput.value = today;
             }
             showNotification(`「${newPlant.name}」をカルテに追加しました！`, 'success');
+            
+            // フォームプレビューをリセット
+            nextWateringPreview.textContent = '植物種と水やり日を選択してください。';
+            nextWateringPreview.classList.remove('alert-date');
         });
     }
 
@@ -969,6 +1024,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             userPlants.splice(insertIndex, 0, draggedItem);
             
+            // 🌟 改善 2: D&D後の並び順を永続化
             localStorage.setItem('userPlants', JSON.stringify(userPlants));
             renderPlantCards();
         }
