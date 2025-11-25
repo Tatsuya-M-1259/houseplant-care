@@ -6,7 +6,7 @@ import { PLANT_DATA } from './data.js';
 document.addEventListener('DOMContentLoaded', () => {
     
     // ----------------------------------------------------
-    // 0. 定数定義
+    // 0. 定数定義・日付初期化
     // ----------------------------------------------------
     const WATER_TYPES = {
         WaterOnly: { name: '水のみ', class: 'water' },
@@ -26,18 +26,28 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentFilter = localStorage.getItem('filter-select') || 'all';
 
     // ----------------------------------------------------
+    // 🌟 修正: 日本時間 (ローカルタイム) の今日の日付を取得
+    // ----------------------------------------------------
+    function getLocalTodayDate() {
+        const d = new Date();
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    const today = getLocalTodayDate();
+
+    // ----------------------------------------------------
     // 🌟 修正: 画像エラーハンドリング (プレースホルダー表示)
     // ----------------------------------------------------
-    // DOM生成後に発生する画像読み込みエラーを捕捉してプレースホルダーに差し替え
     window.addEventListener('error', (e) => {
         if (e.target.tagName === 'IMG') {
-            // グレーの「No Image」SVGを表示
             e.target.src = "data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25' viewBox='0 0 300 200'%3e%3crect fill='%23e0e0e0' width='300' height='200'/%3e%3ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='24' fill='%23888'%3eNo Image%3c/text%3e%3c/svg%3e";
             e.target.alt = "画像読み込み失敗";
-            // e.target.style.display = 'none'; // 非表示にはしない
             console.warn(`画像読み込み失敗: ${e.target.alt}`);
         }
-    }, true); // useCapture: true でloadエラーを捕捉
+    }, true);
 
     // ----------------------------------------------------
     // 2. カスタムUIユーティリティ
@@ -86,7 +96,8 @@ document.addEventListener('DOMContentLoaded', () => {
         renderLastUpdateTime(); 
     }
     
-    function updateLastWatered(plantId, type, date = new Date().toISOString().split('T')[0]) {
+    // 🌟 修正: デフォルト値にローカルタイムのtodayを使用
+    function updateLastWatered(plantId, type, date = today) {
         const numericId = parseInt(plantId);
         const plantIndex = userPlants.findIndex(p => p.id === numericId);
         
@@ -133,7 +144,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const quickSortButtonsContainer = document.getElementById('quick-sort-buttons');
     const lastUpdateDisplay = document.getElementById('last-update-display');
 
-    const today = new Date().toISOString().split('T')[0];
     const lastWateredInput = document.getElementById('last-watered');
     if (lastWateredInput) {
         lastWateredInput.setAttribute('max', today);
@@ -1442,8 +1452,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // ----------------------------------------------------
-    // 11. PWA Service Worker 登録ロジック
+    // 11. 🌟 Service Worker 登録ロジックの追加
     // ----------------------------------------------------
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(registration => {
+                    console.log('ServiceWorker registered: ', registration);
+                })
+                .catch(registrationError => {
+                    console.log('ServiceWorker registration failed: ', registrationError);
+                });
+        });
+    }
     
     initializeApp();
 
