@@ -385,6 +385,10 @@ form select {
     background-color: var(--color-warning);
     color: var(--color-text-dark);
 }
+/* 🌟 新規: 植え替えリマインダー用のスタイル */
+.repotting-alert {
+    color: var(--color-warning); 
+}
 
 
 /* 季節セレクターの改善 */
@@ -450,7 +454,7 @@ form select {
     }
 }
 
-.close-button, .close-button-purchase-date, .close-button-repotting-date { /* 🌟 植え替え日ボタンのクラスを追加 */
+.close-button, .close-button-purchase-date, .close-button-repotting-date, .close-button-water-type { /* 🌟 水やりモーダルクローズボタンのクラスを追加 */
     color: var(--color-text-dark);
     font-size: 32px;
     font-weight: 300;
@@ -465,7 +469,9 @@ form select {
 .close-button-purchase-date:hover,
 .close-button-purchase-date:focus,
 .close-button-repotting-date:hover,
-.close-button-repotting-date:focus {
+.close-button-repotting-date:focus,
+.close-button-water-type:hover,
+.close-button-water-type:focus {
     opacity: 1;
     text-decoration: none;
     cursor: pointer;
@@ -496,7 +502,7 @@ form select {
     font-size: 1.2rem;
 }
 
-/* 🌟 新規: 詳細モーダル内のボタン配置 */
+/* 🌟 詳細モーダル内のボタン配置 */
 .detail-actions {
     display: flex;
     flex-wrap: wrap; 
@@ -517,10 +523,39 @@ form select {
 
 /* 購入日/植え替え日入力モーダル */
 #purchase-date-modal .modal-content,
-#repotting-date-modal .modal-content { /* 🌟 植え替え日モーダルも同じスタイルを適用 */
+#repotting-date-modal .modal-content { 
     margin: 15% auto; 
     max-width: 400px; 
 }
+/* 🌟 新規: 水やり内容選択モーダルのスタイル */
+#water-type-modal .modal-content {
+    margin: 10% auto;
+    max-width: 450px;
+}
+
+.water-type-options-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.water-type-options-container button {
+    padding: 12px 20px;
+    border: 2px solid var(--color-primary);
+    background-color: white;
+    color: var(--color-primary);
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.water-type-options-container button:hover {
+    background-color: var(--color-primary);
+    color: white;
+    box-shadow: var(--shadow-light);
+}
+
 
 /* ---------------------------------- */
 /* Custom Notification/Toast Styles */
