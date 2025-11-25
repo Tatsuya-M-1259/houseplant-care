@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>観葉植物管理カルテ</title>
-    <!-- Google Fonts: Inter and Noto Sans JP for modern aesthetics -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
@@ -16,7 +15,6 @@
     </header>
 
     <main class="container">
-        <!-- 新規植物の登録セクション -->
         <section id="plant-registration" class="card primary-section">
             <h2>🌱 新規植物の登録</h2>
             <form id="add-plant-form">
@@ -29,7 +27,13 @@
                 
                 <label for="last-watered">直近の水やり日:</label>
                 <input type="date" id="last-watered" required>
-                <!-- max属性は app.js で動的に設定され、初期値も設定されます -->
+                <label for="water-type-select">水やり内容:</label>
+                <select id="water-type-select" required>
+                    <option value="WaterOnly">水のみ</option>
+                    <option value="WaterAndFertilizer">水と液肥</option>
+                    <option value="WaterAndActivator">水と活性剤</option>
+                    <option value="WaterFertilizerAndActivator">水と液肥と活性剤</option>
+                </select>
                 
                 <button type="submit" class="action-button primary">カルテに追加</button>
             </form>
@@ -37,7 +41,6 @@
 
         <hr class="separator">
         
-        <!-- データ管理セクション -->
         <section id="data-management" class="card secondary-section">
             <h2>データ管理</h2>
             <div class="data-controls">
@@ -50,31 +53,32 @@
             </div>
         </section>
 
-        <!-- 登録済みの植物リスト -->
         <section id="plant-card-list">
             <h2>📝 登録済みの植物 (カルテ)</h2>
         </section>
     </main>
     
-    <!-- 詳細モーダル -->
     <div id="details-modal" class="modal">
         <div class="modal-content">
             <span class="close-button">&times;</span>
             <div id="plant-details">
-                <!-- ここに植物の詳細情報が動的に挿入されます -->
-            </div>
+                </div>
             
             <div class="user-data-section">
                 <h2>マイカルテ情報</h2>
+                <p><strong>登録日:</strong> <span id="entry-date-display">未設定</span> (<span id="time-since-entry-display"></span>)</p>
                 <p><strong>購入日:</strong> <span id="purchase-date-display">未設定</span></p>
-                <!-- 🌟 改善: 詳細モーダルからの水やりボタン用プレースホルダー -->
+                <p><strong>直近の植え替え日:</strong> <span id="repotting-date-display">未設定</span></p>
+                
                 <div id="water-done-in-detail"></div>
-                <button id="edit-purchase-date-button" class="action-button tertiary">購入日を記録/変更</button>
+                <div class="detail-actions">
+                    <button id="edit-purchase-date-button" class="action-button tertiary">購入日を記録/変更</button>
+                    <button id="edit-repotting-date-button" class="action-button tertiary">植え替え日を記録/変更</button>
+                </div>
             </div>
         </div>
     </div>
     
-    <!-- 購入日入力モーダル -->
     <div id="purchase-date-modal" class="modal">
         <div class="modal-content">
             <span class="close-button-purchase-date">&times;</span>
@@ -82,6 +86,16 @@
             <label for="purchase-date-input">日付:</label>
             <input type="date" id="purchase-date-input" required>
             <button id="save-purchase-date-button" class="action-button primary">保存</button>
+        </div>
+    </div>
+    
+    <div id="repotting-date-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button-repotting-date">&times;</span>
+            <h2>植え替え日の記録</h2>
+            <label for="repotting-date-input">日付:</label>
+            <input type="date" id="repotting-date-input" required>
+            <button id="save-repotting-date-button" class="action-button primary">保存</button>
         </div>
     </div>
     
