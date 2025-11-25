@@ -322,8 +322,6 @@ document.addEventListener('DOMContentLoaded', () => {
             sortSelect.addEventListener('change', (e) => {
                 currentSort = e.target.value;
                 localStorage.setItem('sort-select', currentSort);
-                // ドラッグ＆ドロップ機能を無効化（自動ソート時はD&Dは混乱を招くため）
-                // 実際にはドラッグ可能な状態のままなので、D&Dロジック内でソート時を無視すべきだが、ここではrenderPlantCards()で対応
                 renderPlantCards();
             });
         }
@@ -492,12 +490,9 @@ document.addEventListener('DOMContentLoaded', () => {
         card.className = 'plant-card';
         card.setAttribute('data-id', userPlant.id);
         
-        // ソート/フィルタリング中はドラッグ機能を無効化（手動ソート時のみ有効）
-        if (currentSort === 'nextWateringDate') {
-             card.setAttribute('draggable', false);
-        } else {
-             card.setAttribute('draggable', true);
-        }
+        // 🌟 改善: 自動ソート時はドラッグ機能を無効化
+        const isAutoSorted = currentSort === 'nextWateringDate';
+        card.setAttribute('draggable', !isAutoSorted);
         
         const controls = document.createElement('div');
         controls.className = 'controls';
@@ -505,6 +500,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const dragHandle = document.createElement('span');
         dragHandle.className = 'drag-handle';
         dragHandle.textContent = '☰';
+        
+        // 🌟 改善: 自動ソート時はハンドルを非表示または透明化
+        if (isAutoSorted) {
+             dragHandle.style.opacity = '0';
+             dragHandle.style.cursor = 'default';
+        }
+
         controls.appendChild(dragHandle);
 
         const deleteButton = document.createElement('button');
@@ -555,10 +557,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         card.addEventListener('click', () => showDetailsModal(userPlant, data));
         
-        // ソート/フィルタリングが適用されていない場合のみ、ドラッグイベントをバインド
-        if (currentSort === 'nextWateringDate') {
-            // 自動ソートが適用されている場合はD&Dイベントを無効化
-        } else {
+        // D&Dイベントのバインド
+        if (!isAutoSorted) {
              card.addEventListener('dragstart', handleDragStart);
              card.addEventListener('dragover', handleDragOver);
              card.addEventListener('drop', handleDrop);
@@ -634,10 +634,11 @@ document.addEventListener('DOMContentLoaded', () => {
         let intervalDisplay = '';
         
         if (recommendedIntervalDays !== null) {
+            // 🌟 改善: 推奨頻度テキストに日数を統合して表示
             if (recommendedIntervalDays === 999) { 
-                 intervalDisplay = `（現在 ${SEASONS[seasonKey].name.split(' ')[0]} は断水期間です）`;
+                 intervalDisplay = `（${SEASONS[seasonKey].name.split(' ')[0]}は断水期間）`;
             } else {
-                 intervalDisplay = `（約 ${recommendedIntervalDays} 日ごと）`;
+                 intervalDisplay = `（${recommendedIntervalDays}日目安）`;
             }
         } else {
             intervalDisplay = `（推奨間隔データなし）`;
@@ -900,6 +901,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // ----------------------------------------------------
     // 8. ドラッグ＆ドロップ（順序変更）ロジック
     // ----------------------------------------------------
+    
+    // D&Dイベントは自動ソートが有効な場合にのみ無視される。
 
     function handleDragStart(e) {
         // 自動ソートが適用されている場合はD&Dを無視
