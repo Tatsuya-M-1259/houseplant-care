@@ -543,25 +543,6 @@ document.addEventListener('DOMContentLoaded', () => {
              updatePreview(); // 初期実行
         }
         
-        // 🌟 アコーディオンのイベントリスナー設定
-        document.querySelectorAll('.modal-content').forEach(modal => {
-            modal.addEventListener('click', (e) => {
-                if (e.target.classList.contains('accordion-header') || e.target.closest('.accordion-header')) {
-                    const header = e.target.closest('.accordion-header');
-                    const targetId = header.getAttribute('data-target');
-                    const content = document.getElementById(targetId);
-
-                    if (content) {
-                        const isExpanded = content.classList.contains('expanded');
-                        
-                        // 開閉状態をトグル
-                        content.classList.toggle('expanded', !isExpanded);
-                        header.classList.toggle('collapsed', isExpanded);
-                    }
-                }
-            });
-        });
-        
         renderQuickSortButtons();
     }
     
@@ -1049,14 +1030,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span class="water-type-badge ${typeData.class}">${typeData.name}</span>
             `;
             
-            // 削除ボタン (ロジックは見送りなので、今回は単に非活性化)
-            const deleteButton = document.createElement('button');
-            deleteButton.className = 'delete-log-btn';
-            deleteButton.innerHTML = '🗑️';
-            deleteButton.title = 'この記録を削除';
-
+            // 削除ボタンは今回は見送るため、レンダリングしない
+            // const deleteButton = document.createElement('button'); 
+            
             logItem.appendChild(contentSpan);
-            logItem.appendChild(deleteButton);
             waterHistoryList.appendChild(logItem);
         });
     }
@@ -1134,16 +1111,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         updatePurchaseDateDisplay(userPlant.id); 
         
-        // 🌟 改善: アコーディオンコンテンツを動的に挿入した後、クラスを更新
-        const seasonCareContent = document.getElementById('season-care-content');
-        const basicMaintenanceContent = document.getElementById('basic-maintenance-content');
-        
-        // 初期状態で基本情報と履歴を閉じる
-        if (seasonCareContent) seasonCareContent.classList.add('expanded');
-        if (basicMaintenanceContent) basicMaintenanceContent.classList.remove('expanded');
-        
         renderWaterHistory(userPlant.waterLog, userPlant.id);
-        renderRepottingHistory(userPlant.repottingLog); 
+        renderRepottingHistory(userPlant.repottingLog); // 🌟 植え替え履歴のレンダリング
         
         // 水やり完了ボタンの変更: カスタムモーダル表示に変更
         if (waterDoneInDetailContainer) {
