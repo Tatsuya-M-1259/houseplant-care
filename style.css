@@ -217,6 +217,7 @@ form select {
 .control-group select {
     width: 100%;
     padding: 10px;
+    margin-bottom: 0 !important; /* フォームのデフォルトマージンを上書き */
     border: 1px solid #ced4da;
     border-radius: var(--border-radius);
     box-sizing: border-box;
@@ -318,6 +319,8 @@ form select {
     padding: 3px 8px;
     border-radius: 5px;
     cursor: grab;
+    /* 🌟 改善: D&D無効化時の見た目を調整 */
+    transition: opacity 0.2s; 
 }
 
 .delete-btn {
