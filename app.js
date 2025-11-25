@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${year}-${month}-${day}`;
     }
 
-    // ⚠️ 修正: const today = ... で固定せず、必要な箇所で getLocalTodayDate() を呼ぶように変更
+    // ⚠️ 修正: ここで const today = ... を宣言しない（日またぎ対策）
 
     // ----------------------------------------------------
     // 🌟 画像エラーハンドリング
