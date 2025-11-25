@@ -543,6 +543,25 @@ document.addEventListener('DOMContentLoaded', () => {
              updatePreview(); // 初期実行
         }
         
+        // 🌟 改善: モーダルのアコーディオン制御を初期化
+        document.querySelectorAll('.modal-content').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target.classList.contains('accordion-header') || e.target.closest('.accordion-header')) {
+                    const header = e.target.closest('.accordion-header');
+                    const targetId = header.getAttribute('data-target');
+                    const content = document.getElementById(targetId);
+
+                    if (content) {
+                        const isExpanded = content.classList.contains('expanded');
+                        
+                        // 開閉状態をトグル
+                        content.classList.toggle('expanded', !isExpanded);
+                        header.classList.toggle('collapsed', isExpanded);
+                    }
+                }
+            });
+        });
+        
         renderQuickSortButtons();
     }
     
@@ -842,21 +861,6 @@ document.addEventListener('DOMContentLoaded', () => {
              card.addEventListener('drop', handleDrop);
              card.addEventListener('dragend', handleDragEnd);
         }
-        
-        // 🌟 改善: カードにハイライトクラスを追加
-        const lastLog = userPlant.waterLog && userPlant.waterLog.length > 0 ? userPlant.waterLog[0] : { date: userPlant.entryDate, type: 'WaterOnly' };
-        const seasonData = data.management[currentSeasonKey];
-        const nextWateringDateString = calculateNextWateringDate(lastLog.date, seasonData.waterIntervalDays);
-        
-        if (nextWateringDateString && recommendedIntervalDays !== 999) {
-            const daysUntilNext = Math.ceil((new Date(nextWateringDateString) - new Date(today)) / (1000 * 60 * 60 * 24));
-            
-            if (daysUntilNext <= 0) {
-                card.classList.add('alert-danger'); // 超過
-            } else if (daysUntilNext <= 3) {
-                card.classList.add('alert-warning'); // 3日以内
-            }
-        }
 
         return card;
     }
@@ -883,10 +887,7 @@ document.addEventListener('DOMContentLoaded', () => {
             isRecommendedTime = (currentMonth >= startMonth || currentMonth <= endMonth);
         }
         
-        // 🌟 修正: 植え替えログから最新の日付を取得
-        const userPlant = userPlants.find(p => p.id === userPlantId);
-        const lastRepottingDateString = getLatestRepottingDate(userPlant);
-        
+        const lastRepottingDateString = getLatestRepottingDate(userPlantId);
         let isOverOneYear = true;
         
         if (lastRepottingDateString) {
@@ -1049,14 +1050,6 @@ document.addEventListener('DOMContentLoaded', () => {
             logItem.appendChild(contentSpan);
             waterHistoryList.appendChild(logItem);
         });
-        
-        // 🌟 改善: water-history-list のアコーディオン状態をリセット
-        const header = document.querySelector('#water-history-section .accordion-header');
-        const content = document.getElementById('water-history-list');
-        if (header && content) {
-            header.classList.add('collapsed');
-            content.classList.remove('expanded');
-        }
     }
 
     // 植え替え履歴のレンダリング
@@ -1074,14 +1067,6 @@ document.addEventListener('DOMContentLoaded', () => {
             logItem.innerHTML = `<span class="date">${formatJapaneseDate(log.date)}</span>`;
             repottingHistoryList.appendChild(logItem);
         });
-        
-        // 🌟 改善: repotting-history-list のアコーディオン状態をリセット
-        const header = document.querySelector('#repotting-history-section .accordion-header');
-        const content = document.getElementById('repotting-history-list');
-        if (header && content) {
-            header.classList.add('collapsed');
-            content.classList.remove('expanded');
-        }
     }
 
 
