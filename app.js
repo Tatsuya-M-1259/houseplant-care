@@ -75,6 +75,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     /**
+     * 🌟 Local Storageにデータを保存し、更新時間を記録する
+     */
+    function saveUserPlants(plants) {
+        localStorage.setItem('userPlants', JSON.stringify(plants));
+        localStorage.setItem('last_update_time', Date.now()); // 更新時間を記録
+        renderLastUpdateTime(); // UIを更新
+    }
+    
+    /**
      * 水やりログに記録を追加する関数
      */
     function updateLastWatered(plantId, type, date = new Date().toISOString().split('T')[0]) {
@@ -98,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
             userPlants[plantIndex].waterLog.sort((a, b) => new Date(b.date) - new Date(a.date));
 
 
-            localStorage.setItem('userPlants', JSON.stringify(userPlants));
+            saveUserPlants(userPlants); // 🌟 saveUserPlantsを使用
             renderPlantCards(); // カードを再描画（ソート/予定日更新のため）
             showNotification(`${userPlants[plantIndex].name} の水やり日と内容を記録しました！(${WATER_TYPES[type].name})`, 'success');
             
@@ -131,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 userPlants[plantIndex].waterLog.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-                localStorage.setItem('userPlants', JSON.stringify(userPlants));
+                saveUserPlants(userPlants); // 🌟 saveUserPlantsを使用
                 renderPlantCards();
                 showNotification(`水やり記録 (${formatJapaneseDate(date)}) を削除しました。`, 'success');
                 
@@ -161,6 +170,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const nextPlantButton = document.getElementById('next-plant-btn');
     // 🌟 改善: クイックソートボタンエリア
     const quickSortButtonsContainer = document.getElementById('quick-sort-buttons');
+    // 🌟 改善: 最終更新日時表示エリア
+    const lastUpdateDisplay = document.getElementById('last-update-display');
 
 
     const today = new Date().toISOString().split('T')[0];
@@ -185,7 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // 水やり履歴リスト要素
     const waterHistoryList = document.getElementById('water-history-list');
-    // 🌟 改善: 植え替え履歴リスト要素
+    // 植え替え履歴リスト要素
     const repottingHistoryList = document.getElementById('repotting-history-list');
 
     // 購入日入力モーダル
@@ -226,7 +237,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let userPlants = JSON.parse(localStorage.getItem('userPlants')) || [];
     // データ形式の正規化/マイグレーション
     userPlants = normalizePlantData(userPlants);
-    localStorage.setItem('userPlants', JSON.stringify(userPlants)); 
+    saveUserPlants(userPlants); // 🌟 saveUserPlantsを使用
     
     let currentPlantId = null;
     let draggedId = null; 
@@ -304,7 +315,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             // 🌟 改善: 3. repottingLog の設定 (旧 repotting_date_X から変換)
-            // Local Storageに保存されている Repotting Date をチェックして配列に変換
             const repottingDateStr = localStorage.getItem(`repotting_date_${p.id}`);
             if (!Array.isArray(p.repottingLog)) {
                 p.repottingLog = [];
@@ -324,6 +334,55 @@ document.addEventListener('DOMContentLoaded', () => {
         return normalizedPlants;
     }
 
+    // 🌟 最終更新日時を整形して表示
+    function renderLastUpdateTime() {
+        const lastUpdateTime = localStorage.getItem('last_update_time');
+        const lastExportTime = localStorage.getItem('last_export_time');
+        
+        let displayHtml = '';
+        
+        if (lastUpdateTime) {
+            const updateDate = new Date(parseInt(lastUpdateTime));
+            const formattedUpdateTime = dateToJpTime(updateDate);
+            displayHtml += `**最終データ更新:** ${formattedUpdateTime}`;
+            
+            // 最終エクスポート日時の表示と比較
+            if (lastExportTime) {
+                const exportDate = new Date(parseInt(lastExportTime));
+                const formattedExportTime = dateToJpTime(exportDate);
+                const daysSinceExport = Math.floor((Date.now() - exportDate.getTime()) / (1000 * 60 * 60 * 24));
+                
+                displayHtml += `<br><strong>最終エクスポート:</strong> ${formattedExportTime}`;
+                
+                // 🌟 改善2: 7日以上バックアップがない場合に警告
+                if (daysSinceExport >= 7) {
+                    displayHtml += `<br><span class="warning-text">⚠️ バックアップが${daysSinceExport}日以上前です。エクスポートを推奨します。</span>`;
+                    if (exportButton) exportButton.classList.add('backup-warning');
+                } else {
+                    if (exportButton) exportButton.classList.remove('backup-warning');
+                }
+            } else {
+                displayHtml += '<br><strong>最終エクスポート:</strong> 未実行 ⚠️';
+                if (exportButton) exportButton.classList.add('backup-warning');
+            }
+        } else {
+            displayHtml = 'データが見つかりません。新規登録してください。';
+        }
+        
+        if (lastUpdateDisplay) {
+            lastUpdateDisplay.innerHTML = displayHtml;
+        }
+    }
+    
+    // Dateオブジェクトを日本語の時刻形式に変換するヘルパー関数
+    function dateToJpTime(date) {
+        return date.toLocaleDateString('ja-JP', {
+            year: 'numeric', month: '2-digit', day: '2-digit',
+            hour: '2-digit', minute: '2-digit'
+        }).replace(/\//g, '/').replace(',', ' ');
+    }
+
+
     // 🌟 PWA通知機能のための関数
     function registerNotification(plantId, plantName, dateString) {
         // SWが利用可能か、権限があるか確認
@@ -339,16 +398,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (notificationTriggerDate > now) {
                 // 実際のPWAでは、ここではSWにメッセージを送って永続的な通知をスケジュールしますが、
                 // この環境では、許可されていることを確認するにとどめます。
-                
-                /*
-                navigator.serviceWorker.ready.then(registration => {
-                     registration.showNotification(`${plantName} の水やり`, {
-                         body: `次回予定日: ${formatJapaneseDate(dateString)} が近づいています。`,
-                         icon: 'icon-192x192.png',
-                         tag: `water-reminder-${plantId}`
-                     });
-                 });
-                */
             }
         }
     }
@@ -407,29 +456,6 @@ document.addEventListener('DOMContentLoaded', () => {
             notificationControlContainer.appendChild(button);
         }
     }
-    
-    // 🌟 植え替え履歴のレンダリング
-    function renderRepottingHistory(repottingLog) {
-        if (!repottingHistoryList) return;
-        repottingHistoryList.innerHTML = '';
-        
-        if (!repottingLog || repottingLog.length === 0) {
-            repottingHistoryList.innerHTML = '<li style="justify-content: center; color: var(--color-text-mid);">まだ植え替え記録がありません。</li>';
-            return;
-        }
-
-        repottingLog.forEach(log => {
-            const logItem = document.createElement('li');
-            logItem.innerHTML = `<span class="date">${formatJapaneseDate(log.date)}</span>`;
-            repottingHistoryList.appendChild(logItem);
-        });
-        
-        // 🌟 直近の植え替え日を更新
-        const latestDate = repottingLog.length > 0 ? repottingLog[0].date : null;
-        if (repottingDateDisplay) {
-            repottingDateDisplay.textContent = formatJapaneseDate(latestDate);
-        }
-    }
 
 
     function initializeApp() {
@@ -446,6 +472,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (sortSelect) sortSelect.value = currentSort;
         if (filterSelect) filterSelect.value = currentFilter;
 
+        renderLastUpdateTime(); // 最終更新日時をロード時に表示
         renderPlantCards();
         
         // 🌟 PWA通知UIのセットアップ
@@ -574,7 +601,10 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Local Storage Helper Functions
     const getPurchaseDate = (plantId) => localStorage.getItem(`purchase_date_${plantId}`);
-    const savePurchaseDate = (plantId, date) => localStorage.setItem(`purchase_date_${plantId}`, date);
+    const savePurchaseDate = (plantId, date) => { 
+        localStorage.setItem(`purchase_date_${plantId}`, date);
+        renderLastUpdateTime(); // データ更新時に時刻を記録
+    };
     const updatePurchaseDateDisplay = (plantId) => {
         const date = getPurchaseDate(plantId);
         if (purchaseDateDisplay) purchaseDateDisplay.textContent = formatJapaneseDate(date);
@@ -755,13 +785,35 @@ document.addEventListener('DOMContentLoaded', () => {
         card.appendChild(seasonSelector); 
         card.appendChild(content);
         
+        // 🌟 改善1: カード上の直接アクションボタン
         const waterButton = document.createElement('button');
         waterButton.className = 'action-button tertiary water-done-btn';
-        waterButton.textContent = '💧 水やり完了 (内容選択)';
+        waterButton.textContent = '💧 記録 (内容選択)'; // テキストを短縮
         waterButton.onclick = (e) => {
             e.stopPropagation();
             showWaterTypeSelectionModal(userPlant.id); 
         };
+        
+        // 🌟 改善1: ロングタップイベントを追加 (モバイルUX向上)
+        let pressTimer = null;
+        card.addEventListener('touchstart', (e) => {
+            e.stopPropagation();
+            // ブラウザのコンテキストメニューを抑制
+            e.preventDefault(); 
+            // 500msの長押しで水やりモーダルを出す
+            pressTimer = setTimeout(() => {
+                showWaterTypeSelectionModal(userPlant.id);
+            }, 500); 
+        });
+
+        card.addEventListener('touchend', () => {
+            clearTimeout(pressTimer);
+            pressTimer = null;
+        });
+
+        card.addEventListener('touchmove', () => {
+            clearTimeout(pressTimer);
+        });
         
         const cardFooter = document.createElement('div');
         cardFooter.className = 'card-footer';
@@ -990,7 +1042,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 🌟 改善: 植え替え履歴のレンダリング
+    // 植え替え履歴のレンダリング
     function renderRepottingHistory(repottingLog) {
         if (!repottingHistoryList) return;
         repottingHistoryList.innerHTML = '';
@@ -1019,7 +1071,7 @@ document.addEventListener('DOMContentLoaded', () => {
         entryDateDisplay.textContent = formatJapaneseDate(userPlant.entryDate);
         timeSinceEntryDisplay.textContent = calculateTimeSince(userPlant.entryDate);
         
-        // 🌟 修正: 直近の植え替え日をログの最新から取得
+        // 植え替え日表示をログの最新から取得
         const latestRepottingDate = getLatestRepottingDate(userPlant);
         repottingDateDisplay.textContent = formatJapaneseDate(latestRepottingDate);
 
@@ -1145,7 +1197,7 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             userPlants.unshift(newPlant);
-            localStorage.setItem('userPlants', JSON.stringify(userPlants));
+            saveUserPlants(userPlants); // 🌟 saveUserPlantsを使用
             
             renderPlantCards();
             addPlantForm.reset();
@@ -1170,7 +1222,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         showCustomConfirm('この植物のカルテを削除してもよろしいですか？', () => {
              userPlants = userPlants.filter(plant => plant.id !== numericId);
-             localStorage.setItem('userPlants', JSON.stringify(userPlants));
+             saveUserPlants(userPlants); // 🌟 saveUserPlantsを使用
             
              localStorage.removeItem(`purchase_date_${numericId}`);
              localStorage.removeItem(`repotting_date_${numericId}`); // 旧形式のデータも削除
@@ -1252,7 +1304,7 @@ document.addEventListener('DOMContentLoaded', () => {
             userPlants.splice(insertIndex, 0, draggedItem);
             
             // D&D後の並び順を永続化
-            localStorage.setItem('userPlants', JSON.stringify(userPlants));
+            saveUserPlants(userPlants); // 🌟 saveUserPlantsを使用
             renderPlantCards();
         }
     }
@@ -1273,8 +1325,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // 9. 購入日/植え替え日入力モーダル処理
     // ----------------------------------------------------
     
-    // ... (購入日モーダルロジックは変更なし)
-
     if (closeRepottingDateButton) {
         closeRepottingDateButton.onclick = () => {
             repottingDateModal.style.display = 'none';
@@ -1314,7 +1364,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     userPlants[userPlantIndex].repottingLog.unshift(newRepottingEntry);
                     userPlants[userPlantIndex].repottingLog.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-                    localStorage.setItem('userPlants', JSON.stringify(userPlants));
+                    saveUserPlants(userPlants); // 🌟 saveUserPlantsを使用
                     
                     // 旧形式のLocal Storageキーを削除 (クリーンアップ)
                     localStorage.removeItem(`repotting_date_${currentPlantId}`);
@@ -1373,6 +1423,11 @@ document.addEventListener('DOMContentLoaded', () => {
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
+            
+            // 🌟 改善2: 最終エクスポート日時を記録
+            localStorage.setItem('last_export_time', Date.now());
+            renderLastUpdateTime();
+            
             showNotification('カルテデータのエクスポートが完了しました。', 'success');
         };
     }
@@ -1407,7 +1462,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 showCustomConfirm('現在のカルテ情報をインポートデータで上書きします。よろしいですか？', () => {
                     // userPlantsの正規化処理は、インポートされたデータに対しても適用されるため、waterLogへの変換も安全に行われる。
                     userPlants = normalizePlantData(importedData.userPlants); 
-                    localStorage.setItem('userPlants', JSON.stringify(userPlants));
+                    saveUserPlants(userPlants); // 🌟 saveUserPlantsを使用
 
                     for (let i = 0; i < localStorage.length; i++) {
                         const key = localStorage.key(i);
@@ -1437,7 +1492,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 }
                             }
                         });
-                        localStorage.setItem('userPlants', JSON.stringify(userPlants));
+                        saveUserPlants(userPlants); // 🌟 saveUserPlantsを使用
                     }
 
                     showNotification('カルテデータのインポートが完了しました。画面を更新します。', 'success');
