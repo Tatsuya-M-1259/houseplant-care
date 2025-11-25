@@ -205,6 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let userPlants = JSON.parse(localStorage.getItem('userPlants')) || [];
     
     // 🌟 新規: データ構造の自動移行ロジック
+    // 過去の個別キーデータをuserPlants内に統合し、古いキーを削除する
     function migrateOldData(plants) {
         let hasChanges = false;
         plants.forEach(p => {
@@ -219,6 +220,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const oldRepottingDate = localStorage.getItem(`repotting_date_${p.id}`);
             if (oldRepottingDate) {
                 if (!Array.isArray(p.repottingLog)) p.repottingLog = [];
+                // 重複チェック
                 if (!p.repottingLog.some(l => l.date === oldRepottingDate)) {
                     p.repottingLog.push({ date: oldRepottingDate });
                     p.repottingLog.sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -230,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (hasChanges) {
             saveUserPlants(plants);
-            console.log('Data migration completed.');
+            console.log('Data migration completed: Old keys merged and removed.');
         }
     }
 
@@ -320,7 +322,7 @@ document.addEventListener('DOMContentLoaded', () => {
                  p.waterLog.sort((a, b) => new Date(b.date) - new Date(a.date));
             }
             
-            // リファクタリング: 個別キーチェックはmigrateOldDataで行うため、ここではnormalizeのみ
+            // リファクタリング: 個別キーチェックはmigrateOldDataで行うため、ここでは配列初期化のみ
             if (!Array.isArray(p.repottingLog)) {
                 p.repottingLog = [];
             }
