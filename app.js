@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${year}-${month}-${day}`;
     }
 
-    // ⚠️ 修正: ここで const today = ... を宣言しない（日またぎ対策）
+    // ⚠️ 修正: const today = ... を削除し、関数内で都度呼び出すように変更
 
     // ----------------------------------------------------
     // 🌟 画像エラーハンドリング
@@ -1300,6 +1300,60 @@ document.addEventListener('DOMContentLoaded', () => {
              renderPlantCards();
              showNotification('カルテを削除しました。', 'success'); 
         });
+    }
+
+    // 🌟 修正: 抜け落ちていた購入日モーダル関連の処理を追加
+    if (closePurchaseDateButton) {
+        closePurchaseDateButton.onclick = () => {
+            purchaseDateModal.style.display = 'none';
+            if (detailsModal) detailsModal.style.display = 'block';
+        };
+    }
+
+    if (editPurchaseDateButton) {
+        editPurchaseDateButton.onclick = () => {
+            if (currentPlantId === null) {
+                 showNotification('エラー: まず植物カードをクリックして詳細を表示してください。', 'error');
+                 return;
+            }
+
+            // 現在の購入日を取得してフォームにセット
+            const plant = userPlants.find(p => p.id === currentPlantId);
+            const today = getLocalTodayDate();
+
+            if (plant && plant.purchaseDate) {
+                purchaseDateInput.value = plant.purchaseDate;
+            } else {
+                purchaseDateInput.value = today;
+            }
+
+            detailsModal.style.display = 'none';
+            purchaseDateModal.style.display = 'block';
+            purchaseDateInput.setAttribute('max', today);
+        };
+    }
+
+    if (savePurchaseDateButton) {
+        savePurchaseDateButton.onclick = () => {
+            const newDate = purchaseDateInput.value;
+            if (newDate && currentPlantId !== null) {
+                const plantIndex = userPlants.findIndex(p => p.id === currentPlantId);
+                if (plantIndex !== -1) {
+                    userPlants[plantIndex].purchaseDate = newDate;
+                    saveUserPlants(userPlants);
+                    
+                    // 詳細画面の表示を即時更新
+                    updatePurchaseDateDisplay(currentPlantId);
+                    
+                    showNotification('購入日を保存しました。', 'success');
+                }
+                
+                purchaseDateModal.style.display = 'none';
+                if (detailsModal) detailsModal.style.display = 'block';
+            } else {
+                showNotification('日付を入力してください。', 'warning');
+            }
+        };
     }
 
     if (closeRepottingDateButton) {
