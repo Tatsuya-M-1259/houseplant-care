@@ -41,11 +41,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // ----------------------------------------------------
     // 🌟 修正: 画像エラーハンドリング (プレースホルダー表示)
     // ----------------------------------------------------
+    // 修正: エラー時の画像を関数化してData URIを一箇所管理
+    function getPlaceholderImage() {
+        return "data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25' viewBox='0 0 300 200'%3e%3crect fill='%23e0e0e0' width='300' height='200'/%3e%3ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='24' fill='%23888'%3eNo Image%3c/text%3e%3c/svg%3e";
+    }
+
     window.addEventListener('error', (e) => {
         if (e.target.tagName === 'IMG') {
-            e.target.src = "data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25' viewBox='0 0 300 200'%3e%3crect fill='%23e0e0e0' width='300' height='200'/%3e%3ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='24' fill='%23888'%3eNo Image%3c/text%3e%3c/svg%3e";
-            e.target.alt = "画像読み込み失敗";
-            console.warn(`画像読み込み失敗: ${e.target.alt}`);
+            const placeholder = getPlaceholderImage();
+            if (e.target.src !== placeholder) { // 無限ループ防止
+                e.target.src = placeholder;
+                e.target.alt = "画像読み込み失敗";
+                console.warn(`画像読み込み失敗: ${e.target.alt}`);
+            }
         }
     }, true);
 
@@ -199,7 +207,8 @@ document.addEventListener('DOMContentLoaded', () => {
     saveUserPlants(userPlants);
     
     let currentPlantId = null;
-    let draggedId = null; 
+    // draggedId は SortableJS を使用するため不要になりましたが、互換性のため残すか削除
+    // let draggedId = null; 
 
     // ----------------------------------------------------
     // 3. 季節判定ロジック
@@ -230,11 +239,14 @@ document.addEventListener('DOMContentLoaded', () => {
      * 次回水やり予定日を計算する
      */
     function calculateNextWateringDate(lastDateString, intervalDays) {
-        if (!lastDateString || intervalDays === 999 || intervalDays === null) return null;
+        // 999 (断水) または無効な値の場合は null を返す
+        if (!lastDateString || intervalDays === 999 || intervalDays == null || isNaN(intervalDays)) {
+            return null;
+        }
 
         // 🌟 ヘルパーを使用してローカルタイムで計算
         const lastDate = parseDateAsLocal(lastDateString);
-        lastDate.setDate(lastDate.getDate() + intervalDays);
+        lastDate.setDate(lastDate.getDate() + parseInt(intervalDays));
         
         const y = lastDate.getFullYear();
         const m = String(lastDate.getMonth() + 1).padStart(2, '0');
@@ -667,6 +679,56 @@ document.addEventListener('DOMContentLoaded', () => {
 
         plantCardList.innerHTML = '';
         plantCardList.appendChild(cardContainer);
+
+        // 🌟 修正: SortableJSの初期化 (モバイルDnD対応)
+        // 手動ソート（デフォルトソート以外）の時のみ有効にするか、または常時有効にして
+        // 「次回水やり順」の場合は並び替え後にアラートを出すなどの制御が可能。
+        // ここでは、ユーザーが手動で並び替えたい意図を尊重し、デフォルトソート以外の時に有効化を推奨。
+        // しかし、元のコードロジックに従い、'nextWateringDate' 以外の場合に並び替え可能とします。
+        
+        if (currentSort !== 'nextWateringDate') {
+            new Sortable(cardContainer, {
+                animation: 150,
+                handle: '.drag-handle', // ハンドルでのみドラッグ可能
+                delay: 100, // 誤操作防止（少し待ってからドラッグ開始）
+                delayOnTouchOnly: true,
+                touchStartThreshold: 5, // 5px以上動いたらドラッグとみなす
+                ghostClass: 'sortable-ghost',
+                onEnd: function (evt) {
+                    // DOMの現在の並び順からIDリストを取得
+                    const newOrderIds = Array.from(cardContainer.children).map(card => parseInt(card.dataset.id));
+                    
+                    // 現在表示されている（フィルタリングされた）植物の元データ上のインデックスを取得
+                    const visibleItemsInMain = [];
+                    // ID -> 新しい表示順インデックス のマップ
+                    const idToIndexMap = new Map(newOrderIds.map((id, index) => [id, index]));
+
+                    userPlants.forEach((p, index) => {
+                        if (idToIndexMap.has(p.id)) {
+                            visibleItemsInMain.push({ plant: p, originalIndex: index });
+                        }
+                    });
+
+                    // メイン配列内の「スロット（場所）」を確保するためにインデックスを保存
+                    const slotIndices = visibleItemsInMain.map(item => item.originalIndex).sort((a, b) => a - b);
+
+                    // 新しい表示順序に従って植物データをソート
+                    visibleItemsInMain.sort((a, b) => {
+                        const indexA = idToIndexMap.get(a.plant.id);
+                        const indexB = idToIndexMap.get(b.plant.id);
+                        return indexA - indexB;
+                    });
+
+                    // userPlantsの該当スロットに、並び替えた植物を埋め戻す
+                    slotIndices.forEach((slotIndex, i) => {
+                        userPlants[slotIndex] = visibleItemsInMain[i].plant;
+                    });
+
+                    saveUserPlants(userPlants);
+                    // renderPlantCards() は呼ばない（DOMは既にSortableによって変更されているため）
+                }
+            });
+        }
     }
     
     function showWaterTypeSelectionModal(plantId) {
@@ -698,8 +760,8 @@ document.addEventListener('DOMContentLoaded', () => {
         card.className = 'plant-card';
         card.setAttribute('data-id', userPlant.id);
         
-        const isAutoSorted = currentSort === 'nextWateringDate';
-        card.setAttribute('draggable', !isAutoSorted);
+        // 🌟 修正: HTML5 Draggable属性は削除 (SortableJSを使用するため)
+        // card.setAttribute('draggable', !isAutoSorted);
         
         const controls = document.createElement('div');
         controls.className = 'controls';
@@ -707,10 +769,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const dragHandle = document.createElement('span');
         dragHandle.className = 'drag-handle';
         dragHandle.textContent = '☰';
+        dragHandle.setAttribute('aria-label', '並び替え用ハンドル'); // A11y
         
+        const isAutoSorted = currentSort === 'nextWateringDate';
         if (isAutoSorted) {
              dragHandle.style.opacity = '0';
              dragHandle.style.cursor = 'default';
+             dragHandle.style.pointerEvents = 'none'; // ハンドル無効化
         }
 
         controls.appendChild(dragHandle);
@@ -718,6 +783,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const deleteButton = document.createElement('button');
         deleteButton.className = 'delete-btn';
         deleteButton.textContent = '×';
+        deleteButton.setAttribute('aria-label', `${userPlant.name}のカルテを削除`); // A11y
         deleteButton.onclick = (e) => { 
             e.stopPropagation(); 
             deletePlantCard(userPlant.id);
@@ -761,7 +827,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let startX, startY;
 
         card.addEventListener('touchstart', (e) => {
-            // e.stopPropagation(); 
+            // e.stopPropagation(); // SortableJSとの干渉を防ぐため削除検討、あるいはそのまま
             startX = e.touches[0].clientX;
             startY = e.touches[0].clientY;
             
@@ -807,12 +873,8 @@ document.addEventListener('DOMContentLoaded', () => {
             showDetailsModal(userPlant, data);
         });
         
-        if (!isAutoSorted) {
-             card.addEventListener('dragstart', handleDragStart);
-             card.addEventListener('dragover', handleDragOver);
-             card.addEventListener('drop', handleDrop);
-             card.addEventListener('dragend', handleDragEnd);
-        }
+        // 🌟 修正: 古いドラッグイベントリスナーを削除しました
+        // if (!isAutoSorted) { ... } 部分削除
 
         return card;
     }
@@ -1202,85 +1264,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function handleDragStart(e) {
-        if (currentSort !== 'nextWateringDate') {
-            draggedId = parseInt(e.target.dataset.id);
-            e.target.classList.add('dragging');
-            e.dataTransfer.effectAllowed = 'move';
-            setTimeout(() => e.target.style.opacity = '0.4', 0);
-        }
-    }
-
-    function handleDragOver(e) {
-        if (currentSort !== 'nextWateringDate') {
-            e.preventDefault(); 
-            
-            const targetCard = e.target.closest('.plant-card');
-            if (!targetCard || targetCard.classList.contains('dragging')) return;
-            
-            const bounding = targetCard.getBoundingClientRect();
-            const offset = bounding.y + (bounding.height / 2);
-            
-            if (e.clientY < offset) {
-                targetCard.classList.add('drop-before');
-                targetCard.classList.remove('drop-after');
-            } else {
-                targetCard.classList.add('drop-after');
-                targetCard.classList.remove('drop-before');
-            }
-            
-            e.dataTransfer.dropEffect = 'move';
-        }
-    }
-
-    function handleDrop(e) {
-        if (currentSort !== 'nextWateringDate') {
-            e.preventDefault();
-            
-            const targetCard = e.target.closest('.plant-card');
-            if (!targetCard || draggedId === null) return;
-
-            targetCard.classList.remove('drop-before', 'drop-after');
-
-            const droppedId = parseInt(targetCard.dataset.id);
-            
-            const draggedIndex = userPlants.findIndex(p => p.id === draggedId);
-            let droppedIndex = userPlants.findIndex(p => p.id === droppedId);
-
-            if (draggedIndex === -1 || droppedIndex === -1 || draggedIndex === droppedIndex) return;
-
-            const [draggedItem] = userPlants.splice(draggedIndex, 1);
-            
-            const bounding = targetCard.getBoundingClientRect();
-            const offset = bounding.y + (bounding.height / 2);
-            
-            let insertIndex = droppedIndex;
-
-            if (e.clientY > offset) {
-                insertIndex = droppedIndex + 1;
-            }
-            
-            if (insertIndex > draggedIndex) {
-                insertIndex--;
-            }
-
-            userPlants.splice(insertIndex, 0, draggedItem);
-            
-            saveUserPlants(userPlants); 
-            renderPlantCards();
-        }
-    }
-
-    function handleDragEnd(e) {
-        if (currentSort !== 'nextWateringDate') {
-            e.target.classList.remove('dragging');
-            e.target.style.opacity = '1'; 
-            document.querySelectorAll('.plant-card').forEach(card => {
-                card.classList.remove('drop-before', 'drop-after');
-            });
-            draggedId = null;
-        }
-    }
+    // 🌟 修正: 以下のドラッグハンドラ関数は削除されました
+    // function handleDragStart(e) ...
+    // function handleDragOver(e) ...
+    // function handleDrop(e) ...
+    // function handleDragEnd(e) ...
 
     if (closeRepottingDateButton) {
         closeRepottingDateButton.onclick = () => {
