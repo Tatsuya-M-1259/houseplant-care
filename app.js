@@ -1049,6 +1049,14 @@ document.addEventListener('DOMContentLoaded', () => {
             logItem.appendChild(contentSpan);
             waterHistoryList.appendChild(logItem);
         });
+        
+        // 🌟 改善: water-history-list のアコーディオン状態をリセット
+        const header = document.querySelector('#water-history-section .accordion-header');
+        const content = document.getElementById('water-history-list');
+        if (header && content) {
+            header.classList.add('collapsed');
+            content.classList.remove('expanded');
+        }
     }
 
     // 植え替え履歴のレンダリング
@@ -1066,6 +1074,14 @@ document.addEventListener('DOMContentLoaded', () => {
             logItem.innerHTML = `<span class="date">${formatJapaneseDate(log.date)}</span>`;
             repottingHistoryList.appendChild(logItem);
         });
+        
+        // 🌟 改善: repotting-history-list のアコーディオン状態をリセット
+        const header = document.querySelector('#repotting-history-section .accordion-header');
+        const content = document.getElementById('repotting-history-list');
+        if (header && content) {
+            header.classList.add('collapsed');
+            content.classList.remove('expanded');
+        }
     }
 
 
@@ -1118,8 +1134,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (seasonCareContentDiv) seasonCareContentDiv.innerHTML = seasonCareContentHtml;
         if (basicMaintenanceContentDiv) basicMaintenanceContentDiv.innerHTML = basicMaintenanceContentHtml;
         
-        // 🌟 改善: アコーディオンの初期状態を設定
-        // 初期状態で季節ケアと水やり履歴を開く
+        // 🌟 改善: アコーディオンの初期状態を設定 (現在の季節ケアと水やり履歴をデフォルトで開く)
         document.getElementById('season-care-content').classList.add('expanded');
         document.querySelector('#season-care-wrapper .accordion-header').classList.remove('collapsed');
         
@@ -1173,6 +1188,32 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
         
+        // 🌟 改善1: モーダルスワイプ操作を追加
+        let touchstartX = 0;
+        let touchendX = 0;
+        const modalContent = detailsModal.querySelector('.modal-content');
+
+        const checkDirection = () => {
+            const threshold = 50; // スワイプと認識する最小距離
+            if (touchendX < touchstartX - threshold) { // 左にスワイプ (次の植物)
+                nextPlantButton.click();
+            }
+            if (touchendX > touchstartX + threshold) { // 右にスワイプ (前の植物)
+                prevPlantButton.click();
+            }
+        };
+
+        // スワイプイベントを追加（passive: trueでスムーズなスクロールを阻害しないようにする）
+        modalContent.addEventListener('touchstart', e => {
+            touchstartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+
+        modalContent.addEventListener('touchend', e => {
+            touchendX = e.changedTouches[0].screenX;
+            checkDirection();
+        }, { passive: true });
+
+
         detailsModal.style.display = 'block'; 
     }
 
