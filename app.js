@@ -797,17 +797,23 @@ document.addEventListener('DOMContentLoaded', () => {
         // 🌟 改善1: ロングタップイベントを追加 (モバイルUX向上)
         let pressTimer = null;
         card.addEventListener('touchstart', (e) => {
-            e.stopPropagation();
+            // e.stopPropagation(); // clickイベントを防ぐため、clickハンドラ側で処理
             // ブラウザのコンテキストメニューを抑制
             e.preventDefault(); 
             // 500msの長押しで水やりモーダルを出す
             pressTimer = setTimeout(() => {
                 showWaterTypeSelectionModal(userPlant.id);
+                // ロングタップが成功した場合、clickイベントが発生しないようにする
+                e.target.dataset.isLongPress = 'true';
             }, 500); 
         });
 
-        card.addEventListener('touchend', () => {
+        card.addEventListener('touchend', (e) => {
             clearTimeout(pressTimer);
+            if (e.target.dataset.isLongPress === 'true') {
+                 // 長押し後に指を離した場合、clickイベントを発火させない
+                 delete e.target.dataset.isLongPress; 
+            }
             pressTimer = null;
         });
 
@@ -820,7 +826,14 @@ document.addEventListener('DOMContentLoaded', () => {
         cardFooter.appendChild(waterButton);
         card.appendChild(cardFooter);
 
-        card.addEventListener('click', () => showDetailsModal(userPlant, data));
+        card.addEventListener('click', (e) => {
+            // ロングタップでモーダルが開いた後のclickイベントを無視
+            if (e.target.dataset.isLongPress === 'true') {
+                delete e.target.dataset.isLongPress;
+                return;
+            }
+            showDetailsModal(userPlant, data);
+        });
         
         // D&Dイベントのバインド
         if (!isAutoSorted) {
@@ -1074,40 +1087,51 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const repottingReminderMessage = checkRepottingStatus(plantData, userPlant.id);
 
-        plantDetails.innerHTML = `
-            <h2>${userPlant.name} (${plantData.species})</h2>
-            <p class="scientific-name">${plantData.scientific}</p>
-            <div style="text-align:center; margin-bottom: 20px;">
-                <img src="${plantData.img}" alt="${plantData.species}" class="detail-image" 
-                     style="max-width: 100%; height: auto;"
-                     onerror="this.onerror=null; this.src='https://placehold.co/250x250/e9ecef/495057?text=No+Image'; this.style.objectFit='contain';">
-            </div>
-            
-            <!-- 季節別ケアの内容 -->
-            <div id="season-care-content" class="accordion-content expanded">
-                <ul>
-                    <li><strong>水やり量（一度に与える量）:</strong> ${plantData.water_method}</li>
-                    <li><strong>水やり頻度（タイミング）:</strong> ${seasonData.water}</li>
-                    <li><strong>光:</strong> ${seasonData.light}</li>
-                    ${seasonData.tempRisk ? `<li><strong>寒さ対策:</strong> ${seasonData.tempRisk}</li>` : ''}
-                </ul>
-            </div>
-            
-            <!-- 基本情報の内容 -->
-            <div id="basic-maintenance-content" class="accordion-content">
-                <ul>
-                    <li><strong>難易度:</strong> ${plantData.difficulty}</li>
-                    <li><strong>特徴:</strong> ${plantData.feature}</li>
-                    <li><strong>最低越冬温度:</strong> ${plantData.minTemp}°C</li>
-                    <li><strong>肥料:</strong> ${maintenance.fertilizer}</li>
-                    <li><strong>植え替え:</strong> ${maintenance.repotting}</li>
-                    <li><strong>剪定:</strong> ${maintenance.pruning}</li>
-                </ul>
-                <div class="detail-section" style="padding: 10px 0; border-top: 1px solid #e9ecef;">
-                    ${repottingReminderMessage}
-                </div>
+        // 🌟 改善: アコーディオンの内容を直接コンテンツエリアに挿入
+        const seasonCareContentHtml = `
+            <ul>
+                <li><strong>水やり量（一度に与える量）:</strong> ${plantData.water_method}</li>
+                <li><strong>水やり頻度（タイミング）:</strong> ${seasonData.water}</li>
+                <li><strong>光:</strong> ${seasonData.light}</li>
+                ${seasonData.tempRisk ? `<li><strong>寒さ対策:</strong> ${seasonData.tempRisk}</li>` : ''}
+            </ul>
+        `;
+        
+        const basicMaintenanceContentHtml = `
+            <ul>
+                <li><strong>難易度:</strong> ${plantData.difficulty}</li>
+                <li><strong>特徴:</strong> ${plantData.feature}</li>
+                <li><strong>最低越冬温度:</strong> ${plantData.minTemp}°C</li>
+                <li><strong>肥料:</strong> ${maintenance.fertilizer}</li>
+                <li><strong>植え替え:</strong> ${maintenance.repotting}</li>
+                <li><strong>剪定:</strong> ${maintenance.pruning}</li>
+            </ul>
+            <div class="detail-section" style="padding: 10px 0; border-top: 1px solid #e9ecef;">
+                ${repottingReminderMessage}
             </div>
         `;
+        
+        // 既存のHTML構造を利用して動的に挿入
+        const seasonCareContentDiv = document.getElementById('season-care-content');
+        const basicMaintenanceContentDiv = document.getElementById('basic-maintenance-content');
+        
+        if (seasonCareContentDiv) seasonCareContentDiv.innerHTML = seasonCareContentHtml;
+        if (basicMaintenanceContentDiv) basicMaintenanceContentDiv.innerHTML = basicMaintenanceContentHtml;
+        
+        // 🌟 改善: アコーディオンの初期状態を設定
+        // 初期状態で季節ケアと水やり履歴を開く
+        document.getElementById('season-care-content').classList.add('expanded');
+        document.querySelector('#season-care-wrapper .accordion-header').classList.remove('collapsed');
+        
+        document.getElementById('basic-maintenance-content').classList.remove('expanded');
+        document.querySelector('#basic-maintenance-wrapper .accordion-header').classList.add('collapsed');
+        
+        document.getElementById('water-history-list').classList.add('expanded');
+        document.querySelector('#water-history-section .accordion-header').classList.remove('collapsed');
+        
+        document.getElementById('repotting-history-list').classList.remove('expanded');
+        document.querySelector('#repotting-history-section .accordion-header').classList.add('collapsed');
+
         
         updatePurchaseDateDisplay(userPlant.id); 
         
