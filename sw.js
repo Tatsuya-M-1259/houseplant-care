@@ -1,6 +1,6 @@
 // sw.js
 
-const CACHE_NAME = 'houseplant-care-v4'; // 🌟 キャッシュバージョンを更新
+const CACHE_NAME = 'houseplant-care-v5'; // 🌟 修正: キャッシュバージョンを更新
 const CORE_ASSETS = [
     './', // index.html
     'index.html',
