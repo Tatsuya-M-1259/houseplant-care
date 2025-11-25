@@ -1,6 +1,9 @@
 // sw.js
 
-const CACHE_NAME = 'houseplant-care-v6'; // 🌟 修正: キャッシュバージョンを更新
+const CACHE_NAME = 'houseplant-care-v7'; // 🌟 更新: バージョンをインクリメント
+// 🌟 修正: バージョンを固定して安全性を確保
+const SORTABLE_CDN = 'https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js';
+
 const CORE_ASSETS = [
     './', // index.html
     'index.html',
@@ -10,17 +13,18 @@ const CORE_ASSETS = [
     'manifest.json',
     'icon-192x192.png',
     'icon-512x512.png',
-    // 🌟 重要: 外部CDNのライブラリもキャッシュしてオフライン対応させる
-    'https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js' 
+    SORTABLE_CDN // 🌟 重要: 外部CDNのライブラリもキャッシュしてオフライン対応させる
 ];
 
 // インストールイベント: コアアセットのプリロード
 self.addEventListener('install', (event) => {
+    // 🌟 追加: 更新時に待機状態をスキップして即時有効化させる
+    self.skipWaiting();
+
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then((cache) => {
                 console.log('Service Worker: コアアセットをプリロードしました。');
-                // 外部URLを含むすべてのアセットをキャッシュ
                 return cache.addAll(CORE_ASSETS);
             })
     );
@@ -53,7 +57,7 @@ self.addEventListener('fetch', (event) => {
         event.respondWith(staleWhileRevalidate(event.request));
     } 
     // 🌟 外部CDN (SortableJS) もキャッシュ優先で返す
-    else if (CORE_ASSETS.includes(event.request.url) || CORE_ASSETS.includes(path)) {
+    else if (event.request.url === SORTABLE_CDN || CORE_ASSETS.includes(path)) {
          event.respondWith(caches.match(event.request).then((response) => {
             return response || fetch(event.request);
         }));
