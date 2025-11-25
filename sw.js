@@ -1,6 +1,6 @@
 // sw.js
 
-const CACHE_NAME = 'houseplant-care-v7'; // 🌟 更新: バージョンをインクリメント
+const CACHE_NAME = 'houseplant-care-v8'; // 🌟 更新: バージョンをインクリメント
 // 🌟 修正: バージョンを固定して安全性を確保
 const SORTABLE_CDN = 'https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js';
 
