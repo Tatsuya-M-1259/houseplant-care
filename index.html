@@ -28,6 +28,9 @@
                 <label for="last-watered">直近の水やり日:</label>
                 <input type="date" id="last-watered" required>
                 
+                <!-- 🌟 修正: 次回予定日のリアルタイム表示エリアを追加 -->
+                <p id="next-watering-preview" class="form-preview-message"></p>
+                
                 <label for="water-type-select">水やり内容:</label>
                 <select id="water-type-select" required>
                     <option value="WaterOnly">水のみ</option>
