@@ -628,3 +628,39 @@ form select {
     font-weight: normal;
     font-size: 1em;
 }
+
+/* 🌟 新規: 水やり履歴リストのスタイル */
+.water-history-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 200px; /* スクロール可能にするための制限 */
+    overflow-y: auto;
+    border: 1px solid #e9ecef;
+    border-radius: var(--border-radius);
+}
+
+.water-history-list li {
+    padding: 10px 15px;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.95rem;
+}
+
+.water-history-list li:last-child {
+    border-bottom: none;
+}
+
+.water-history-list li .date {
+    font-weight: 600;
+    color: var(--color-text-dark);
+    min-width: 130px;
+}
+
+.water-history-list li .water-type-badge {
+    margin-left: 10px; /* リスト表示用に調整 */
+    font-size: 0.8rem;
+    padding: 4px 8px;
+}
