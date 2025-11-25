@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     /**
-     * 新規: 水やり日と内容を更新する
+     * 水やり日と内容を更新する
      * @param {number} plantId - 植物のID
      * @param {string} type - 水やり内容のキー ('WaterOnly', 'WaterAndFertilizer', etc.)
      * @param {string} [date] - 更新日 (デフォルトは今日)
@@ -79,23 +79,22 @@ document.addEventListener('DOMContentLoaded', () => {
         const plantIndex = userPlants.findIndex(p => p.id === numericId);
         
         if (plantIndex !== -1) {
-            // 🌟 構造を更新: lastWatering オブジェクトを使用
             userPlants[plantIndex].lastWatering = {
                 date: date,
                 type: type
             };
             
-            // 古い lastWatered プロパティが存在する場合は削除
             delete userPlants[plantIndex].lastWatered; 
 
             localStorage.setItem('userPlants', JSON.stringify(userPlants));
             renderPlantCards();
             showNotification(`${userPlants[plantIndex].name} の水やり日と内容を更新しました！(${WATER_TYPES[type].name})`, 'success');
             
-            // 詳細モーダルが開いている場合は表示を更新
-            if (currentPlantId === numericId && detailsModal.style.display === 'block') {
-                const plantData = PLANT_DATA.find(p => p.id == userPlants[plantIndex].speciesId);
-                showDetailsModal(userPlants[plantIndex], plantData);
+            // モーダルが開きっぱなしになるのを防ぐ
+            waterTypeModal.style.display = 'none';
+            if (detailsModal.style.display === 'block') {
+                 const plantData = PLANT_DATA.find(p => p.id == userPlants[plantIndex].speciesId);
+                 showDetailsModal(userPlants[plantIndex], plantData);
             }
         }
     }
@@ -108,12 +107,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const speciesSelect = document.getElementById('species-select');
     const addPlantForm = document.getElementById('add-plant-form');
 
-    // 日付入力の最大値を今日に設定し、未来日の入力を防止
     const today = new Date().toISOString().split('T')[0];
     const lastWateredInput = document.getElementById('last-watered');
     if (lastWateredInput) {
         lastWateredInput.setAttribute('max', today);
-        lastWateredInput.value = today; // 🌟 初期値を今日に設定
+        lastWateredInput.value = today; 
     }
 
     // モーダル要素
@@ -121,15 +119,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeDetailButton = detailsModal ? detailsModal.querySelector('.close-button') : null; 
     const plantDetails = document.getElementById('plant-details'); 
     
-    // 詳細モーダル内の要素
     const purchaseDateDisplay = document.getElementById('purchase-date-display');
     const editPurchaseDateButton = document.getElementById('edit-purchase-date-button');
     const waterDoneInDetailContainer = document.getElementById('water-done-in-detail'); 
-    // 🌟 新規: 詳細モーダルの新規要素
     const entryDateDisplay = document.getElementById('entry-date-display');
     const timeSinceEntryDisplay = document.getElementById('time-since-entry-display');
     const repottingDateDisplay = document.getElementById('repotting-date-display');
-    const editRepottingDateButton = document.getElementById('edit-repotting-date-button'); // 植え替え日ボタン
+    const editRepottingDateButton = document.getElementById('edit-repotting-date-button'); 
     
     // 購入日入力モーダル
     const purchaseDateModal = document.getElementById('purchase-date-modal');
@@ -137,12 +133,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const purchaseDateInput = document.getElementById('purchase-date-input');
     const savePurchaseDateButton = document.getElementById('save-purchase-date-button');
     
-    // 🌟 新規: 植え替え日入力モーダル
+    // 植え替え日入力モーダル
     const repottingDateModal = document.getElementById('repotting-date-modal');
     const closeRepottingDateButton = repottingDateModal ? repottingDateModal.querySelector('.close-button-repotting-date') : null;
     const repottingDateInput = document.getElementById('repotting-date-input');
     const saveRepottingDateButton = document.getElementById('save-repotting-date-button');
     
+    // 🌟 新規: 水やり内容選択モーダル要素
+    const waterTypeModal = document.getElementById('water-type-modal');
+    const closeWaterTypeButton = waterTypeModal ? waterTypeModal.querySelector('.close-button-water-type') : null;
+    const waterTypeModalTitle = document.getElementById('water-type-modal-title');
+    const waterDateDisplay = document.getElementById('water-date-display');
+    const waterTypeOptionsContainer = document.getElementById('water-type-options');
+
     // エクスポート/インポート関連の要素
     const exportButton = document.getElementById('export-data-button');
     const importButton = document.getElementById('import-data-button');
@@ -160,9 +163,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // データ状態の管理
     let userPlants = JSON.parse(localStorage.getItem('userPlants')) || [];
-    // 🌟 新規: データ形式の正規化/マイグレーション
+    // データ形式の正規化/マイグレーション
     userPlants = normalizePlantData(userPlants);
-    localStorage.setItem('userPlants', JSON.stringify(userPlants)); // 念のため更新
+    localStorage.setItem('userPlants', JSON.stringify(userPlants)); 
     
     let currentPlantId = null;
     let draggedId = null; 
@@ -186,10 +189,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // ----------------------------------------------------
 
     /**
-     * 新規: 既存データを新しい形式に変換する（マイグレーション）
+     * 既存データを新しい形式に変換する（マイグレーション）
      */
     function normalizePlantData(plants) {
-        return plants.map(p => {
+        const normalizedPlants = plants.map(p => {
             // 登録日がない場合は、既存の lastWatered または今日の日付を設定
             if (!p.entryDate) {
                 p.entryDate = p.lastWatered || today; 
@@ -198,16 +201,16 @@ document.addEventListener('DOMContentLoaded', () => {
             // lastWatering がない場合は、 lastWatered (string) から変換
             if (!p.lastWatering || typeof p.lastWatering === 'string') {
                 p.lastWatering = {
-                    date: p.lastWatered || today, // dateは既存のlastWateredを使用
-                    type: 'WaterOnly' // 内容はデフォルトの「水のみ」を設定
+                    date: p.lastWatered || today, 
+                    type: 'WaterOnly' 
                 };
             }
 
-            // 古い lastWatered プロパティを削除（クリーンアップ）
             delete p.lastWatered; 
-            
             return p;
         });
+        
+        return normalizedPlants;
     }
 
     function initializeApp() {
@@ -223,64 +226,45 @@ document.addEventListener('DOMContentLoaded', () => {
         renderPlantCards();
     }
     
-    // 🌟 新規: 日付表示ユーティリティ関数
+    // 日付表示ユーティリティ関数 (変更なし)
     function formatJapaneseDate(dateString) {
         if (!dateString) return '未設定';
         const [year, month, day] = dateString.split('-');
         return `${year}年${parseInt(month)}月${parseInt(day)}日`;
     }
 
-    // 🌟 新規: 日数/年数を計算するユーティリティ関数
+    // 日数/年数を計算するユーティリティ関数 (変更なし)
     function calculateTimeSince(startDateString) {
         if (!startDateString) return '';
         
         const start = new Date(startDateString);
         const today = new Date();
-        start.setHours(0, 0, 0, 0); // 時刻を無視
-        today.setHours(0, 0, 0, 0); // 時刻を無視
+        start.setHours(0, 0, 0, 0); 
+        today.setHours(0, 0, 0, 0); 
         
         const diffTime = Math.abs(today - start);
-        // 1日 = 1000ms * 60s * 60m * 24h
         const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)); 
         
         if (diffDays >= 365) {
-            const diffYears = (diffDays / 365.25).toFixed(1); // 閏年考慮
+            const diffYears = (diffDays / 365.25).toFixed(1); 
             return `約 ${diffYears} 年`;
         }
         return `${diffDays} 日`;
     }
     
-    // Local Storage Helper Functions (Repotting Date を追加)
-    
-    const getPurchaseDate = (plantId) => {
-        return localStorage.getItem(`purchase_date_${plantId}`);
-    };
-
-    const savePurchaseDate = (plantId, date) => {
-        localStorage.setItem(`purchase_date_${plantId}`, date);
-    };
-
+    // Local Storage Helper Functions (変更なし)
+    const getPurchaseDate = (plantId) => localStorage.getItem(`purchase_date_${plantId}`);
+    const savePurchaseDate = (plantId, date) => localStorage.setItem(`purchase_date_${plantId}`, date);
     const updatePurchaseDateDisplay = (plantId) => {
         const date = getPurchaseDate(plantId);
-        if (purchaseDateDisplay) {
-            purchaseDateDisplay.textContent = formatJapaneseDate(date);
-        }
+        if (purchaseDateDisplay) purchaseDateDisplay.textContent = formatJapaneseDate(date);
     };
     
-    // 🌟 新規: 植え替え日ヘルパー
-    const getRepottingDate = (plantId) => {
-        return localStorage.getItem(`repotting_date_${plantId}`);
-    };
-
-    const saveRepottingDate = (plantId, date) => {
-        localStorage.setItem(`repotting_date_${plantId}`, date);
-    };
-
+    const getRepottingDate = (plantId) => localStorage.getItem(`repotting_date_${plantId}`);
+    const saveRepottingDate = (plantId, date) => localStorage.setItem(`repotting_date_${plantId}`, date);
     const updateRepottingDateDisplay = (plantId) => {
         const date = getRepottingDate(plantId);
-        if (repottingDateDisplay) {
-            repottingDateDisplay.textContent = formatJapaneseDate(date);
-        }
+        if (repottingDateDisplay) repottingDateDisplay.textContent = formatJapaneseDate(date);
     };
     
     // ----------------------------------------------------
@@ -290,7 +274,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderPlantCards() {
         if (!plantCardList) return;
 
-        // 🌟 改善: 空のカルテリストに対するフィードバック
         if (userPlants.length === 0) {
             plantCardList.innerHTML = `
                 <div class="empty-state">
@@ -317,32 +300,29 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     /**
-     * 新規: 水やり内容の選択ダイアログを表示する関数
+     * 🌟 改善 1: 水やり内容の選択カスタムモーダルを表示する関数
      */
-    function showWaterTypeSelection(plantId) {
-        const plant = userPlants.find(p => p.id === parseInt(plantId));
-        if (!plant) return;
+    function showWaterTypeSelectionModal(plantId) {
+        const numericId = parseInt(plantId);
+        const plant = userPlants.find(p => p.id === numericId);
+        if (!plant || !waterTypeModal) return;
 
-        // ブラウザ標準のpromptをカスタム通知/確認に置き換えるための暫定的な実装
-        const waterTypesOptions = Object.keys(WATER_TYPES).map((key, index) => 
-            `${index + 1}: ${WATER_TYPES[key].name}`
-        ).join('\n');
-
-        const input = window.prompt(
-            `「${plant.name}」の水やり内容を選択してください。\n\n${waterTypesOptions}\n\n数字を入力してください:`
-        );
-
-        if (input) {
-            const index = parseInt(input) - 1;
-            const selectedKey = Object.keys(WATER_TYPES)[index];
-
-            if (selectedKey) {
-                // 🌟 updateLastWatered を呼び出す
-                updateLastWatered(plantId, selectedKey);
-            } else {
-                showNotification('無効な選択です。', 'error');
-            }
-        }
+        waterTypeModalTitle.textContent = `「${plant.name}」の水やり内容`;
+        waterDateDisplay.textContent = formatJapaneseDate(today) + ' に完了'; 
+        waterTypeOptionsContainer.innerHTML = '';
+        
+        Object.keys(WATER_TYPES).forEach(key => {
+            const typeData = WATER_TYPES[key];
+            const button = document.createElement('button');
+            button.textContent = typeData.name;
+            button.className = 'action-button'; // CSSでカスタム
+            button.onclick = () => {
+                updateLastWatered(numericId, key, today);
+            };
+            waterTypeOptionsContainer.appendChild(button);
+        });
+        
+        waterTypeModal.style.display = 'block';
     }
 
 
@@ -353,17 +333,14 @@ document.addEventListener('DOMContentLoaded', () => {
         card.setAttribute('data-id', userPlant.id);
         card.setAttribute('draggable', true);
         
-        // コントロールボタンコンテナ
         const controls = document.createElement('div');
         controls.className = 'controls';
         
-        // ドラッグハンドル
         const dragHandle = document.createElement('span');
         dragHandle.className = 'drag-handle';
         dragHandle.textContent = '☰';
         controls.appendChild(dragHandle);
 
-        // 削除ボタン
         const deleteButton = document.createElement('button');
         deleteButton.className = 'delete-btn';
         deleteButton.textContent = '×';
@@ -374,26 +351,18 @@ document.addEventListener('DOMContentLoaded', () => {
         controls.appendChild(deleteButton);
         card.appendChild(controls); 
 
-        // 季節選択ボタンの生成 
         const seasonSelector = document.createElement('div');
         seasonSelector.className = 'season-selector';
-        
         ['SPRING', 'SUMMER', 'AUTUMN', 'WINTER'].forEach(key => {
             const button = document.createElement('button');
             button.textContent = SEASONS[key].name.split(' ')[0];
             button.className = key === activeSeasonKey ? 'active' : '';
-            
-            // 季節切替機能の実装
             button.onclick = (e) => { 
                 e.stopPropagation();
-                
                 seasonSelector.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
                 button.classList.add('active');
-                
                 const contentElement = card.querySelector('.card-content-wrapper');
-                if(contentElement) {
-                    contentElement.innerHTML = generateCardContent(userPlant, data, key);
-                }
+                if(contentElement) contentElement.innerHTML = generateCardContent(userPlant, data, key);
             };
             seasonSelector.appendChild(button);
         });
@@ -405,14 +374,13 @@ document.addEventListener('DOMContentLoaded', () => {
         card.appendChild(seasonSelector); 
         card.appendChild(content);
         
-        // 🌟 水やり完了ボタンの変更: showWaterTypeSelectionを呼び出す
+        // 水やり完了ボタンの変更: カスタムモーダル表示に変更
         const waterButton = document.createElement('button');
         waterButton.className = 'action-button tertiary water-done-btn';
         waterButton.textContent = '💧 水やり完了 (内容選択)';
         waterButton.onclick = (e) => {
             e.stopPropagation();
-            // 🌟 新しい水やり内容選択ロジックを呼び出す
-            showWaterTypeSelection(userPlant.id);
+            showWaterTypeSelectionModal(userPlant.id); 
         };
         
         const cardFooter = document.createElement('div');
@@ -420,10 +388,7 @@ document.addEventListener('DOMContentLoaded', () => {
         cardFooter.appendChild(waterButton);
         card.appendChild(cardFooter);
 
-
         card.addEventListener('click', () => showDetailsModal(userPlant, data));
-
-        // ドラッグ＆ドロップイベントリスナー
         card.addEventListener('dragstart', handleDragStart);
         card.addEventListener('dragover', handleDragOver);
         card.addEventListener('drop', handleDrop);
@@ -431,24 +396,73 @@ document.addEventListener('DOMContentLoaded', () => {
 
         return card;
     }
+    
+    /**
+     * 🌟 改善 2: 植え替えリマインダーロジックを実装
+     */
+    function checkRepottingStatus(plantData, userPlantId) {
+        const repottingText = plantData.maintenance.repotting; // 例: '5月〜8月'
+        const match = repottingText.match(/(\d+)月.([〜~])(\d+)月/);
+
+        // 植え替え不要、またはパースできない場合
+        if (!match) {
+            return `<li>植え替え推奨時期: ${repottingText}</li>`;
+        }
+
+        const startMonth = parseInt(match[1]);
+        const endMonth = parseInt(match[3]);
+        const currentMonth = new Date().getMonth() + 1; // 1-12
+
+        // 植え替え推奨期間の判定ロジック
+        let isRecommendedTime = false;
+        if (startMonth <= endMonth) { // 例: 5月〜8月
+            isRecommendedTime = (currentMonth >= startMonth && currentMonth <= endMonth);
+        } else { // 例: 12月〜2月 (年越し)
+            isRecommendedTime = (currentMonth >= startMonth || currentMonth <= endMonth);
+        }
+        
+        const lastRepottingDateString = getRepottingDate(userPlantId);
+        let isOverOneYear = true;
+        
+        if (lastRepottingDateString) {
+            const lastRepottingDate = new Date(lastRepottingDateString);
+            const oneYearAgo = new Date();
+            oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+            oneYearAgo.setDate(oneYearAgo.getDate() - 1); // 厳密に365日以上
+
+            // 植え替え日が1年以内なら、リマインドは出さない
+            if (lastRepottingDate > oneYearAgo) {
+                isOverOneYear = false;
+            }
+        } else {
+             // 植え替え日が未設定の場合は、常にリマインド対象とする
+             isOverOneYear = true; 
+        }
+
+        if (isRecommendedTime && isOverOneYear) {
+            // リマインドメッセージ（警告）
+            return `<li class="risk-message repotting-alert">⚠️ <span class="risk-alert warning">植え替え推奨時期 (${repottingText})！${lastRepottingDateString ? '直近の植え替え日から1年以上経過しています。' : '植え替え日が未設定です。'}</span></li>`;
+        }
+        
+        // 植え替えリマインドは出さないが、情報として表示
+        return `<li>植え替え推奨時期: ${repottingText}</li>`;
+    }
 
     function generateCardContent(userPlant, data, seasonKey) {
         const seasonData = data.management[seasonKey];
         const riskText = getSeasonRisk(seasonKey, data);
         
-        // 🌟 userPlant.lastWatering.date を使用する
         const lastWateringDate = new Date(userPlant.lastWatering.date);
         const todayDate = new Date();
-        lastWateringDate.setHours(0, 0, 0, 0); // 時刻を無視
-        todayDate.setHours(0, 0, 0, 0); // 時刻を無視
+        lastWateringDate.setHours(0, 0, 0, 0); 
+        todayDate.setHours(0, 0, 0, 0); 
         const timeSinceWatered = Math.floor((todayDate - lastWateringDate) / (1000 * 60 * 60 * 24)); 
         
-        // waterIntervalDaysプロパティを使用して推奨間隔を取得 (データ駆動)
         let recommendedIntervalDays = seasonData.waterIntervalDays || null; 
         let intervalDisplay = '';
         
         if (recommendedIntervalDays !== null) {
-            if (recommendedIntervalDays === 999) { // 999は断水期間
+            if (recommendedIntervalDays === 999) { 
                  intervalDisplay = `（現在 ${SEASONS[seasonKey].name.split(' ')[0]} は断水期間です）`;
             } else {
                  intervalDisplay = `（約 ${recommendedIntervalDays} 日ごと）`;
@@ -474,12 +488,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const waterMethodSummary = data.water_method.split('。')[0] + '。';
         
-        // 🌟 新規: 前回の水やり内容表示
         const lastWateringTypeKey = userPlant.lastWatering.type;
         const lastWateringType = WATER_TYPES[lastWateringTypeKey] || WATER_TYPES.WaterOnly;
         
-        // 🌟 新規: 登録日と経過日数の表示
         const timeSinceEntry = calculateTimeSince(userPlant.entryDate);
+        
+        // 植え替えリマインダーメッセージを生成
+        const repottingReminder = checkRepottingStatus(data, userPlant.id);
+
 
         return `
             <div class="card-image">
@@ -509,6 +525,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 ${actionMessage}
                 <li>**光量要求:** ${seasonData.light}</li>
             </ul>
+            
+            <ul style="border-top: 1px dashed #f0f0f0; margin-top: 10px; padding-top: 10px;">
+                ${repottingReminder}
+            </ul>
         `;
     }
     
@@ -531,9 +551,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const seasonData = plantData.management[currentSeasonKey];
         const maintenance = plantData.maintenance;
         
-        // 🌟 登録日と経過日数の表示を更新
         entryDateDisplay.textContent = formatJapaneseDate(userPlant.entryDate);
         timeSinceEntryDisplay.textContent = calculateTimeSince(userPlant.entryDate);
+
+        // 詳細モーダルにも植え替えリマインダーロジックを反映
+        const repottingReminderMessage = checkRepottingStatus(plantData, userPlant.id);
 
         plantDetails.innerHTML = `
             <h2>${userPlant.name} (${plantData.species})</h2>
@@ -564,21 +586,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     <li><strong>剪定:</strong> ${maintenance.pruning}</li>
                 </ul>
             </div>
+            
+            <div class="detail-section" style="padding: 10px 0; border-top: 1px solid #e9ecef;">
+                ${repottingReminderMessage}
+            </div>
         `;
         
         updatePurchaseDateDisplay(userPlant.id); 
-        // 🌟 新規: 植え替え日表示を更新
         updateRepottingDateDisplay(userPlant.id); 
         
-        // 🌟 水やり完了ボタンの変更: showWaterTypeSelectionを呼び出す
+        // 水やり完了ボタンの変更: カスタムモーダル表示に変更
         if (waterDoneInDetailContainer) {
-            waterDoneInDetailContainer.innerHTML = ''; // 一旦クリア
+            waterDoneInDetailContainer.innerHTML = ''; 
             const waterButton = document.createElement('button');
-            waterButton.className = 'action-button water-done-btn'; // スタイルはCSSで調整
+            waterButton.className = 'action-button water-done-btn'; 
             waterButton.textContent = '💧 水やり完了 (内容選択)';
             waterButton.onclick = () => {
-                // 🌟 新しい水やり内容選択ロジックを呼び出す
-                showWaterTypeSelection(userPlant.id);
+                showWaterTypeSelectionModal(userPlant.id); 
             };
             waterDoneInDetailContainer.appendChild(waterButton);
         }
@@ -593,26 +617,29 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
     
+    // 🌟 新規: 水やり内容選択モーダルのクローズ処理
+    if (closeWaterTypeButton) {
+        closeWaterTypeButton.onclick = () => {
+            waterTypeModal.style.display = 'none';
+        };
+    }
+    
     // ----------------------------------------------------
-    // 6. 新規植物登録処理 
+    // 6. 新規植物登録処理 (変更なし)
     // ----------------------------------------------------
 
     if (addPlantForm) {
         addPlantForm.addEventListener('submit', function(e) {
             e.preventDefault();
 
-            // 🌟 新規: 水やり内容を取得
             const lastWateredDate = document.getElementById('last-watered').value;
             const waterType = document.getElementById('water-type-select').value;
             
             const newPlant = {
                 id: Date.now(), 
-                // 🌟 改善: 植物名をサニタイズしてXSSを防止
                 name: escapeHTML(document.getElementById('plant-name').value),
                 speciesId: document.getElementById('species-select').value,
-                // 🌟 新規: 登録日を lastWatered と同じ日に設定
                 entryDate: lastWateredDate,
-                // 🌟 構造変更: lastWatering オブジェクト
                 lastWatering: {
                     date: lastWateredDate,
                     type: waterType
@@ -625,7 +652,6 @@ document.addEventListener('DOMContentLoaded', () => {
             renderPlantCards();
             addPlantForm.reset();
             
-            // lastWateredInput の初期値を今日に戻す
             if (lastWateredInput) {
                 lastWateredInput.value = today;
             }
@@ -634,19 +660,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ----------------------------------------------------
-    // 7. カルテ削除ロジック 
+    // 7. カルテ削除ロジック (変更なし)
     // ----------------------------------------------------
 
     function deletePlantCard(id) {
         const numericId = parseInt(id); 
         
-        // 🌟 修正: カスタム確認関数を使用
         showCustomConfirm('この植物のカルテを削除してもよろしいですか？', () => {
              userPlants = userPlants.filter(plant => plant.id !== numericId);
              localStorage.setItem('userPlants', JSON.stringify(userPlants));
             
              localStorage.removeItem(`purchase_date_${numericId}`);
-             // 🌟 新規: 植え替え日も削除
              localStorage.removeItem(`repotting_date_${numericId}`);
             
              renderPlantCards();
@@ -655,7 +679,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ----------------------------------------------------
-    // 8. ドラッグ＆ドロップ（順序変更）ロジック (CSSクラスを適用)
+    // 8. ドラッグ＆ドロップ（順序変更）ロジック (変更なし)
     // ----------------------------------------------------
 
     function handleDragStart(e) {
@@ -671,7 +695,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const targetCard = e.target.closest('.plant-card');
         if (!targetCard || targetCard.classList.contains('dragging')) return;
         
-        // CSSクラスを操作
         const bounding = targetCard.getBoundingClientRect();
         const offset = bounding.y + (bounding.height / 2);
         
@@ -692,7 +715,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const targetCard = e.target.closest('.plant-card');
         if (!targetCard || draggedId === null) return;
 
-        // クラスを削除して視覚フィードバックをリセット
         targetCard.classList.remove('drop-before', 'drop-after');
 
         const droppedId = parseInt(targetCard.dataset.id);
@@ -726,7 +748,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleDragEnd(e) {
         e.target.classList.remove('dragging');
         e.target.style.opacity = '1'; 
-        // すべてのカードのクラスをリセット
         document.querySelectorAll('.plant-card').forEach(card => {
             card.classList.remove('drop-before', 'drop-after');
         });
@@ -754,7 +775,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             detailsModal.style.display = 'none'; 
             purchaseDateModal.style.display = 'block';
-            purchaseDateInput.setAttribute('max', today); // 未来日入力防止
+            purchaseDateInput.setAttribute('max', today); 
 
             const existingDate = getPurchaseDate(currentPlantId);
             purchaseDateInput.value = existingDate || '';
@@ -778,7 +799,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // ----------------------------------------------------
-    // 9.5. 新規: 植え替え日入力モーダル処理
+    // 9.5. 植え替え日入力モーダル処理 (変更なし)
     // ----------------------------------------------------
     
     if (closeRepottingDateButton) {
@@ -797,7 +818,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             detailsModal.style.display = 'none'; 
             repottingDateModal.style.display = 'block';
-            repottingDateInput.setAttribute('max', today); // 未来日入力防止
+            repottingDateInput.setAttribute('max', today); 
             
             const existingDate = getRepottingDate(currentPlantId);
             repottingDateInput.value = existingDate || '';
@@ -814,6 +835,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 repottingDateModal.style.display = 'none';
                 if (detailsModal) detailsModal.style.display = 'block'; 
                 updateRepottingDateDisplay(currentPlantId);
+                renderPlantCards(); // カードのリマインダーも更新するため再描画
             } else {
                 showNotification('日付を入力してください。', 'warning');
             }
@@ -822,20 +844,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // ----------------------------------------------------
-    // 10. エクスポート/インポート機能 
+    // 10. エクスポート/インポート機能 (変更なし)
     // ----------------------------------------------------
 
     const collectAllData = () => {
         const userPlantsRaw = localStorage.getItem('userPlants');
         const purchaseDates = {};
-        const repottingDates = {}; // 🌟 新規: 植え替え日データ
+        const repottingDates = {}; 
 
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
             if (key && key.startsWith('purchase_date_')) {
                 purchaseDates[key] = localStorage.getItem(key);
             }
-            // 🌟 新規: 植え替え日を収集
             if (key && key.startsWith('repotting_date_')) {
                 repottingDates[key] = localStorage.getItem(key);
             }
@@ -844,7 +865,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return {
             userPlants: userPlantsRaw ? JSON.parse(userPlantsRaw) : [],
             purchaseDates: purchaseDates,
-            repottingDates: repottingDates // 🌟 新規: エクスポートデータに追加
+            repottingDates: repottingDates 
         };
     };
 
@@ -889,17 +910,14 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const importedData = JSON.parse(e.target.result);
 
-                // 必要なキーの確認 (repottingDatesはオプションとして扱う)
                 if (!Array.isArray(importedData.userPlants) || typeof importedData.purchaseDates !== 'object') {
                     throw new Error('JSON形式が正しくありません。必要なキー（userPlants, purchaseDates）が見つかりません。');
                 }
                 
                 showCustomConfirm('現在のカルテ情報をインポートデータで上書きします。よろしいですか？', () => {
-                    // 1. userPlants (メインカルテ) の更新と正規化
                     userPlants = normalizePlantData(importedData.userPlants); 
                     localStorage.setItem('userPlants', JSON.stringify(userPlants));
 
-                    // 2. LocalStorage のデータクリーンアップ (古いデータ形式も削除)
                     for (let i = 0; i < localStorage.length; i++) {
                         const key = localStorage.key(i);
                         if (key && (key.startsWith('purchase_date_') || key.startsWith('repotting_date_') || key === 'userPlants' || key === 'purchaseDates')) {
@@ -907,12 +925,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
                     
-                    // 3. Purchase Dates (購入日) の更新
                     Object.keys(importedData.purchaseDates).forEach(key => {
                         localStorage.setItem(key, importedData.purchaseDates[key]);
                     });
                     
-                    // 4. 🌟 新規: Repotting Dates (植え替え日) の更新
                     if (importedData.repottingDates) {
                         Object.keys(importedData.repottingDates).forEach(key => {
                             localStorage.setItem(key, importedData.repottingDates[key]);
@@ -929,7 +945,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 showNotification('データのインポートに失敗しました。ファイル形式を確認してください。エラー: ' + error.message, 'error', 5000); 
                 console.error("Import Error:", error);
             } finally {
-                // 成功/エラー/キャンセルにかかわらず、ファイル選択はここで必ずリセットする
                 if(importFileInput) {
                     importFileInput.value = '';
                     importFileNameDisplay.textContent = 'ファイル未選択';
