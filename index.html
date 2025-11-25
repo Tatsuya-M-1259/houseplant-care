@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>観葉植物管理カルテ</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="[https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+JP:wght@400;600;700&display=swap](https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+JP:wght@400;600;700&display=swap)" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
 </head>
@@ -26,10 +26,14 @@
                 </select>
                 
                 <label for="last-watered">直近の水やり日:</label>
-                <input type="date" id="last-watered" required>
+                <div class="input-with-button">
+                    <input type="date" id="last-watered" required>
+                    <!-- 🌟 改善: 「今日の日付をセット」ボタン -->
+                    <button type="button" id="set-today-button" class="action-button tertiary">今日をセット</button>
+                </div>
                 
-                <!-- 🌟 修正: 次回予定日のリアルタイム表示エリアを追加 -->
-                <p id="next-watering-preview" class="form-preview-message"></p>
+                <!-- 🌟 修正: 次回予定日のリアルタイム表示エリア -->
+                <p id="next-watering-preview" class="form-preview-message">植物種と水やり日を選択してください。</p>
                 
                 <label for="water-type-select">水やり内容:</label>
                 <select id="water-type-select" required>
@@ -47,6 +51,9 @@
         
         <section id="data-management" class="card secondary-section">
             <h2>データ管理</h2>
+            <div id="notification-control-container" class="control-group">
+                <!-- 🌟 PWA通知設定UIがここに動的に挿入されます -->
+            </div>
             <div class="data-controls">
                 <button id="export-data-button" class="action-button secondary">📤 データエクスポート</button>
                 <div class="import-control">
