@@ -231,6 +231,35 @@ form select {
     }
 }
 
+/* 🌟 新規: クイックソートボタンのスタイル */
+.quick-sort-buttons {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    max-width: 800px;
+    margin: -10px auto 20px auto;
+    padding: 0 20px;
+}
+.quick-sort-buttons button {
+    flex-grow: 1;
+    padding: 8px 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border: 1px solid #ced4da;
+    background-color: white;
+    color: var(--color-text-mid);
+    border-radius: var(--border-radius);
+    transition: background-color 0.2s, color 0.2s;
+}
+.quick-sort-buttons button.active {
+    background-color: var(--color-primary);
+    color: white;
+    border-color: var(--color-primary);
+}
+.quick-sort-buttons button:hover:not(.active) {
+    background-color: #e9ecef;
+}
+/* ---------------------------------- */
 /* 🌟 新規: ソート/フィルタリング UI のスタイル */
 .control-card {
     max-width: 800px !important; 
@@ -770,4 +799,38 @@ form select {
 .log-content {
     display: flex;
     align-items: center;
+}
+
+/* 🌟 改善: モーダルナビゲーションボタン */
+.modal-nav-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: rgba(0, 0, 0, 0.4);
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    z-index: 1010; 
+    font-size: 1.5rem;
+    line-height: 1;
+    transition: background-color 0.2s;
+}
+.modal-nav-btn:hover {
+    background-color: rgba(0, 0, 0, 0.7);
+}
+.modal-nav-btn.prev-btn {
+    left: 0;
+    border-radius: 0 5px 5px 0;
+}
+.modal-nav-btn.next-btn {
+    right: 0;
+    border-radius: 5px 0 0 5px;
+}
+/* モバイルではボタンを大きくする */
+@media (max-width: 600px) {
+    .modal-nav-btn {
+        padding: 15px 20px;
+        font-size: 2rem;
+    }
 }
