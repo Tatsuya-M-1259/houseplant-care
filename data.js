@@ -75,7 +75,7 @@ export const PLANT_DATA = [
         water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', 
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', waterIntervalDays: 7, light: '明るい日なた/半日陰' },
-            SUMMER: { water: '土表面が乾いたらすぐ', waterIntervalDays: 7, light: '明るい日なた/半日陰' },
+            SUMMER: { water: '土表面が乾いたらすぐ', waterIntervalDays: 7, light: '日当たり良好/半日陰' },
             AUTUMN: { water: '土表面が乾いてから1日後', waterIntervalDays: 10, light: '明るい日なた/半日陰' },
             WINTER: { water: '土中が乾いてから2-3日後 (少量)', waterIntervalDays: 14, light: '半日陰', tempRisk: '厳重な温度管理（最低10℃確保）' }
         },
