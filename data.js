@@ -1,9 +1,10 @@
 // data.js
 
-// 季節区分の定義 (SEASONS定義はapp.jsに移動しました)
+// 季節区分の定義 (SEASONS定義はapp.jsにあります)
 
 // 全22種の観葉植物データセット
-const PLANT_DATA = [
+// 🌟 export を追加してモジュール化
+export const PLANT_DATA = [
     // waterIntervalDays: 推奨される水やり頻度の日数。999は断水期間を意味します。
 
     // No. 1: コルジリネ
