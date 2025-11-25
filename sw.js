@@ -1,16 +1,17 @@
 // sw.js
 
-const CACHE_NAME = 'houseplant-care-v5'; // 🌟 修正: キャッシュバージョンを更新
+const CACHE_NAME = 'houseplant-care-v6'; // 🌟 修正: キャッシュバージョンを更新
 const CORE_ASSETS = [
     './', // index.html
     'index.html',
     'style.css',
     'app.js',
+    'data.js', // 🌟 追加: data.js もコアアセットとして明示的にキャッシュ推奨
     'manifest.json',
     'icon-192x192.png',
     'icon-512x512.png',
-    // 🌟 コア画像（アセットとして必須なもののみ残す、他は動的キャッシュ）
-    // 必要に応じてデフォルト画像やアイコンを追加
+    // 🌟 重要: 外部CDNのライブラリもキャッシュしてオフライン対応させる
+    'https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js' 
 ];
 
 // インストールイベント: コアアセットのプリロード
@@ -19,6 +20,7 @@ self.addEventListener('install', (event) => {
         caches.open(CACHE_NAME)
             .then((cache) => {
                 console.log('Service Worker: コアアセットをプリロードしました。');
+                // 外部URLを含むすべてのアセットをキャッシュ
                 return cache.addAll(CORE_ASSETS);
             })
     );
@@ -46,10 +48,17 @@ self.addEventListener('fetch', (event) => {
         return; // 処理終了
     }
 
-    // data.js の SWR 戦略 (モジュール化してもファイル名が変わらなければ有効)
+    // data.js の SWR 戦略
     if (path.includes('data.js')) {
         event.respondWith(staleWhileRevalidate(event.request));
-    } else {
+    } 
+    // 🌟 外部CDN (SortableJS) もキャッシュ優先で返す
+    else if (CORE_ASSETS.includes(event.request.url) || CORE_ASSETS.includes(path)) {
+         event.respondWith(caches.match(event.request).then((response) => {
+            return response || fetch(event.request);
+        }));
+    }
+    else {
         // Cache-First戦略をコアアセットに適用
         event.respondWith(caches.match(event.request).then((response) => {
             return response || fetch(event.request);
@@ -87,9 +96,6 @@ self.addEventListener('activate', (event) => {
         })
     );
 });
-
-// 🌟 プッシュ通知イベントリスナーは、サーバーレス環境では発火しないため削除しました。
-// 通知ロジックは app.js のクライアント側処理に移行しました。
 
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
