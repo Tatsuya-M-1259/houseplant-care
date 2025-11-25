@@ -26,15 +26,15 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentFilter = localStorage.getItem('filter-select') || 'all';
 
     // ----------------------------------------------------
-    // 🌟 画像エラーハンドリング (グローバルキャプチャ)
+    // 🌟 修正: 画像エラーハンドリング (プレースホルダー表示)
     // ----------------------------------------------------
     // DOM生成後に発生する画像読み込みエラーを捕捉してプレースホルダーに差し替え
     window.addEventListener('error', (e) => {
         if (e.target.tagName === 'IMG') {
-            // e.target.src = 'path/to/placeholder.png'; // プレースホルダー画像があれば指定
-            // ここでは簡易的にスタイリングで対応
-            e.target.style.display = 'none'; // または e.target.style.opacity = 0.5; 等
-            // 代替テキスト表示などの処理も可能
+            // グレーの「No Image」SVGを表示
+            e.target.src = "data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25' viewBox='0 0 300 200'%3e%3crect fill='%23e0e0e0' width='300' height='200'/%3e%3ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='24' fill='%23888'%3eNo Image%3c/text%3e%3c/svg%3e";
+            e.target.alt = "画像読み込み失敗";
+            // e.target.style.display = 'none'; // 非表示にはしない
             console.warn(`画像読み込み失敗: ${e.target.alt}`);
         }
     }, true); // useCapture: true でloadエラーを捕捉
@@ -505,6 +505,14 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
         
+        // 🌟 修正: ブラウザの戻るボタンでモーダルを閉じる処理
+        window.addEventListener('popstate', (e) => {
+            if (detailsModal.style.display === 'block') {
+                detailsModal.style.display = 'none';
+                currentPlantId = null;
+            }
+        });
+
         renderQuickSortButtons();
     }
     
@@ -882,7 +890,9 @@ document.addEventListener('DOMContentLoaded', () => {
             : `<li><strong>次回予定日:</strong> ${recommendedIntervalDays === 999 ? '断水中' : '算出不可'}</li>`;
 
 
-        const waterMethodSummary = data.water_method.split('。')[0] + '。';
+        // 🌟 修正: 安全にwater_methodを取得（クラッシュ防止）
+        const waterMethodText = data.water_method || '水やり方法は詳細を確認してください。';
+        const waterMethodSummary = waterMethodText.split('。')[0] + '。';
         
         const lastWateringTypeKey = lastLog.type;
         const lastWateringType = WATER_TYPES[lastWateringTypeKey] || WATER_TYPES.WaterOnly;
@@ -995,9 +1005,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const repottingReminderMessage = checkRepottingStatus(plantData, userPlant.id);
 
+        // 🌟 修正: 安全にwater_methodを取得
+        const safeWaterMethod = plantData.water_method || '詳細不明';
+
         const seasonCareContentHtml = `
             <ul>
-                <li><strong>水やり量（一度に与える量）:</strong> ${plantData.water_method}</li>
+                <li><strong>水やり量（一度に与える量）:</strong> ${safeWaterMethod}</li>
                 <li><strong>水やり頻度（タイミング）:</strong> ${seasonData.water}</li>
                 <li><strong>光:</strong> ${seasonData.light}</li>
                 ${seasonData.tempRisk ? `<li><strong>寒さ対策:</strong> ${seasonData.tempRisk}</li>` : ''}
@@ -1099,13 +1112,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }, { passive: true });
 
 
+        // 🌟 修正: History API でモーダル状態を管理
+        history.pushState({ modal: 'details' }, null, '');
         detailsModal.style.display = 'block'; 
     }
 
     if (closeDetailButton) {
         closeDetailButton.onclick = () => {
-            detailsModal.style.display = 'none';
-            currentPlantId = null;
+            // 🌟 修正: 戻るボタンの挙動と連動
+            if (history.state && history.state.modal === 'details') {
+                history.back(); // これが popstate をトリガーして閉じる
+            } else {
+                detailsModal.style.display = 'none';
+                currentPlantId = null;
+            }
         };
     }
     
