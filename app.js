@@ -41,7 +41,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // ----------------------------------------------------
     // 🌟 修正: 画像エラーハンドリング (プレースホルダー表示)
     // ----------------------------------------------------
-    // 修正: エラー時の画像を関数化してData URIを一箇所管理
     function getPlaceholderImage() {
         return "data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25' viewBox='0 0 300 200'%3e%3crect fill='%23e0e0e0' width='300' height='200'/%3e%3ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='24' fill='%23888'%3eNo Image%3c/text%3e%3c/svg%3e";
     }
@@ -49,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('error', (e) => {
         if (e.target.tagName === 'IMG') {
             const placeholder = getPlaceholderImage();
-            if (e.target.src !== placeholder) { // 無限ループ防止
+            if (e.target.src !== placeholder) { 
                 e.target.src = placeholder;
                 e.target.alt = "画像読み込み失敗";
                 console.warn(`画像読み込み失敗: ${e.target.alt}`);
@@ -207,8 +206,6 @@ document.addEventListener('DOMContentLoaded', () => {
     saveUserPlants(userPlants);
     
     let currentPlantId = null;
-    // draggedId は SortableJS を使用するため不要になりましたが、互換性のため残すか削除
-    // let draggedId = null; 
 
     // ----------------------------------------------------
     // 3. 季節判定ロジック
@@ -353,7 +350,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
-    // 🌟 通知ロジックの修正: クライアントサイドで今日やるべきことをチェック
+    // 🌟 通知ロジックの修正: 今日「以降」ではなく、今日やるべき（または過ぎている）ものをチェック
     function checkDailyNotifications() {
         if (!('Notification' in window) || Notification.permission !== 'granted') return;
 
@@ -361,15 +358,18 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = PLANT_DATA.find(pd => pd.id == p.speciesId);
             const seasonData = data.management[currentSeasonKey];
             const lastLog = p.waterLog[0] || { date: p.entryDate };
-            const nextDate = calculateNextWateringDate(lastLog.date, seasonData.waterIntervalDays);
+            const nextDateString = calculateNextWateringDate(lastLog.date, seasonData.waterIntervalDays);
             
-            return nextDate === today; // 今日が予定日のものを抽出
+            if (!nextDateString) return false; // 断水期間など
+
+            // 🌟 修正: 予定日が「今日」または「今日より前（通知漏れ防止）」の場合に通知
+            return nextDateString <= today;
         });
 
         if (plantsToWater.length > 0) {
             const names = plantsToWater.map(p => p.name).join(', ');
             new Notification('水やりリマインダー', {
-                body: `今日は ${names} の水やり予定日です。`,
+                body: `水やり予定日です（または過ぎています）: ${names}`,
                 icon: 'icon-192x192.png'
             });
         }
@@ -681,11 +681,6 @@ document.addEventListener('DOMContentLoaded', () => {
         plantCardList.appendChild(cardContainer);
 
         // 🌟 修正: SortableJSの初期化 (モバイルDnD対応)
-        // 手動ソート（デフォルトソート以外）の時のみ有効にするか、または常時有効にして
-        // 「次回水やり順」の場合は並び替え後にアラートを出すなどの制御が可能。
-        // ここでは、ユーザーが手動で並び替えたい意図を尊重し、デフォルトソート以外の時に有効化を推奨。
-        // しかし、元のコードロジックに従い、'nextWateringDate' 以外の場合に並び替え可能とします。
-        
         if (currentSort !== 'nextWateringDate') {
             new Sortable(cardContainer, {
                 animation: 150,
@@ -693,7 +688,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 delay: 100, // 誤操作防止（少し待ってからドラッグ開始）
                 delayOnTouchOnly: true,
                 touchStartThreshold: 5, // 5px以上動いたらドラッグとみなす
-                ghostClass: 'sortable-ghost',
+                ghostClass: 'sortable-ghost', // style.cssでスタイル定義推奨
                 onEnd: function (evt) {
                     // DOMの現在の並び順からIDリストを取得
                     const newOrderIds = Array.from(cardContainer.children).map(card => parseInt(card.dataset.id));
@@ -759,9 +754,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const card = document.createElement('div');
         card.className = 'plant-card';
         card.setAttribute('data-id', userPlant.id);
-        
-        // 🌟 修正: HTML5 Draggable属性は削除 (SortableJSを使用するため)
-        // card.setAttribute('draggable', !isAutoSorted);
         
         const controls = document.createElement('div');
         controls.className = 'controls';
@@ -872,9 +864,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             showDetailsModal(userPlant, data);
         });
-        
-        // 🌟 修正: 古いドラッグイベントリスナーを削除しました
-        // if (!isAutoSorted) { ... } 部分削除
 
         return card;
     }
@@ -1263,12 +1252,6 @@ document.addEventListener('DOMContentLoaded', () => {
              showNotification('カルテを削除しました。', 'success'); 
         });
     }
-
-    // 🌟 修正: 以下のドラッグハンドラ関数は削除されました
-    // function handleDragStart(e) ...
-    // function handleDragOver(e) ...
-    // function handleDrop(e) ...
-    // function handleDragEnd(e) ...
 
     if (closeRepottingDateButton) {
         closeRepottingDateButton.onclick = () => {
