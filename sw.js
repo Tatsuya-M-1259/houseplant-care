@@ -1,7 +1,7 @@
 // sw.js
 
-// 🌟 更新: キャッシュバージョンを v9 に更新
-const CACHE_NAME = 'houseplant-care-v9'; 
+// 🌟 更新: キャッシュバージョンを v10 に更新してリフレッシュを強制
+const CACHE_NAME = 'houseplant-care-v10'; 
 const SORTABLE_CDN = 'https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js';
 
 const CORE_ASSETS = [
@@ -18,7 +18,7 @@ const CORE_ASSETS = [
 
 // インストールイベント: コアアセットのプリロード
 self.addEventListener('install', (event) => {
-    self.skipWaiting();
+    self.skipWaiting(); // 即時有効化
 
     event.waitUntil(
         caches.open(CACHE_NAME)
