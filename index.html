@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self'; img-src 'self' data:;">
+    
     <title>観葉植物管理カルテ</title>
     
     <link rel="manifest" href="manifest.json">
@@ -14,6 +16,7 @@
     <link rel="stylesheet" href="style.css">
     
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js" defer></script>
+    <script type="module" src="app.js"></script>
 </head>
 <body>
 
@@ -26,7 +29,7 @@
             <h2>🌱 新規植物の登録</h2>
             <form id="add-plant-form">
                 <label for="plant-name">植物名 (ニックネーム):</label>
-                <input type="text" id="plant-name" required>
+                <input type="text" id="plant-name" required autocomplete="off">
                 
                 <label for="species-select">植物種 (リストから選択):</label>
                 <select id="species-select" required>
@@ -183,7 +186,5 @@
             <p style="margin-top: 20px;">※水やり日を変更したい場合は、カルテ新規登録フォームから設定してください。</p>
         </div>
     </div>
-    
-    <script type="module" src="app.js"></script>
 </body>
 </html>
