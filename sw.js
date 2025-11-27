@@ -39,10 +39,16 @@ self.addEventListener('fetch', (event) => {
         event.respondWith(
             caches.open(CACHE_NAME).then((cache) => {
                 return cache.match(event.request).then((response) => {
-                    return response || fetch(event.request).then((networkResponse) => {
-                        cache.put(event.request, networkResponse.clone());
-                        return networkResponse;
-                    });
+                    return response || fetch(event.request)
+                        .then((networkResponse) => {
+                            cache.put(event.request, networkResponse.clone());
+                            return networkResponse;
+                        })
+                        // 🌟 修正: オフライン等で画像取得に失敗した場合のエラーハンドリング
+                        // nullを返すことで、アプリ側の img.onerror を発火させて代替画像を表示する
+                        .catch(() => {
+                            return null;
+                        });
                 });
             })
         );
