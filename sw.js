@@ -1,7 +1,7 @@
 // sw.js
 
-const CACHE_NAME = 'houseplant-care-v8'; // 🌟 更新: バージョンをインクリメント
-// 🌟 修正: バージョンを固定して安全性を確保
+// 🌟 更新: キャッシュバージョンを v9 に更新
+const CACHE_NAME = 'houseplant-care-v9'; 
 const SORTABLE_CDN = 'https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js';
 
 const CORE_ASSETS = [
@@ -9,16 +9,15 @@ const CORE_ASSETS = [
     'index.html',
     'style.css',
     'app.js',
-    'data.js', // 🌟 追加: data.js もコアアセットとして明示的にキャッシュ推奨
+    'data.js', 
     'manifest.json',
     'icon-192x192.png',
     'icon-512x512.png',
-    SORTABLE_CDN // 🌟 重要: 外部CDNのライブラリもキャッシュしてオフライン対応させる
+    SORTABLE_CDN 
 ];
 
 // インストールイベント: コアアセットのプリロード
 self.addEventListener('install', (event) => {
-    // 🌟 追加: 更新時に待機状態をスキップして即時有効化させる
     self.skipWaiting();
 
     event.waitUntil(
@@ -35,13 +34,11 @@ self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
     const path = url.pathname;
 
-    // 🌟 画像ファイル（.jpg, .jpeg, .png）の動的キャッシュ戦略
+    // 画像ファイル（.jpg, .jpeg, .png）の動的キャッシュ戦略
     if (path.match(/\.(jpg|jpeg|png)$/i)) {
         event.respondWith(
             caches.open(CACHE_NAME).then((cache) => {
                 return cache.match(event.request).then((response) => {
-                    // キャッシュにあればそれを返す
-                    // なければネットワークから取得してキャッシュに保存
                     return response || fetch(event.request).then((networkResponse) => {
                         cache.put(event.request, networkResponse.clone());
                         return networkResponse;
@@ -49,14 +46,14 @@ self.addEventListener('fetch', (event) => {
                 });
             })
         );
-        return; // 処理終了
+        return; 
     }
 
     // data.js の SWR 戦略
     if (path.includes('data.js')) {
         event.respondWith(staleWhileRevalidate(event.request));
     } 
-    // 🌟 外部CDN (SortableJS) もキャッシュ優先で返す
+    // 外部CDN (SortableJS) もキャッシュ優先で返す
     else if (event.request.url === SORTABLE_CDN || CORE_ASSETS.includes(path)) {
          event.respondWith(caches.match(event.request).then((response) => {
             return response || fetch(event.request);
