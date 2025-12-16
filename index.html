@@ -65,7 +65,12 @@
             <p id="last-update-display" class="file-name-display" style="text-align: left; margin-bottom: 15px;"></p>
             
             <div class="data-controls">
-                <button id="export-data-button" class="action-button secondary">📤 データエクスポート</button>
+                <div class="export-options">
+                    <button id="export-data-button" class="action-button secondary">📤 データエクスポート</button>
+                    <label style="font-size: 0.9em; display: inline-flex; align-items: center; margin-top: 5px;">
+                        <input type="checkbox" id="export-include-images" checked style="width: auto; margin: 0 5px 0 0;"> 画像を含める
+                    </label>
+                </div>
                 <div class="import-control">
                     <input type="file" id="import-file-input" accept=".json" style="display: none;">
                     <button id="import-data-button" class="action-button primary-outline">📥 データインポート</button>
@@ -206,6 +211,8 @@
         <span id="lightbox-close">&times;</span>
         <img id="lightbox-image" src="" alt="">
     </div>
+
+    <div id="scroll-to-top" title="トップへ戻る">↑</div>
 
 </body>
 </html>
