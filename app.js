@@ -159,6 +159,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return "data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25' viewBox='0 0 300 200'%3e%3crect fill='%23e0e0e0' width='300' height='200'/%3e%3ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='24' fill='%23888'%3eNo Image%3c/text%3e%3c/svg%3e";
     }
 
+    // 🌟 スクロールロック制御 (UX改善)
+    function toggleBodyScroll(lock) {
+        document.body.style.overflow = lock ? 'hidden' : '';
+    }
+
     window.addEventListener('error', (e) => {
         if (e.target.tagName === 'IMG') {
             const placeholder = getPlaceholderImage();
@@ -245,6 +250,8 @@ document.addEventListener('DOMContentLoaded', () => {
             showNotification(`${userPlants[plantIndex].name} の記録完了！`, 'success');
             
             waterTypeModal.style.display = 'none';
+            toggleBodyScroll(false); // モーダル閉じる
+            
             if (detailsModal.style.display === 'block') {
                  const plantData = PLANT_DATA.find(p => String(p.id) === String(userPlants[plantIndex].speciesId));
                  showDetailsModal(userPlants[plantIndex], plantData);
@@ -339,7 +346,7 @@ document.addEventListener('DOMContentLoaded', () => {
         userPlants = [];
     }
     
-    // バリデーション機能
+    // 🌟 バリデーション機能
     function validatePlantData(plant) {
         if (!plant || typeof plant !== 'object') return null;
         const safePlant = { ...plant };
@@ -431,7 +438,6 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             await initDB();
             console.log("IndexedDB Initialized.");
-            // ガベージコレクションは削除時のみ実行
         } catch(e) {
             console.error("IndexedDB Init Failed", e);
             showNotification("データベースの初期化に失敗しました", "error");
@@ -512,17 +518,41 @@ document.addEventListener('DOMContentLoaded', () => {
              speciesSelect.addEventListener('change', updatePreview);
         }
 
+        // 🌟 モーダル制御の一元化
         window.addEventListener('click', (e) => {
             if (e.target === detailsModal) closeDetailModal();
-            if (e.target === waterTypeModal) waterTypeModal.style.display = 'none';
-            if (e.target === purchaseDateModal) purchaseDateModal.style.display = 'none';
-            if (e.target === repottingDateModal) repottingDateModal.style.display = 'none';
+            if (e.target === waterTypeModal) {
+                waterTypeModal.style.display = 'none';
+                toggleBodyScroll(false);
+            }
+            if (e.target === purchaseDateModal) {
+                purchaseDateModal.style.display = 'none';
+                // 親モーダル（詳細）に戻る場合はスクロールロック解除しない
+            }
+            if (e.target === repottingDateModal) {
+                repottingDateModal.style.display = 'none';
+            }
             if (e.target === lightboxModal) closeLightbox();
         });
 
+        // 🌟 「戻る」ボタン対応 (popstate)
+        window.addEventListener('popstate', (e) => {
+            if (detailsModal.style.display === 'block') {
+                detailsModal.style.display = 'none';
+                currentPlantId = null;
+                toggleBodyScroll(false); // 解除
+            }
+        });
+
         const closeDetailModal = () => {
-            if (history.state && history.state.modal === 'details') history.back();
-            else { detailsModal.style.display = 'none'; currentPlantId = null; }
+            // history.state を確認して戻るか閉じるか判断
+            if (history.state && history.state.modal === 'details') {
+                history.back(); // これが popstate を発火させる
+            } else { 
+                detailsModal.style.display = 'none'; 
+                currentPlantId = null; 
+                toggleBodyScroll(false); // 解除
+            }
         };
         if (closeDetailButton) closeDetailButton.onclick = closeDetailModal;
         
@@ -857,6 +887,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const seasonData = data.management[seasonKey];
         const lastLog = userPlant.waterLog[0] || { date: userPlant.entryDate, type: 'WaterOnly' };
         const nextDateString = calculateNextWateringDate(lastLog.date, seasonData.waterIntervalDays);
+        const waterMethodSummary = (data.water_method || '').split('。')[0] + '。';
         const mistingInfo = seasonData.mist || 'データなし';
         
         const html = `
@@ -878,6 +909,10 @@ document.addEventListener('DOMContentLoaded', () => {
             </ul>
         `;
         container.innerHTML = html;
+        // 🌟 読み込み完了後に不透明度を戻すアニメーション (UX)
+        container.style.opacity = '0';
+        requestAnimationFrame(() => container.style.opacity = '1');
+        container.style.transition = 'opacity 0.3s ease';
     }
 
     function sortAndFilterPlants() {
@@ -942,7 +977,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (existingImg) existingImg.remove();
         plantDetails.prepend(detailImageContainer);
         
-        // ▼▼▼ データ注入 (修正箇所) ▼▼▼
+        // ▼ データ注入 ▼
         const seasonData = plantData.management[getCurrentSeason()];
         const maintenance = plantData.maintenance;
 
@@ -957,7 +992,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     ${seasonData.tempRisk ? `<li><strong>寒さ対策:</strong> ${escapeHTML(seasonData.tempRisk)}</li>` : ''}
                 </ul>
             `;
-            // 開く
             seasonContent.classList.add('expanded');
             const h = document.querySelector('[data-target="season-care-content"]');
             if(h) h.classList.remove('collapsed');
@@ -976,7 +1010,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     <li><strong>剪定:</strong> ${escapeHTML(maintenance.pruning)}</li>
                 </ul>
             `;
-            // 閉じる
             basicContent.classList.remove('expanded');
             const h = document.querySelector('[data-target="basic-maintenance-content"]');
             if(h) h.classList.add('collapsed');
@@ -995,15 +1028,28 @@ document.addEventListener('DOMContentLoaded', () => {
             const h = document.querySelector('[data-target="repotting-history-list"]');
             if(h) h.classList.add('collapsed');
         }
-        // ▲▲▲ データ注入 ここまで ▲▲▲
         
         renderWaterHistory(userPlant.waterLog, userPlant.id);
         renderRepottingHistory(userPlant.repottingLog);
         
+        // 🌟 修正: 詳細画面内の水やりボタン配置
+        if (waterDoneInDetailContainer) {
+            waterDoneInDetailContainer.innerHTML = ''; 
+            const waterButton = document.createElement('button');
+            waterButton.className = 'action-button water-done-btn'; 
+            waterButton.textContent = '💧 水やり完了 (内容選択)';
+            waterButton.onclick = () => {
+                showWaterTypeSelectionModal(userPlant.id); 
+            };
+            waterDoneInDetailContainer.appendChild(waterButton);
+        }
+
+        // 🌟 モーダルを開く＆履歴追加＆スクロールロック
         detailsModal.style.display = 'block';
+        toggleBodyScroll(true);
+        history.pushState({ modal: 'details' }, null, '#details');
     }
 
-    // 🌟 復活: 水やり内容選択モーダル
     function showWaterTypeSelectionModal(plantId) {
         const strId = String(plantId);
         const plant = userPlants.find(p => String(p.id) === strId);
@@ -1028,6 +1074,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         waterTypeModal.style.display = 'block';
+        toggleBodyScroll(true); // ロック
     }
 
     // ----------------------------------------------------
