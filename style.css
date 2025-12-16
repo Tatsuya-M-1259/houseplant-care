@@ -368,3 +368,24 @@ form select {
 #lightbox-close {
     position: absolute; top: 20px; right: 30px; color: white; font-size: 40px; cursor: pointer; z-index: 2001;
 }
+
+/* 追加: 写真変更ボタン */
+#change-photo-button {
+    margin-bottom: 15px;
+    background-color: #6c757d;
+    color: white;
+    font-size: 0.9rem;
+    width: auto;
+    display: inline-block;
+}
+#change-photo-button:hover {
+    background-color: #5a6268;
+}
+/* 詳細画像の表示調整 */
+.detail-image {
+    width: 100%;
+    max-height: 300px;
+    object-fit: cover; /* 縦長写真も枠内に収める */
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+}
