@@ -617,6 +617,50 @@ document.addEventListener('DOMContentLoaded', () => {
                 showDetailsModal(plant, PLANT_DATA.find(pd => String(pd.id) === String(plant.speciesId)));
             });
         }
+        
+        // 5. 新規登録フォーム送信
+        if (addPlantForm) {
+            addPlantForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const speciesId = speciesSelect.value;
+                const lastWateredDate = lastWateredInput.value;
+        
+                if (speciesId && lastWateredDate) {
+                    const selectedPlantData = PLANT_DATA.find(p => String(p.id) === String(speciesId));
+                    const newPlant = {
+                        id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+                        speciesId: speciesId,
+                        name: selectedPlantData ? selectedPlantData.species : '植物',
+                        entryDate: getLocalTodayDate(),
+                        waterLog: [{ date: lastWateredDate, type: 'WaterOnly' }],
+                        repottingLog: [],
+                        hasCustomImage: false
+                    };
+        
+                    userPlants.push(newPlant);
+                    saveUserPlants(userPlants);
+                    
+                    renderPlantCards();
+                    showNotification('植物を追加しました！', 'success');
+        
+                    // フォームリセット
+                    speciesSelect.value = '';
+                    nextWateringPreview.textContent = '';
+                }
+            });
+        }
+        
+        // 通知設定UI (ダミー実装)
+        function setupNotificationUI() {
+            if (!notificationControlContainer) return;
+            notificationControlContainer.innerHTML = '';
+            
+            const btn = document.createElement('button');
+            btn.textContent = '通知設定を開く (未実装)';
+            btn.className = 'action-button secondary';
+            btn.onclick = () => showNotification('通知機能は現在開発中です。', 'info');
+            notificationControlContainer.appendChild(btn);
+        }
 
         renderQuickSortButtons();
     } // end initializeApp
