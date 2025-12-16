@@ -230,15 +230,15 @@ document.addEventListener('DOMContentLoaded', () => {
             
             waterTypeModal.style.display = 'none';
             
-            // 🌟 UX改善: 詳細モーダルが開いている場合はスクロールロックを解除しない
+            // 🌟 修正箇所: 詳細モーダルが開いている場合はスクロールロックを解除しない
             const isDetailOpen = detailsModal.style.display === 'block';
             
             if (isDetailOpen) {
-                 // 詳細モーダルが開いている場合は、詳細データを更新するだけ（ロック維持）
+                 // 詳細画面が開いているなら、ロックは解除せず（維持したまま）、中身だけ更新する
                  const plantData = PLANT_DATA.find(p => String(p.id) === String(userPlants[plantIndex].speciesId));
                  showDetailsModal(userPlants[plantIndex], plantData);
             } else {
-                 // リスト画面からの操作ならロック解除
+                 // リスト画面からの操作（詳細が開いていない）なら、ロックを解除して元の画面に戻す
                  toggleBodyScroll(false); 
             }
         }
@@ -493,54 +493,67 @@ document.addEventListener('DOMContentLoaded', () => {
              speciesSelect.addEventListener('change', updatePreview);
         }
 
-        // 🌟 モーダル制御の統合: すべて閉じる関数
-        const closeAllModals = () => {
-            if (detailsModal) detailsModal.style.display = 'none';
-            if (waterTypeModal) waterTypeModal.style.display = 'none';
-            if (purchaseDateModal) purchaseDateModal.style.display = 'none';
-            if (repottingDateModal) repottingDateModal.style.display = 'none';
-            if (lightboxModal) lightboxModal.classList.remove('active');
-            
-            currentPlantId = null;
-            toggleBodyScroll(false); // スクロールロック解除
-        };
-
-        // モーダル背景クリックで閉じる
+        // 🌟 モーダル制御の統合: 背景クリック時の挙動を修正
         window.addEventListener('click', (e) => {
-            if (e.target === detailsModal || 
-                e.target === waterTypeModal || 
-                e.target === purchaseDateModal || 
-                e.target === repottingDateModal || 
-                e.target === lightboxModal) {
-                
-                // ヒストリーバックで戻る場合と区別するため、ここではhistory.back()を呼ぶ
-                if (history.state && history.state.modal) {
-                    history.back();
-                } else {
-                    closeAllModals();
-                }
+            // 1. サブモーダル（詳細画面の上に重なるもの）の背景クリック
+            // これらは単に閉じるだけで、親（詳細画面）は維持する
+            if (e.target === waterTypeModal) {
+                waterTypeModal.style.display = 'none';
+                return;
+            }
+            if (e.target === purchaseDateModal) {
+                purchaseDateModal.style.display = 'none';
+                return;
+            }
+            if (e.target === repottingDateModal) {
+                repottingDateModal.style.display = 'none';
+                return;
+            }
+            if (e.target === lightboxModal) {
+                closeLightbox();
+                return;
+            }
+
+            // 2. メインの詳細モーダルの背景クリック
+            // これはHistory APIと連動して閉じる（戻る動作）
+            if (e.target === detailsModal) {
+                closeDetailModal();
             }
         });
 
         // 🌟 「戻る」ボタン (popstate) ですべて閉じる
         window.addEventListener('popstate', (e) => {
-            closeAllModals();
+            // History操作で戻った場合、モーダルを閉じる
+            if (detailsModal.style.display === 'block') {
+                detailsModal.style.display = 'none';
+                currentPlantId = null;
+                toggleBodyScroll(false); // 解除
+            }
+            // サブモーダルも念の為閉じる
+            if (waterTypeModal) waterTypeModal.style.display = 'none';
+            if (purchaseDateModal) purchaseDateModal.style.display = 'none';
+            if (repottingDateModal) repottingDateModal.style.display = 'none';
+            if (lightboxModal) lightboxModal.classList.remove('active');
         });
 
         // 個別の閉じるボタン (×)
-        if (closeDetailButton) {
-            closeDetailButton.onclick = () => {
-                if (history.state && history.state.modal === 'details') history.back();
-                else closeAllModals();
-            };
-        }
+        const closeDetailModal = () => {
+            if (history.state && history.state.modal === 'details') {
+                history.back(); // これが popstate を発火させる
+            } else { 
+                detailsModal.style.display = 'none'; 
+                currentPlantId = null; 
+                toggleBodyScroll(false); // 解除
+            }
+        };
+        if (closeDetailButton) closeDetailButton.onclick = closeDetailModal;
+        
         if (closeWaterTypeButton) closeWaterTypeButton.onclick = () => waterTypeModal.style.display = 'none';
         
         // サブモーダル用の閉じるボタン
         if (closePurchaseDateButton) {
             closePurchaseDateButton.onclick = () => {
                 purchaseDateModal.style.display = 'none';
-                // 親モーダル(detailsModal)は閉じない
             };
         }
         if (closeRepottingDateButton) {
@@ -1004,8 +1017,7 @@ document.addEventListener('DOMContentLoaded', () => {
             waterDoneInDetailContainer.appendChild(waterButton);
         }
 
-        // 🌟 UX改善: 履歴が重複しないようにチェック
-        // すでに詳細画面が開いている場合は、表示を更新するだけで履歴追加しない
+        // 🌟 履歴重複防止チェック
         if (detailsModal.style.display !== 'block') {
             detailsModal.style.display = 'block';
             toggleBodyScroll(true);
@@ -1034,11 +1046,10 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
         waterTypeModal.style.display = 'block';
-        // サブモーダルは上に重ねるだけなのでヒストリー操作はしない
     }
 
     // ----------------------------------------------------
-    // サブモーダル開閉処理 (UX改善)
+    // サブモーダル開閉処理
     // ----------------------------------------------------
     if (editPurchaseDateButton) {
         editPurchaseDateButton.onclick = () => {
