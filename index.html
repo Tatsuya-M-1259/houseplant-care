@@ -21,7 +21,7 @@
 <body>
 
     <header>
-        <h1>🪴 My Plant Care - 観葉植物管理カルテ</h1>
+        <h1>🪴 My Plant Care</h1>
     </header>
 
     <main class="container">
@@ -80,6 +80,16 @@
         <section id="plant-controls" class="card secondary-section control-card">
             <h2>🗂️ カルテ表示設定</h2>
             <div class="control-group-container">
+                <div class="control-group">
+                    <label for="global-season-select">季節設定:</label>
+                    <select id="global-season-select">
+                        <option value="AUTO">📅 自動 (現在の月)</option>
+                        <option value="SPRING">🌸 春 (3-5月)</option>
+                        <option value="SUMMER">🌻 夏 (6-8月)</option>
+                        <option value="AUTUMN">🍁 秋 (9-11月)</option>
+                        <option value="WINTER">❄️ 冬 (12-2月)</option>
+                    </select>
+                </div>
                 <div class="control-group">
                     <label for="sort-select">並び替え:</label>
                     <select id="sort-select">
