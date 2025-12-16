@@ -1,4 +1,4 @@
-/* style.css - UI/UX強化 + ダークモード対応版 */
+/* style.css - UX強化版 */
 :root {
     --color-primary: #10b981; /* Teal */
     --color-secondary: #00bcd4; /* Light Cyan */
@@ -12,6 +12,17 @@
     --border-radius: 8px;
     --shadow-light: 0 2px 4px rgba(0, 0, 0, 0.05);
     --shadow-hover: 0 6px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* 🌟 UX改善: モバイルでのタップハイライトを消す */
+html, body {
+    -webkit-tap-highlight-color: transparent;
+    font-family: 'Noto Sans JP', 'Inter', sans-serif;
+    background-color: var(--color-background);
+    color: var(--color-text-dark);
+    padding: 0;
+    margin: 0;
+    overscroll-behavior-y: none;
 }
 
 /* ダークモード対応 */
@@ -62,15 +73,6 @@
         color: var(--color-text-dark);
         border-color: #444;
     }
-}
-
-body {
-    font-family: 'Noto Sans JP', 'Inter', sans-serif;
-    background-color: var(--color-background);
-    color: var(--color-text-dark);
-    padding: 0;
-    margin: 0;
-    overscroll-behavior-y: none;
 }
 
 header {
@@ -182,6 +184,11 @@ form select {
     transition: background-color 0.2s;
     width: 100%;
     margin-top: 10px;
+    /* 🌟 UX改善: タッチ操作しやすく */
+    min-height: 44px; 
+}
+.action-button:active {
+    transform: translateY(1px); /* 押した感 */
 }
 .action-button.primary { background-color: var(--color-primary); color: white; }
 .action-button.primary:hover { background-color: #0c8a66; }
@@ -210,6 +217,7 @@ form select {
 .quick-sort-buttons button {
     flex-grow: 1; padding: 8px 10px; font-size: 0.9rem; border: 1px solid var(--color-border);
     background-color: var(--color-card-bg); color: var(--color-text-mid); border-radius: var(--border-radius);
+    min-height: 44px;
 }
 .quick-sort-buttons button.active {
     background-color: var(--color-primary); color: white; border-color: var(--color-primary);
@@ -245,7 +253,7 @@ form select {
 }
 .drag-handle {
     font-size: 1.2rem; color: white; background-color: rgba(0, 0, 0, 0.4);
-    padding: 3px 8px; border-radius: 5px; cursor: grab; touch-action: none; /* 🌟 重要: スクロール干渉防止 */
+    padding: 3px 8px; border-radius: 5px; cursor: grab; touch-action: none;
 }
 .delete-btn {
     background-color: var(--color-alert); color: white; border: none; border-radius: 50%;
@@ -280,6 +288,7 @@ form select {
 .season-selector button {
     flex-grow: 1; border: none; background: none; cursor: pointer;
     font-size: 0.8rem; font-weight: 600; color: var(--color-text-mid); border-radius: 4px;
+    min-height: 44px; /* タッチ領域確保 */
 }
 .season-selector button.active { background-color: var(--color-primary); color: white; }
 .season-selector button:hover:not(.active) { background-color: #dee2e6; }
@@ -300,12 +309,12 @@ form select {
 }
 
 .detail-image-container { text-align: center; margin-bottom: 15px; cursor: zoom-in; }
-/* 詳細画像のスタイル改善: 画像が大きくても全体を表示し、はみ出さないように */
+/* 🌟 詳細画像のスタイル改善 */
 .detail-image {
     width: 100%;
     height: auto;
-    max-height: 400px; /* 高さを制限 */
-    object-fit: contain; /* アスペクト比を維持して全体を表示 */
+    max-height: 400px;
+    object-fit: contain; /* 見切れ防止 */
     background-color: #f0f0f0;
     border: 1px solid var(--color-border);
     border-radius: 8px;
@@ -316,6 +325,8 @@ form select {
 .accordion-header {
     width: 100%; background-color: #f7f7f7; border: none; padding: 15px; cursor: pointer;
     display: flex; justify-content: space-between; position: relative;
+    min-height: 50px;
+    align-items: center;
 }
 .accordion-header h3 { color: var(--color-primary); margin: 0; }
 .accordion-header::after { content: '▼'; color: var(--color-text-mid); right: 15px; position: absolute; }
@@ -363,12 +374,12 @@ form select {
 .water-history-list li {
     padding: 10px 15px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center;
 }
-.delete-log-btn { background: none; border: none; color: var(--color-alert); font-size: 1.1rem; cursor: pointer; }
+.delete-log-btn { background: none; border: none; color: var(--color-alert); font-size: 1.1rem; cursor: pointer; padding: 5px 10px; }
 
 /* Sortable ghost */
 .sortable-ghost { opacity: 0.4; background-color: #e0f7fa; border: 2px dashed var(--color-primary); }
 
-/* 🌟 Lightbox (画像プレビュー) */
+/* Lightbox */
 #lightbox-modal {
     display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%;
     background-color: rgba(0,0,0,0.9); justify-content: center; align-items: center;
@@ -392,10 +403,10 @@ form select {
     background-color: #5a6268;
 }
 
-/* 🌟 トップへ戻るボタン */
+/* トップへ戻るボタン */
 #scroll-to-top {
     position: fixed;
-    bottom: 80px; /* 通知エリアより上 */
+    bottom: 80px;
     right: 20px;
     width: 45px;
     height: 45px;
