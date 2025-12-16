@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:;">
     
     <title>観葉植物管理カルテ</title>
     
@@ -116,8 +116,13 @@
             <div id="plant-details">
                 </div>
             
+            <input type="file" id="custom-image-input" accept="image/*" style="display: none;">
+
             <div class="user-data-section">
                 <h2>マイカルテ情報</h2>
+                <div style="text-align: center; margin-bottom: 10px;">
+                    <button id="change-photo-button" class="action-button secondary" style="width: auto; font-size: 0.9em;">📷 写真を変更する</button>
+                </div>
                 <p><strong>登録日:</strong> <span id="entry-date-display">未設定</span> (<span id="time-since-entry-display"></span>)</p>
                 <p><strong>購入日:</strong> <span id="purchase-date-display">未設定</span></p>
                 <p><strong>直近の植え替え日:</strong> <span id="repotting-date-display">未設定</span></p>
