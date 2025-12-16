@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Undo用の一時保存変数
     let deletedPlantBackup = null;
+    let deletedPlantIndex = -1; // 修正: 未定義エラー回避のため初期化
     let deleteTimeoutId = null;
 
     // ----------------------------------------------------
@@ -117,9 +118,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function saveUserPlants(plants) {
-        localStorage.setItem('userPlants', JSON.stringify(plants));
-        localStorage.setItem('last_update_time', Date.now()); 
-        renderLastUpdateTime(); 
+        try {
+            localStorage.setItem('userPlants', JSON.stringify(plants));
+            localStorage.setItem('last_update_time', Date.now()); 
+            renderLastUpdateTime(); 
+        } catch (e) {
+            console.error("保存に失敗しました。容量オーバーの可能性があります。", e);
+            showNotification("データの保存に失敗しました (容量制限)", 'error');
+        }
     }
     
     function updateLastWatered(plantId, type, date = getLocalTodayDate()) {
@@ -192,6 +198,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const repottingDateDisplay = document.getElementById('repotting-date-display');
     const editRepottingDateButton = document.getElementById('edit-repotting-date-button'); 
     
+    // Custom Image Elements
+    const customImageInput = document.getElementById('custom-image-input');
+    const changePhotoButton = document.getElementById('change-photo-button');
+
     const waterHistoryList = document.getElementById('water-history-list');
     const repottingHistoryList = document.getElementById('repotting-history-list');
 
@@ -224,7 +234,15 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.appendChild(notificationArea);
     }
     
-    let userPlants = JSON.parse(localStorage.getItem('userPlants')) || [];
+    // 🌟 エラーハンドリング付きデータ読み込み
+    let userPlants = [];
+    try {
+        userPlants = JSON.parse(localStorage.getItem('userPlants')) || [];
+    } catch (e) {
+        console.error("保存データの読み込みに失敗しました:", e);
+        showNotification("保存データが破損している可能性があります。", 'error');
+        userPlants = [];
+    }
     
     // データ移行と正規化
     function migrateOldData(plants) {
@@ -364,14 +382,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (lastUpdateTime) {
             const updateDate = new Date(parseInt(lastUpdateTime));
             const formattedUpdateTime = dateToJpTime(updateDate);
-            displayHtml += `**最終データ更新:** ${formattedUpdateTime}`;
+            displayHtml += `**最終データ更新:** ${escapeHTML(formattedUpdateTime)}`;
             
             if (lastExportTime) {
                 const exportDate = new Date(parseInt(lastExportTime));
                 const formattedExportTime = dateToJpTime(exportDate);
                 const daysSinceExport = Math.floor((Date.now() - exportDate.getTime()) / (1000 * 60 * 60 * 24));
                 
-                displayHtml += `<br><strong>最終エクスポート:</strong> ${formattedExportTime}`;
+                displayHtml += `<br><strong>最終エクスポート:</strong> ${escapeHTML(formattedExportTime)}`;
                 
                 if (daysSinceExport >= 7) {
                     displayHtml += `<br><span class="warning-text">⚠️ バックアップが${daysSinceExport}日以上前です。エクスポートを推奨します。</span>`;
@@ -555,7 +573,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const nextDateString = calculateNextWateringDate(lastDate, intervalDays);
                 
                 if (nextDateString === null) {
-                    nextWateringPreview.textContent = `次回予定日: ${plantData.management[currentSeasonKey].water}（断水期間）`;
+                    nextWateringPreview.textContent = `次回予定日: ${escapeHTML(plantData.management[currentSeasonKey].water)}（断水期間）`;
                     nextWateringPreview.classList.remove('alert-date');
                     return;
                 }
@@ -665,13 +683,51 @@ document.addEventListener('DOMContentLoaded', () => {
                 // カード本体クリック（詳細表示）
                 showDetailsModal(plant, PLANT_DATA.find(pd => String(pd.id) === String(plant.speciesId)));
             });
-
-            // ロングタップ対応（デリゲーション内で処理するのは複雑なため、ここはカード生成時に付与しない方針とし、
-            // UX的にタップでモーダル -> その中にアクションがある方が誤操作が少ないため、ロングタップ水やりは削除または
-            // 必要なら別途実装。今回はシンプル化のためクリックベースに統一）
         }
 
         renderQuickSortButtons();
+    }
+    
+    // カスタム写真のアップロード処理
+    if (changePhotoButton && customImageInput) {
+        changePhotoButton.onclick = () => {
+            customImageInput.click();
+        };
+
+        customImageInput.onchange = (e) => {
+            if (customImageInput.files && customImageInput.files[0]) {
+                const file = customImageInput.files[0];
+                const reader = new FileReader();
+                
+                reader.onload = function(event) {
+                    const base64Image = event.target.result;
+                    
+                    // 現在の植物IDに対応するデータを更新
+                    if (currentPlantId !== null) {
+                        const plantIndex = userPlants.findIndex(p => String(p.id) === String(currentPlantId));
+                        if (plantIndex !== -1) {
+                            userPlants[plantIndex].customImage = base64Image;
+                            saveUserPlants(userPlants);
+                            
+                            // 詳細モーダルの画像を即時更新
+                            const detailImage = plantDetails.querySelector('.detail-image');
+                            if (detailImage) {
+                                detailImage.src = base64Image;
+                            }
+                            
+                            // カードリストも更新
+                            renderPlantCards();
+                            
+                            showNotification('写真を変更しました！', 'success');
+                        }
+                    }
+                };
+                
+                reader.readAsDataURL(file);
+            }
+            // inputをリセットして同じファイルを再度選択可能にする
+            customImageInput.value = '';
+        };
     }
     
     function renderQuickSortButtons() {
@@ -855,7 +911,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!plant || !waterTypeModal) return;
 
         const today = getLocalTodayDate();
-        waterTypeModalTitle.textContent = `「${plant.name}」の水やり内容`;
+        waterTypeModalTitle.textContent = `「${escapeHTML(plant.name)}」の水やり内容`;
         waterDateDisplay.textContent = formatJapaneseDate(today) + ' に完了'; 
         waterTypeOptionsContainer.innerHTML = '';
         
@@ -879,17 +935,17 @@ document.addEventListener('DOMContentLoaded', () => {
         card.className = 'plant-card';
         card.setAttribute('data-id', String(userPlant.id));
         
-        // 🌟 画像パスの生成 (Base path + filename)
-        const imgSrc = `${IMAGE_BASE_PATH}${data.img}`;
+        // 🌟 画像パスの生成: カスタム画像があればそれを優先、なければデフォルト
+        const imgSrc = userPlant.customImage ? userPlant.customImage : `${IMAGE_BASE_PATH}${data.img}`;
 
         const isAutoSorted = currentSort === 'nextWateringDate';
         const dragHandleStyle = isAutoSorted ? "opacity:0; cursor:default; pointer-events:none;" : "";
 
-        // HTML文字列生成
+        // HTML文字列生成 (XSS対策でescapeHTMLを使用)
         card.innerHTML = `
             <div class="controls">
                 <span class="drag-handle" style="${dragHandleStyle}" aria-label="並び替え用ハンドル">☰</span>
-                <button class="delete-btn" aria-label="${userPlant.name}のカルテを削除">×</button>
+                <button class="delete-btn" aria-label="${escapeHTML(userPlant.name)}のカルテを削除">×</button>
             </div>
             <div class="season-selector">
                 ${['SPRING', 'SUMMER', 'AUTUMN', 'WINTER'].map(key => `
@@ -912,7 +968,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const match = repottingText.match(/(\d+)月.([〜~])(\d+)月/);
 
         if (!match) {
-            return `<li>植え替え推奨時期: ${repottingText}</li>`;
+            return `<li>植え替え推奨時期: ${escapeHTML(repottingText)}</li>`;
         }
 
         const startMonth = parseInt(match[1]);
@@ -943,16 +999,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (isRecommendedTime && isOverOneYear) {
-            return `<li class="risk-message repotting-alert">⚠️ <span class="risk-alert warning">植え替え推奨時期 (${repottingText})！${lastRepottingDateString ? '直近から1年以上経過。' : '未実施です。'}</span></li>`;
+            return `<li class="risk-message repotting-alert">⚠️ <span class="risk-alert warning">植え替え推奨時期 (${escapeHTML(repottingText)})！${lastRepottingDateString ? '直近から1年以上経過。' : '未実施です。'}</span></li>`;
         }
         
-        return `<li>植え替え推奨時期: ${repottingText}</li>`;
+        return `<li>植え替え推奨時期: ${escapeHTML(repottingText)}</li>`;
     }
 
     function generateCardContent(userPlant, data, seasonKey) {
         const seasonData = data.management[seasonKey];
         const riskText = getSeasonRisk(seasonKey, data);
-        const imgSrc = `${IMAGE_BASE_PATH}${data.img}`;
+        
+        // カード内でもカスタム画像を反映
+        const imgSrc = userPlant.customImage ? userPlant.customImage : `${IMAGE_BASE_PATH}${data.img}`;
         
         const lastLog = userPlant.waterLog && userPlant.waterLog.length > 0 ? userPlant.waterLog[0] : { date: userPlant.entryDate, type: 'WaterOnly' };
         const lastWateringDate = parseDateAsLocal(lastLog.date);
@@ -1001,39 +1059,41 @@ document.addEventListener('DOMContentLoaded', () => {
         const timeSinceEntry = calculateTimeSince(userPlant.entryDate);
         const repottingReminder = checkRepottingStatus(data, userPlant.id);
 
-        // ▼ 追加: 葉水データの取得（データがない場合はデフォルトメッセージを表示）
         const mistingInfo = seasonData.mist || 'データなし'; 
 
+        // XSS対策のため、データをHTMLに埋め込む際は要注意。
+        // ここでは信頼できるデータソース(data.js)からの情報は比較的安全だが、
+        // 今後の拡張に備えてescapeHTMLを通すのがベスト。
         return `
             <div class="card-image">
-                <img src="${imgSrc}" alt="${data.species}" loading="lazy" style="object-fit: contain;">
+                <img src="${imgSrc}" alt="${escapeHTML(data.species)}" loading="lazy" style="object-fit: ${userPlant.customImage ? 'cover' : 'contain'};">
             </div>
             <div class="card-header">
-                <h3>${userPlant.name}</h3>
-                <p>${data.species} (登録から ${timeSinceEntry})</p>
+                <h3>${escapeHTML(userPlant.name)}</h3>
+                <p>${escapeHTML(data.species)} (登録から ${timeSinceEntry})</p>
             </div>
             
             <div class="status-box">
-                ${SEASONS[seasonKey].name.split(' ')[0]}の最重要項目: **${riskText}**
+                ${SEASONS[seasonKey].name.split(' ')[0]}の最重要項目: **${escapeHTML(riskText)}**
             </div>
 
             <h4>現在の管理プロトコル</h4>
             <ul>
-                <li>**水やり量:** ${waterMethodSummary}</li>
-                <li>**推奨頻度:** ${seasonData.water} <span style="font-size:0.9em; font-weight:normal;">${intervalDisplay}</span></li>
+                <li>**水やり量:** ${escapeHTML(waterMethodSummary)}</li>
+                <li>**推奨頻度:** ${escapeHTML(seasonData.water)} <span style="font-size:0.9em; font-weight:normal;">${escapeHTML(intervalDisplay)}</span></li>
                 
-                <li>**葉水:** ${mistingInfo}</li>
+                <li>**葉水:** ${escapeHTML(mistingInfo)}</li>
                 
                 <li><strong>前回水やり:</strong> ${formatJapaneseDate(lastLog.date)} 
                     <strong class="last-watered-type">
                         <span class="water-type-badge ${lastWateringType.class}">
-                            ${lastWateringType.name}
+                            ${escapeHTML(lastWateringType.name)}
                         </span>
                     </strong>
                 </li>
                 ${nextWateringInfo}
                 ${actionMessage}
-                <li>**光量要求:** ${seasonData.light}</li>
+                <li>**光量要求:** ${escapeHTML(seasonData.light)}</li>
             </ul>
             
             <ul style="border-top: 1px dashed #f0f0f0; margin-top: 10px; padding-top: 10px;">
@@ -1070,7 +1130,7 @@ document.addEventListener('DOMContentLoaded', () => {
             contentSpan.className = 'log-content';
             contentSpan.innerHTML = `
                 <span class="date">${formatJapaneseDate(log.date)}</span>
-                <span class="water-type-badge ${typeData.class}">${typeData.name}</span>
+                <span class="water-type-badge ${typeData.class}">${escapeHTML(typeData.name)}</span>
             `;
             
             const deleteBtn = document.createElement('button');
@@ -1141,7 +1201,9 @@ document.addEventListener('DOMContentLoaded', () => {
         currentPlantId = userPlant.id;
         const seasonData = plantData.management[currentSeasonKey];
         const maintenance = plantData.maintenance;
-        const imgSrc = `${IMAGE_BASE_PATH}${plantData.img}`;
+        
+        // 詳細モーダルでもカスタム画像を反映
+        const imgSrc = userPlant.customImage ? userPlant.customImage : `${IMAGE_BASE_PATH}${plantData.img}`;
         
         entryDateDisplay.textContent = formatJapaneseDate(userPlant.entryDate);
         timeSinceEntryDisplay.textContent = calculateTimeSince(userPlant.entryDate);
@@ -1153,7 +1215,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // 詳細モーダル内の画像エリアを更新 (クリックでLightbox起動)
         const detailImageContainer = document.createElement('div');
         detailImageContainer.className = 'detail-image-container';
-        detailImageContainer.innerHTML = `<img src="${imgSrc}" alt="${plantData.species}" class="detail-image" loading="lazy">`;
+        // カスタム画像の場合はobject-fit: coverで見栄え良く
+        const objectFitStyle = userPlant.customImage ? 'object-fit: cover;' : '';
+        detailImageContainer.innerHTML = `<img src="${imgSrc}" alt="${escapeHTML(plantData.species)}" class="detail-image" style="${objectFitStyle}" loading="lazy">`;
         detailImageContainer.onclick = () => openLightbox(imgSrc, plantData.species);
         
         // 既存の画像があれば置き換え、なければ先頭に追加
@@ -1163,21 +1227,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const seasonCareContentHtml = `
             <ul>
-                <li><strong>水やり量:</strong> ${safeWaterMethod}</li>
-                <li><strong>水やり頻度:</strong> ${seasonData.water}</li>
-                <li><strong>光:</strong> ${seasonData.light}</li>
-                ${seasonData.tempRisk ? `<li><strong>寒さ対策:</strong> ${seasonData.tempRisk}</li>` : ''}
+                <li><strong>水やり量:</strong> ${escapeHTML(safeWaterMethod)}</li>
+                <li><strong>水やり頻度:</strong> ${escapeHTML(seasonData.water)}</li>
+                <li><strong>光:</strong> ${escapeHTML(seasonData.light)}</li>
+                ${seasonData.tempRisk ? `<li><strong>寒さ対策:</strong> ${escapeHTML(seasonData.tempRisk)}</li>` : ''}
             </ul>
         `;
         
         const basicMaintenanceContentHtml = `
             <ul>
-                <li><strong>難易度:</strong> ${plantData.difficulty}</li>
-                <li><strong>特徴:</strong> ${plantData.feature}</li>
-                <li><strong>最低越冬温度:</strong> ${plantData.minTemp}°C</li>
-                <li><strong>肥料:</strong> ${maintenance.fertilizer}</li>
-                <li><strong>植え替え:</strong> ${maintenance.repotting}</li>
-                <li><strong>剪定:</strong> ${maintenance.pruning}</li>
+                <li><strong>難易度:</strong> ${escapeHTML(plantData.difficulty)}</li>
+                <li><strong>特徴:</strong> ${escapeHTML(plantData.feature)}</li>
+                <li><strong>最低越冬温度:</strong> ${escapeHTML(String(plantData.minTemp))}°C</li>
+                <li><strong>肥料:</strong> ${escapeHTML(maintenance.fertilizer)}</li>
+                <li><strong>植え替え:</strong> ${escapeHTML(maintenance.repotting)}</li>
+                <li><strong>剪定:</strong> ${escapeHTML(maintenance.pruning)}</li>
             </ul>
             <div class="detail-section" style="padding: 10px 0; border-top: 1px solid #e9ecef;">
                 ${repottingReminderMessage}
@@ -1278,7 +1342,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     date: lastWateredDate,
                     type: waterType
                 }],
-                repottingLog: []
+                repottingLog: [],
+                customImage: null // 初期値
             };
 
             userPlants.unshift(newPlant);
@@ -1329,13 +1394,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         });
-
-        // 本当の削除完了処理（ストレージ内の付随データ削除）は一定時間後または次回起動時に行う設計が安全だが、
-        // 今回はシンプルにlocalStorageの付随データは即時削除せず残す（容量微小のため）か、
-        // 厳密にやるならUndoタイムアウト後にクリーンアップする。
-        // ここではUX優先で即時削除->復元のみ実装。
     }
 
+    // ... (以下の日付モーダル関連処理は変更なしですが、context保持のため記載)
     if (closePurchaseDateButton) {
         closePurchaseDateButton.onclick = () => {
             purchaseDateModal.style.display = 'none';
