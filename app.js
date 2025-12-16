@@ -42,21 +42,18 @@ document.addEventListener('DOMContentLoaded', () => {
     function initDB() {
         return new Promise((resolve, reject) => {
             const request = indexedDB.open(DB_NAME, DB_VERSION);
-            
             request.onerror = (event) => {
                 console.error("Database error: " + event.target.errorCode);
                 reject(event.target.error);
             };
-
             request.onsuccess = (event) => {
                 db = event.target.result;
                 resolve(db);
             };
-
             request.onupgradeneeded = (event) => {
                 const db = event.target.result;
                 if (!db.objectStoreNames.contains(STORE_NAME)) {
-                    db.createObjectStore(STORE_NAME); // Key-Value store (plantId -> base64)
+                    db.createObjectStore(STORE_NAME);
                 }
             };
         });
@@ -68,7 +65,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const transaction = db.transaction([STORE_NAME], "readwrite");
             const store = transaction.objectStore(STORE_NAME);
             const request = store.put(imageData, plantId);
-            
             request.onsuccess = () => resolve();
             request.onerror = (e) => reject(e.target.error);
         });
@@ -80,7 +76,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const transaction = db.transaction([STORE_NAME], "readonly");
             const store = transaction.objectStore(STORE_NAME);
             const request = store.get(plantId);
-            
             request.onsuccess = () => resolve(request.result);
             request.onerror = () => resolve(null);
         });
@@ -92,19 +87,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const transaction = db.transaction([STORE_NAME], "readwrite");
             const store = transaction.objectStore(STORE_NAME);
             const request = store.delete(plantId);
-            
             request.onsuccess = () => resolve();
             request.onerror = (e) => reject(e.target.error);
         });
     }
 
-    // 🌟 ガベージコレクション: 使われていない画像を削除
+    // 🌟 ガベージコレクション
     function cleanupOrphanedImages() {
         if (!db) return;
-        
-        // 現在有効な植物IDのセットを作成
         const validIds = new Set(userPlants.map(p => String(p.id)));
-        
         const transaction = db.transaction([STORE_NAME], "readwrite");
         const store = transaction.objectStore(STORE_NAME);
         const request = store.openCursor();
@@ -113,7 +104,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const cursor = event.target.result;
             if (cursor) {
                 const storedId = String(cursor.key);
-                // IDが植物リストに存在しない場合、削除する
                 if (!validIds.has(storedId)) {
                     console.log(`Garbage Collecting: Removing orphaned image for ID ${storedId}`);
                     cursor.delete();
@@ -136,20 +126,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 img.onload = () => {
                     let width = img.width;
                     let height = img.height;
-
                     if (width > maxWidth) {
                         height *= maxWidth / width;
                         width = maxWidth;
                     }
-
                     const canvas = document.createElement('canvas');
                     canvas.width = width;
                     canvas.height = height;
-                    
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
-                    
-                    // JPEGとして圧縮
                     const dataUrl = canvas.toDataURL('image/jpeg', quality);
                     resolve(dataUrl);
                 };
@@ -204,8 +189,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         notificationArea.appendChild(toast);
-        // Force reflow
-        toast.offsetHeight;
+        toast.offsetHeight; // Force reflow
         toast.classList.add('show');
 
         if (duration > 0) {
@@ -225,17 +209,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function escapeHTML(str) {
         if (typeof str !== 'string') return str;
         return str.replace(/[&<>"']/g, function(match) {
-            const escapeMap = {
-                '&': '&amp;', '<': '&lt;', '>': '&gt;',
-                '"': '&quot;', "'": '&#39;'
-            };
+            const escapeMap = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
             return escapeMap[match];
         });
     }
     
     function saveUserPlants(plants) {
         try {
-            // 画像データ自体はここには含まれない(IDBへ保存)ため、localStorage容量を圧迫しない
             localStorage.setItem('userPlants', JSON.stringify(plants));
             localStorage.setItem('last_update_time', Date.now()); 
             renderLastUpdateTime(); 
@@ -254,7 +234,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!Array.isArray(userPlants[plantIndex].waterLog)) {
                 userPlants[plantIndex].waterLog = [];
             }
-            // 重複チェック
             const isDuplicate = userPlants[plantIndex].waterLog.some(log => log.date === date && log.type === type);
             if (!isDuplicate) {
                 userPlants[plantIndex].waterLog.unshift(newLogEntry);
@@ -266,7 +245,6 @@ document.addEventListener('DOMContentLoaded', () => {
             showNotification(`${userPlants[plantIndex].name} の記録完了！`, 'success');
             
             waterTypeModal.style.display = 'none';
-            // 詳細モーダルが開いていれば更新
             if (detailsModal.style.display === 'block') {
                  const plantData = PLANT_DATA.find(p => String(p.id) === String(userPlants[plantIndex].speciesId));
                  showDetailsModal(userPlants[plantIndex], plantData);
@@ -331,9 +309,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const waterTypeOptionsContainer = document.getElementById('water-type-options');
 
     const exportButton = document.getElementById('export-data-button');
+    const exportIncludeImages = document.getElementById('export-include-images'); // 🌟 追加
     const importButton = document.getElementById('import-data-button');
     const importFileInput = document.getElementById('import-file-input');
     const importFileNameDisplay = document.getElementById('import-file-name');
+    
+    // 🌟 Scroll to top button
+    const scrollToTopBtn = document.getElementById('scroll-to-top');
     
     const NOTIFICATION_AREA_ID = 'custom-notification-area';
     let notificationArea = document.getElementById(NOTIFICATION_AREA_ID);
@@ -357,14 +339,28 @@ document.addEventListener('DOMContentLoaded', () => {
         userPlants = [];
     }
     
+    // 🌟 バリデーション機能: データの健全性をチェックして補正
+    function validatePlantData(plant) {
+        // 必須フィールドの補完
+        if (!plant.id) plant.id = crypto.randomUUID ? crypto.randomUUID() : String(Date.now());
+        if (!plant.speciesId) plant.speciesId = '1'; // デフォルトID
+        if (!plant.name) plant.name = '名無し';
+        if (!plant.entryDate) plant.entryDate = getLocalTodayDate();
+        if (!Array.isArray(plant.waterLog)) plant.waterLog = [];
+        if (!Array.isArray(plant.repottingLog)) plant.repottingLog = [];
+        // ゴミデータの削除
+        if (plant._exportImageData) delete plant._exportImageData;
+        return plant;
+    }
+
     // データ正規化・移行
     function normalizePlantData(plants) {
+        if (!Array.isArray(plants)) return [];
         return plants.map(p => {
+            // IDを文字列型に統一
             p.id = String(p.id);
             p.speciesId = String(p.speciesId);
-            if (!Array.isArray(p.waterLog)) p.waterLog = [];
-            if (!Array.isArray(p.repottingLog)) p.repottingLog = [];
-            return p;
+            return validatePlantData(p);
         });
     }
     userPlants = normalizePlantData(userPlants);
@@ -551,6 +547,17 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
+        // 🌟 Scroll to top logic
+        if (scrollToTopBtn) {
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 300) scrollToTopBtn.classList.add('visible');
+                else scrollToTopBtn.classList.remove('visible');
+            });
+            scrollToTopBtn.addEventListener('click', () => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        }
+
         // カードリスト イベントデリゲーション
         if (plantCardList) {
             plantCardList.addEventListener('click', (e) => {
@@ -639,21 +646,23 @@ document.addEventListener('DOMContentLoaded', () => {
     // ----------------------------------------------------
     
     // 🌟 画像データを含めてデータを収集する非同期関数
-    const collectAllData = async () => {
+    const collectAllData = async (includeImages = true) => {
         // データをディープコピー
         const plantsToExport = JSON.parse(JSON.stringify(userPlants));
         
-        // 画像がある植物について、IndexedDBからデータを取得して結合
-        for (const plant of plantsToExport) {
-            if (plant.hasCustomImage) {
-                try {
-                    const imageData = await getImageFromDB(plant.id);
-                    if (imageData) {
-                        // 一時的にBase64データをプロパティに追加
-                        plant._exportImageData = imageData;
+        if (includeImages) {
+            // 画像がある植物について、IndexedDBからデータを取得して結合
+            for (const plant of plantsToExport) {
+                if (plant.hasCustomImage) {
+                    try {
+                        const imageData = await getImageFromDB(plant.id);
+                        if (imageData) {
+                            // 一時的にBase64データをプロパティに追加
+                            plant._exportImageData = imageData;
+                        }
+                    } catch (e) {
+                        console.warn(`画像のエクスポートに失敗: ${plant.name}`, e);
                     }
-                } catch (e) {
-                    console.warn(`画像のエクスポートに失敗: ${plant.name}`, e);
                 }
             }
         }
@@ -668,9 +677,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (exportButton) {
         exportButton.onclick = async () => { // asyncにする
             try {
-                showNotification('バックアップデータを作成中...', 'success', 1000);
+                const includeImages = exportIncludeImages ? exportIncludeImages.checked : true;
+                showNotification(includeImages ? 'バックアップデータを作成中...' : 'テキストデータを作成中...', 'success', 1000);
                 
-                const data = await collectAllData(); // awaitで待機
+                const data = await collectAllData(includeImages); // awaitで待機
                 const json = JSON.stringify(data, null, 2);
                 const blob = new Blob([json], { type: 'application/json' });
                 const url = URL.createObjectURL(blob);
@@ -736,7 +746,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 showCustomConfirm('現在のデータを上書きします。よろしいですか？', async () => { // async callback
                     try {
-                        // 1. まずデータを正規化
+                        // 1. まずデータを正規化 (バリデーション含む)
                         loadedPlants = normalizePlantData(loadedPlants);
                         
                         // 2. 画像データの復元処理
@@ -965,7 +975,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // DOM更新
         const detailImageContainer = document.createElement('div');
         detailImageContainer.className = 'detail-image-container';
-        detailImageContainer.innerHTML = `<img src="${imgSrc}" class="detail-image" style="object-fit:cover;">`;
+        detailImageContainer.innerHTML = `<img src="${imgSrc}" class="detail-image">`; // object-fitはCSSで制御
         detailImageContainer.onclick = () => openLightbox(imgSrc);
         
         const existingImg = plantDetails.querySelector('.detail-image-container');
@@ -1127,5 +1137,10 @@ document.addEventListener('DOMContentLoaded', () => {
             saveUserPlants(userPlants);
             showDetailsModal(userPlants[pIndex], PLANT_DATA.find(d => String(d.id) === userPlants[pIndex].speciesId));
         }
+    }
+    
+    function formatJapaneseDate(d) {
+        const date = new Date(d);
+        return `${date.getFullYear()}年${date.getMonth()+1}月${date.getDate()}日`;
     }
 });
