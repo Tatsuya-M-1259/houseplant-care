@@ -150,7 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${year}-${month}-${day}`;
     }
 
-    // 🌟 スクロールロック制御 (UX改善)
+    // 🌟 スクロールロック制御
     function toggleBodyScroll(lock) {
         document.body.style.overflow = lock ? 'hidden' : '';
     }
@@ -229,17 +229,17 @@ document.addEventListener('DOMContentLoaded', () => {
             showNotification(`${userPlants[plantIndex].name} の記録完了！`, 'success');
             
             waterTypeModal.style.display = 'none';
-            toggleBodyScroll(false); // 解除
             
-            // 詳細モーダルが開いていれば更新
-            if (detailsModal.style.display === 'block') {
-                 // 詳細モーダルは開いたままスクロールロックを維持すべきだが、
-                 // 簡易化のため一旦解除して、詳細モーダル表示時に再ロックされるフローにするか、
-                 // またはここで toggleBodyScroll(true) し直す。
-                 // 今回は「詳細モーダル表示中」なのでロック維持が正しい。
-                 toggleBodyScroll(true);
+            // 🌟 UX改善: 詳細モーダルが開いている場合はスクロールロックを解除しない
+            const isDetailOpen = detailsModal.style.display === 'block';
+            
+            if (isDetailOpen) {
+                 // 詳細モーダルが開いている場合は、詳細データを更新するだけ（ロック維持）
                  const plantData = PLANT_DATA.find(p => String(p.id) === String(userPlants[plantIndex].speciesId));
                  showDetailsModal(userPlants[plantIndex], plantData);
+            } else {
+                 // リスト画面からの操作ならロック解除
+                 toggleBodyScroll(false); 
             }
         }
     }
@@ -1004,10 +1004,13 @@ document.addEventListener('DOMContentLoaded', () => {
             waterDoneInDetailContainer.appendChild(waterButton);
         }
 
-        // 🌟 モーダル表示処理
-        detailsModal.style.display = 'block';
-        toggleBodyScroll(true);
-        history.pushState({ modal: 'details' }, null, '#details');
+        // 🌟 UX改善: 履歴が重複しないようにチェック
+        // すでに詳細画面が開いている場合は、表示を更新するだけで履歴追加しない
+        if (detailsModal.style.display !== 'block') {
+            detailsModal.style.display = 'block';
+            toggleBodyScroll(true);
+            history.pushState({ modal: 'details' }, null, '#details');
+        }
     }
 
     function showWaterTypeSelectionModal(plantId) {
@@ -1031,7 +1034,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
         waterTypeModal.style.display = 'block';
-        // サブモーダルを開くときはヒストリー追加せず、上乗せする
+        // サブモーダルは上に重ねるだけなのでヒストリー操作はしない
     }
 
     // ----------------------------------------------------
@@ -1097,7 +1100,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 showNotification('植え替え記録を追加しました。', 'success');
                 repottingDateModal.style.display = 'none';
                 
-                // 詳細画面更新
                 const plantData = PLANT_DATA.find(p => String(p.id) === String(userPlants[userPlantIndex].speciesId));
                 showDetailsModal(userPlants[userPlantIndex], plantData);
                 renderPlantCards();
