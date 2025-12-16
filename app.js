@@ -34,18 +34,15 @@ document.addEventListener('DOMContentLoaded', () => {
     let deletedPlantBackup = null;
     let deletedPlantIndex = -1;
     let deleteTimeoutId = null;
-    let db = null; // IndexedDB instance
+    let db = null; 
 
     // ----------------------------------------------------
-    // 1. IndexedDB Utilities (画像保存用)
+    // 1. IndexedDB Utilities
     // ----------------------------------------------------
     function initDB() {
         return new Promise((resolve, reject) => {
             const request = indexedDB.open(DB_NAME, DB_VERSION);
-            request.onerror = (event) => {
-                console.error("Database error: " + event.target.errorCode);
-                reject(event.target.error);
-            };
+            request.onerror = (event) => reject(event.target.error);
             request.onsuccess = (event) => {
                 db = event.target.result;
                 resolve(db);
@@ -92,20 +89,18 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 🌟 ガベージコレクション
     function cleanupOrphanedImages() {
         if (!db) return;
         const validIds = new Set(userPlants.map(p => String(p.id)));
         const transaction = db.transaction([STORE_NAME], "readwrite");
         const store = transaction.objectStore(STORE_NAME);
         const request = store.openCursor();
-
         request.onsuccess = (event) => {
             const cursor = event.target.result;
             if (cursor) {
                 const storedId = String(cursor.key);
                 if (!validIds.has(storedId)) {
-                    console.log(`Garbage Collecting: Removing orphaned image for ID ${storedId}`);
+                    console.log(`GC: Removing orphaned image ${storedId}`);
                     cursor.delete();
                 }
                 cursor.continue();
@@ -114,7 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ----------------------------------------------------
-    // 2. 画像圧縮ユーティリティ
+    // 2. 画像圧縮
     // ----------------------------------------------------
     function compressImage(file, maxWidth = 1024, quality = 0.8) {
         return new Promise((resolve, reject) => {
@@ -145,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ----------------------------------------------------
-    // ユーティリティ関数
+    // ユーティリティ
     // ----------------------------------------------------
     function getLocalTodayDate() {
         const d = new Date();
@@ -155,24 +150,10 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${year}-${month}-${day}`;
     }
 
-    function getPlaceholderImage() {
-        return "data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25' viewBox='0 0 300 200'%3e%3crect fill='%23e0e0e0' width='300' height='200'/%3e%3ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='24' fill='%23888'%3eNo Image%3c/text%3e%3c/svg%3e";
-    }
-
     // 🌟 スクロールロック制御 (UX改善)
     function toggleBodyScroll(lock) {
         document.body.style.overflow = lock ? 'hidden' : '';
     }
-
-    window.addEventListener('error', (e) => {
-        if (e.target.tagName === 'IMG') {
-            const placeholder = getPlaceholderImage();
-            if (e.target.src !== placeholder) { 
-                e.target.src = placeholder;
-                e.target.alt = "画像読み込み失敗";
-            }
-        }
-    }, true);
 
     function showNotification(message, type = 'success', duration = 3000, action = null) {
         const toast = document.createElement('div');
@@ -194,7 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         notificationArea.appendChild(toast);
-        toast.offsetHeight; // Force reflow
+        toast.offsetHeight; 
         toast.classList.add('show');
 
         if (duration > 0) {
@@ -206,9 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function showCustomConfirm(message, onConfirm) {
-        if (window.confirm(message)) {
-            onConfirm();
-        }
+        if (window.confirm(message)) onConfirm();
     }
 
     function escapeHTML(str) {
@@ -250,9 +229,15 @@ document.addEventListener('DOMContentLoaded', () => {
             showNotification(`${userPlants[plantIndex].name} の記録完了！`, 'success');
             
             waterTypeModal.style.display = 'none';
-            toggleBodyScroll(false); // モーダル閉じる
+            toggleBodyScroll(false); // 解除
             
+            // 詳細モーダルが開いていれば更新
             if (detailsModal.style.display === 'block') {
+                 // 詳細モーダルは開いたままスクロールロックを維持すべきだが、
+                 // 簡易化のため一旦解除して、詳細モーダル表示時に再ロックされるフローにするか、
+                 // またはここで toggleBodyScroll(true) し直す。
+                 // 今回は「詳細モーダル表示中」なのでロック維持が正しい。
+                 toggleBodyScroll(true);
                  const plantData = PLANT_DATA.find(p => String(p.id) === String(userPlants[plantIndex].speciesId));
                  showDetailsModal(userPlants[plantIndex], plantData);
             }
@@ -277,7 +262,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const lastUpdateDisplay = document.getElementById('last-update-display');
     const lastWateredInput = document.getElementById('last-watered');
     
-    // Modals
     const detailsModal = document.getElementById('details-modal'); 
     const closeDetailButton = detailsModal ? detailsModal.querySelector('.close-button') : null; 
     const plantDetails = document.getElementById('plant-details'); 
@@ -321,7 +305,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const importFileInput = document.getElementById('import-file-input');
     const importFileNameDisplay = document.getElementById('import-file-name');
     
-    // Scroll to top button
     const scrollToTopBtn = document.getElementById('scroll-to-top');
     
     const NOTIFICATION_AREA_ID = 'custom-notification-area';
@@ -339,6 +322,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     let userPlants = [];
+    let currentPlantId = null;
+
     try {
         userPlants = JSON.parse(localStorage.getItem('userPlants')) || [];
     } catch (e) {
@@ -346,22 +331,18 @@ document.addEventListener('DOMContentLoaded', () => {
         userPlants = [];
     }
     
-    // 🌟 バリデーション機能
+    // バリデーション
     function validatePlantData(plant) {
         if (!plant || typeof plant !== 'object') return null;
         const safePlant = { ...plant };
-        
         if (!safePlant.id) safePlant.id = crypto.randomUUID ? crypto.randomUUID() : String(Date.now());
         else safePlant.id = String(safePlant.id); 
-        
         if (!safePlant.speciesId) safePlant.speciesId = '1';
         else safePlant.speciesId = String(safePlant.speciesId);
-        
         if (!safePlant.name) safePlant.name = '名無し';
         if (!safePlant.entryDate) safePlant.entryDate = getLocalTodayDate();
         if (!Array.isArray(safePlant.waterLog)) safePlant.waterLog = [];
         if (!Array.isArray(safePlant.repottingLog)) safePlant.repottingLog = [];
-        
         if (safePlant._exportImageData) delete safePlant._exportImageData;
         return safePlant;
     }
@@ -377,9 +358,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ----------------------------------------------------
 
     function getCurrentSeason() {
-        if (currentGlobalSeason && currentGlobalSeason !== 'AUTO') {
-            return currentGlobalSeason;
-        }
+        if (currentGlobalSeason && currentGlobalSeason !== 'AUTO') return currentGlobalSeason;
         const month = new Date().getMonth() + 1;
         if (month >= 3 && month <= 5) return 'SPRING';
         if (month >= 6 && month <= 8) return 'SUMMER';
@@ -394,12 +373,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function calculateNextWateringDate(lastDateString, intervalDays) {
-        if (!lastDateString || intervalDays === INTERVAL_WATER_STOP || intervalDays == null || isNaN(intervalDays)) {
-            return null;
-        }
+        if (!lastDateString || intervalDays === INTERVAL_WATER_STOP || intervalDays == null || isNaN(intervalDays)) return null;
         const lastDate = parseDateAsLocal(lastDateString);
         lastDate.setDate(lastDate.getDate() + parseInt(intervalDays));
-        
         const y = lastDate.getFullYear();
         const m = String(lastDate.getMonth() + 1).padStart(2, '0');
         const d = String(lastDate.getDate()).padStart(2, '0');
@@ -410,7 +386,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const lastUpdateTime = localStorage.getItem('last_update_time');
         const lastExportTime = localStorage.getItem('last_export_time');
         let displayHtml = '';
-        
         if (lastUpdateTime) {
             const updateDate = new Date(parseInt(lastUpdateTime));
             displayHtml += `**最終データ更新:** ${dateToJpTime(updateDate)}`;
@@ -518,44 +493,63 @@ document.addEventListener('DOMContentLoaded', () => {
              speciesSelect.addEventListener('change', updatePreview);
         }
 
-        // 🌟 モーダル制御の一元化
-        window.addEventListener('click', (e) => {
-            if (e.target === detailsModal) closeDetailModal();
-            if (e.target === waterTypeModal) {
-                waterTypeModal.style.display = 'none';
-                toggleBodyScroll(false);
-            }
-            if (e.target === purchaseDateModal) {
-                purchaseDateModal.style.display = 'none';
-                // 親モーダル（詳細）に戻る場合はスクロールロック解除しない
-            }
-            if (e.target === repottingDateModal) {
-                repottingDateModal.style.display = 'none';
-            }
-            if (e.target === lightboxModal) closeLightbox();
-        });
-
-        // 🌟 「戻る」ボタン対応 (popstate)
-        window.addEventListener('popstate', (e) => {
-            if (detailsModal.style.display === 'block') {
-                detailsModal.style.display = 'none';
-                currentPlantId = null;
-                toggleBodyScroll(false); // 解除
-            }
-        });
-
-        const closeDetailModal = () => {
-            // history.state を確認して戻るか閉じるか判断
-            if (history.state && history.state.modal === 'details') {
-                history.back(); // これが popstate を発火させる
-            } else { 
-                detailsModal.style.display = 'none'; 
-                currentPlantId = null; 
-                toggleBodyScroll(false); // 解除
-            }
+        // 🌟 モーダル制御の統合: すべて閉じる関数
+        const closeAllModals = () => {
+            if (detailsModal) detailsModal.style.display = 'none';
+            if (waterTypeModal) waterTypeModal.style.display = 'none';
+            if (purchaseDateModal) purchaseDateModal.style.display = 'none';
+            if (repottingDateModal) repottingDateModal.style.display = 'none';
+            if (lightboxModal) lightboxModal.classList.remove('active');
+            
+            currentPlantId = null;
+            toggleBodyScroll(false); // スクロールロック解除
         };
-        if (closeDetailButton) closeDetailButton.onclick = closeDetailModal;
+
+        // モーダル背景クリックで閉じる
+        window.addEventListener('click', (e) => {
+            if (e.target === detailsModal || 
+                e.target === waterTypeModal || 
+                e.target === purchaseDateModal || 
+                e.target === repottingDateModal || 
+                e.target === lightboxModal) {
+                
+                // ヒストリーバックで戻る場合と区別するため、ここではhistory.back()を呼ぶ
+                if (history.state && history.state.modal) {
+                    history.back();
+                } else {
+                    closeAllModals();
+                }
+            }
+        });
+
+        // 🌟 「戻る」ボタン (popstate) ですべて閉じる
+        window.addEventListener('popstate', (e) => {
+            closeAllModals();
+        });
+
+        // 個別の閉じるボタン (×)
+        if (closeDetailButton) {
+            closeDetailButton.onclick = () => {
+                if (history.state && history.state.modal === 'details') history.back();
+                else closeAllModals();
+            };
+        }
+        if (closeWaterTypeButton) closeWaterTypeButton.onclick = () => waterTypeModal.style.display = 'none';
         
+        // サブモーダル用の閉じるボタン
+        if (closePurchaseDateButton) {
+            closePurchaseDateButton.onclick = () => {
+                purchaseDateModal.style.display = 'none';
+                // 親モーダル(detailsModal)は閉じない
+            };
+        }
+        if (closeRepottingDateButton) {
+            closeRepottingDateButton.onclick = () => {
+                repottingDateModal.style.display = 'none';
+            };
+        }
+        
+        // アコーディオン
         document.querySelectorAll('.modal-content').forEach(modal => {
             modal.addEventListener('click', (e) => {
                 const header = e.target.closest('.accordion-header');
@@ -628,14 +622,11 @@ document.addEventListener('DOMContentLoaded', () => {
         customImageInput.onchange = async (e) => {
             if (!customImageInput.files || !customImageInput.files[0]) return;
             const file = customImageInput.files[0];
-            
             try {
                 showNotification('画像を処理中...', 'success', 1000);
                 const compressedDataUrl = await compressImage(file);
-                
                 if (currentPlantId !== null) {
                     await saveImageToDB(currentPlantId, compressedDataUrl);
-                    
                     const plantIndex = userPlants.findIndex(p => String(p.id) === String(currentPlantId));
                     if (plantIndex !== -1) {
                         userPlants[plantIndex].hasCustomImage = true;
@@ -658,29 +649,21 @@ document.addEventListener('DOMContentLoaded', () => {
     // ----------------------------------------------------
     // エクスポート・インポート
     // ----------------------------------------------------
-    
     const collectAllData = async (includeImages = true) => {
         const plantsToExport = JSON.parse(JSON.stringify(userPlants));
-        
         if (includeImages) {
             for (const plant of plantsToExport) {
                 if (plant.hasCustomImage) {
                     try {
                         const imageData = await getImageFromDB(plant.id);
-                        if (imageData) {
-                            plant._exportImageData = imageData;
-                        }
+                        if (imageData) plant._exportImageData = imageData;
                     } catch (e) {
                         console.warn(`画像のエクスポートに失敗: ${plant.name}`, e);
                     }
                 }
             }
         }
-        return {
-            userPlants: plantsToExport,
-            version: 1.0,
-            exportedAt: Date.now()
-        };
+        return { userPlants: plantsToExport, version: 1.0, exportedAt: Date.now() };
     };
 
     if (exportButton) {
@@ -703,7 +686,6 @@ document.addEventListener('DOMContentLoaded', () => {
                                 String(now.getHours()).padStart(2,'0') + 
                                 String(now.getMinutes()).padStart(2,'0');
                 a.download = `houseplant_backup_${dateStr}.json`;
-                
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
@@ -720,9 +702,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (importButton) {
-        importButton.onclick = () => {
-            importFileInput.click();
-        };
+        importButton.onclick = () => importFileInput.click();
     }
 
     if (importFileInput) {
@@ -742,7 +722,6 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const importedData = JSON.parse(e.target.result);
                 let loadedPlants = [];
-                
                 if (importedData.userPlants && Array.isArray(importedData.userPlants)) {
                     loadedPlants = importedData.userPlants;
                 } else if (Array.isArray(importedData)) {
@@ -754,7 +733,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 showCustomConfirm('現在のデータを上書きします。よろしいですか？', async () => {
                     try {
                         loadedPlants = normalizePlantData(loadedPlants);
-                        
                         for (const plant of loadedPlants) {
                             if (plant._exportImageData) {
                                 await saveImageToDB(plant.id, plant._exportImageData);
@@ -762,18 +740,15 @@ document.addEventListener('DOMContentLoaded', () => {
                                 delete plant._exportImageData; 
                             }
                         }
-                        
                         userPlants = loadedPlants;
                         saveUserPlants(userPlants);
                         renderPlantCards();
                         showNotification('インポートが完了しました。', 'success');
-                        
                     } catch (err) {
                         console.error(err);
                         showNotification('画像の復元中にエラーが発生しました。', 'error');
                     }
                 });
-
             } catch (error) {
                 showNotification('インポート失敗: ' + error.message, 'error', 5000); 
             } finally {
@@ -807,7 +782,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = PLANT_DATA.find(d => String(d.id) === String(userPlant.speciesId));
             const card = createPlantCardSkeleton(userPlant, data, seasonKey);
             cardContainer.appendChild(card);
-            
             const contentWrapper = card.querySelector('.card-content-wrapper');
             renderCardContentAsync(contentWrapper, userPlant, data, seasonKey);
         });
@@ -827,25 +801,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     const newOrderIds = Array.from(cardContainer.children).map(card => String(card.dataset.id));
                     const visibleItemsInMain = [];
                     const idToIndexMap = new Map(newOrderIds.map((id, index) => [id, index]));
-
                     userPlants.forEach((p, index) => {
                         if (idToIndexMap.has(String(p.id))) {
                             visibleItemsInMain.push({ plant: p, originalIndex: index });
                         }
                     });
-
                     const slotIndices = visibleItemsInMain.map(item => item.originalIndex).sort((a, b) => a - b);
-
                     visibleItemsInMain.sort((a, b) => {
                         const indexA = idToIndexMap.get(String(a.plant.id));
                         const indexB = idToIndexMap.get(String(b.plant.id));
                         return indexA - indexB;
                     });
-
                     slotIndices.forEach((slotIndex, i) => {
                         userPlants[slotIndex] = visibleItemsInMain[i].plant;
                     });
-
                     saveUserPlants(userPlants);
                 }
             });
@@ -856,7 +825,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const card = document.createElement('div');
         card.className = 'plant-card';
         card.setAttribute('data-id', String(userPlant.id));
-        
         card.innerHTML = `
             <div class="controls">
                 <span class="drag-handle">☰</span>
@@ -909,7 +877,6 @@ document.addEventListener('DOMContentLoaded', () => {
             </ul>
         `;
         container.innerHTML = html;
-        // 🌟 読み込み完了後に不透明度を戻すアニメーション (UX)
         container.style.opacity = '0';
         requestAnimationFrame(() => container.style.opacity = '1');
         container.style.transition = 'opacity 0.3s ease';
@@ -925,20 +892,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 return d.minTemp >= th;
             });
         }
-        
         filtered.sort((a, b) => {
-            if (currentSort === 'name') {
-                return a.name.localeCompare(b.name);
-            } else if (currentSort === 'entryDate') {
-                return new Date(b.entryDate) - new Date(a.entryDate); 
-            } else if (currentSort === 'minTemp') {
+            if (currentSort === 'name') return a.name.localeCompare(b.name);
+            if (currentSort === 'entryDate') return new Date(b.entryDate) - new Date(a.entryDate); 
+            if (currentSort === 'minTemp') {
                 const dataA = PLANT_DATA.find(pd => String(pd.id) === String(a.speciesId));
                 const dataB = PLANT_DATA.find(pd => String(pd.id) === String(b.speciesId));
                 return dataA.minTemp - dataB.minTemp; 
             }
             return 0;
         });
-        
         if (currentSort === 'nextWateringDate') {
             const seasonKey = getCurrentSeason();
             filtered.sort((a, b) => {
@@ -951,7 +914,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 return getNextDate(a) - getNextDate(b);
             });
         }
-
         return filtered;
     }
 
@@ -977,11 +939,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (existingImg) existingImg.remove();
         plantDetails.prepend(detailImageContainer);
         
-        // ▼ データ注入 ▼
+        // データ注入
         const seasonData = plantData.management[getCurrentSeason()];
         const maintenance = plantData.maintenance;
 
-        // 1. 季節のケア情報
+        // 季節のケア情報
         const seasonContent = document.getElementById('season-care-content');
         if(seasonContent) {
             seasonContent.innerHTML = `
@@ -997,7 +959,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if(h) h.classList.remove('collapsed');
         }
 
-        // 2. 基本情報・メンテナンス情報
+        // 基本情報
         const basicContent = document.getElementById('basic-maintenance-content');
         if(basicContent) {
             basicContent.innerHTML = `
@@ -1015,7 +977,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if(h) h.classList.add('collapsed');
         }
         
-        // 3. 履歴リストの開閉状態リセット
+        // 履歴リストの開閉状態リセット
         const waterList = document.getElementById('water-history-list');
         if(waterList) {
             waterList.classList.add('expanded');
@@ -1032,19 +994,17 @@ document.addEventListener('DOMContentLoaded', () => {
         renderWaterHistory(userPlant.waterLog, userPlant.id);
         renderRepottingHistory(userPlant.repottingLog);
         
-        // 🌟 修正: 詳細画面内の水やりボタン配置
+        // 水やりボタンの生成
         if (waterDoneInDetailContainer) {
             waterDoneInDetailContainer.innerHTML = ''; 
             const waterButton = document.createElement('button');
             waterButton.className = 'action-button water-done-btn'; 
             waterButton.textContent = '💧 水やり完了 (内容選択)';
-            waterButton.onclick = () => {
-                showWaterTypeSelectionModal(userPlant.id); 
-            };
+            waterButton.onclick = () => showWaterTypeSelectionModal(userPlant.id); 
             waterDoneInDetailContainer.appendChild(waterButton);
         }
 
-        // 🌟 モーダルを開く＆履歴追加＆スクロールロック
+        // 🌟 モーダル表示処理
         detailsModal.style.display = 'block';
         toggleBodyScroll(true);
         history.pushState({ modal: 'details' }, null, '#details');
@@ -1066,15 +1026,85 @@ document.addEventListener('DOMContentLoaded', () => {
                 const button = document.createElement('button');
                 button.textContent = typeData.name;
                 button.className = 'action-button';
-                button.onclick = () => {
-                    updateLastWatered(strId, key, today);
-                };
+                button.onclick = () => updateLastWatered(strId, key, today);
                 waterTypeOptionsContainer.appendChild(button);
             });
         }
-        
         waterTypeModal.style.display = 'block';
-        toggleBodyScroll(true); // ロック
+        // サブモーダルを開くときはヒストリー追加せず、上乗せする
+    }
+
+    // ----------------------------------------------------
+    // サブモーダル開閉処理 (UX改善)
+    // ----------------------------------------------------
+    if (editPurchaseDateButton) {
+        editPurchaseDateButton.onclick = () => {
+            if (currentPlantId === null) return;
+            const plant = userPlants.find(p => String(p.id) === String(currentPlantId));
+            const today = getLocalTodayDate();
+            if (purchaseDateInput) {
+                purchaseDateInput.value = plant && plant.purchaseDate ? plant.purchaseDate : today;
+                purchaseDateInput.setAttribute('max', today);
+            }
+            purchaseDateModal.style.display = 'block';
+        };
+    }
+
+    if (savePurchaseDateButton) {
+        savePurchaseDateButton.onclick = () => {
+            const newDate = purchaseDateInput.value;
+            if (newDate && currentPlantId !== null) {
+                const plantIndex = userPlants.findIndex(p => String(p.id) === String(currentPlantId));
+                if (plantIndex !== -1) {
+                    userPlants[plantIndex].purchaseDate = newDate;
+                    saveUserPlants(userPlants);
+                    if(purchaseDateDisplay) purchaseDateDisplay.textContent = formatJapaneseDate(newDate);
+                    showNotification('購入日を保存しました。', 'success');
+                }
+                purchaseDateModal.style.display = 'none';
+            } else {
+                showNotification('日付を入力してください。', 'warning');
+            }
+        };
+    }
+
+    if (editRepottingDateButton) {
+        editRepottingDateButton.onclick = () => {
+            if (currentPlantId === null) return;
+            repottingDateModal.style.display = 'block';
+            const today = getLocalTodayDate();
+            if(repottingDateInput) {
+                repottingDateInput.setAttribute('max', today); 
+                repottingDateInput.value = today; 
+            }
+        };
+    }
+    
+    if (saveRepottingDateButton) {
+        saveRepottingDateButton.onclick = () => {
+            const newDate = repottingDateInput.value;
+            if (newDate && currentPlantId !== null) {
+                const userPlantIndex = userPlants.findIndex(p => String(p.id) === String(currentPlantId));
+                if (userPlantIndex !== -1) {
+                    const newRepottingEntry = { date: newDate };
+                    if (!Array.isArray(userPlants[userPlantIndex].repottingLog)) {
+                        userPlants[userPlantIndex].repottingLog = [];
+                    }
+                    userPlants[userPlantIndex].repottingLog.unshift(newRepottingEntry);
+                    userPlants[userPlantIndex].repottingLog.sort((a, b) => new Date(b.date) - new Date(a.date));
+                    saveUserPlants(userPlants); 
+                }
+                showNotification('植え替え記録を追加しました。', 'success');
+                repottingDateModal.style.display = 'none';
+                
+                // 詳細画面更新
+                const plantData = PLANT_DATA.find(p => String(p.id) === String(userPlants[userPlantIndex].speciesId));
+                showDetailsModal(userPlants[userPlantIndex], plantData);
+                renderPlantCards();
+            } else {
+                showNotification('日付を入力してください。', 'warning');
+            }
+        };
     }
 
     // ----------------------------------------------------
@@ -1104,9 +1134,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         setTimeout(() => {
             if (!userPlants.find(p => String(p.id) === String(id))) {
-                deleteImageFromDB(id).then(() => {
-                    cleanupOrphanedImages();
-                });
+                deleteImageFromDB(id).then(() => cleanupOrphanedImages());
             }
         }, 6000);
     }
@@ -1171,15 +1199,12 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function renderQuickSortButtons() {
         if (!quickSortButtonsContainer) return;
-        
         const quickSorts = [
             { value: 'nextWateringDate', label: '💧 急ぎ' },
             { value: 'name', label: '🌱 名前順' },
             { value: 'entryDate', label: '📅 登録順' }
         ];
-        
         quickSortButtonsContainer.innerHTML = '';
-        
         quickSorts.forEach(sort => {
             const button = document.createElement('button');
             button.textContent = sort.label;
