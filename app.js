@@ -98,8 +98,33 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // 🌟 ガベージコレクション: 使われていない画像を削除
+    function cleanupOrphanedImages() {
+        if (!db) return;
+        
+        // 現在有効な植物IDのセットを作成
+        const validIds = new Set(userPlants.map(p => String(p.id)));
+        
+        const transaction = db.transaction([STORE_NAME], "readwrite");
+        const store = transaction.objectStore(STORE_NAME);
+        const request = store.openCursor();
+
+        request.onsuccess = (event) => {
+            const cursor = event.target.result;
+            if (cursor) {
+                const storedId = String(cursor.key);
+                // IDが植物リストに存在しない場合、削除する
+                if (!validIds.has(storedId)) {
+                    console.log(`Garbage Collecting: Removing orphaned image for ID ${storedId}`);
+                    cursor.delete();
+                }
+                cursor.continue();
+            }
+        };
+    }
+
     // ----------------------------------------------------
-    // 2. 画像圧縮ユーティリティ (Client-side Compression)
+    // 2. 画像圧縮ユーティリティ
     // ----------------------------------------------------
     function compressImage(file, maxWidth = 1024, quality = 0.8) {
         return new Promise((resolve, reject) => {
@@ -339,10 +364,6 @@ document.addEventListener('DOMContentLoaded', () => {
             p.speciesId = String(p.speciesId);
             if (!Array.isArray(p.waterLog)) p.waterLog = [];
             if (!Array.isArray(p.repottingLog)) p.repottingLog = [];
-            
-            // 古いBase64データがlocalStorageに残っている場合の移行処理（容量解放のため削除推奨だが、ここでは残す）
-            // 将来的にはカスタム画像の移行ロジックを入れるべき
-            
             return p;
         });
     }
@@ -415,6 +436,8 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             await initDB();
             console.log("IndexedDB Initialized.");
+            // 🌟 起動時にゴミ掃除を実行
+            cleanupOrphanedImages();
         } catch(e) {
             console.error("IndexedDB Init Failed", e);
             showNotification("データベースの初期化に失敗しました", "error");
@@ -612,6 +635,146 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ----------------------------------------------------
+    // エクスポート・インポートロジック (🌟 修正箇所)
+    // ----------------------------------------------------
+    
+    // 🌟 画像データを含めてデータを収集する非同期関数
+    const collectAllData = async () => {
+        // データをディープコピー
+        const plantsToExport = JSON.parse(JSON.stringify(userPlants));
+        
+        // 画像がある植物について、IndexedDBからデータを取得して結合
+        for (const plant of plantsToExport) {
+            if (plant.hasCustomImage) {
+                try {
+                    const imageData = await getImageFromDB(plant.id);
+                    if (imageData) {
+                        // 一時的にBase64データをプロパティに追加
+                        plant._exportImageData = imageData;
+                    }
+                } catch (e) {
+                    console.warn(`画像のエクスポートに失敗: ${plant.name}`, e);
+                }
+            }
+        }
+        
+        return {
+            userPlants: plantsToExport,
+            version: 1.0,
+            exportedAt: Date.now()
+        };
+    };
+
+    if (exportButton) {
+        exportButton.onclick = async () => { // asyncにする
+            try {
+                showNotification('バックアップデータを作成中...', 'success', 1000);
+                
+                const data = await collectAllData(); // awaitで待機
+                const json = JSON.stringify(data, null, 2);
+                const blob = new Blob([json], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                const now = new Date();
+                // ファイル名を見やすく整形 (YYYYMMDD-HHMM)
+                const dateStr = now.getFullYear() +
+                                String(now.getMonth()+1).padStart(2,'0') + 
+                                String(now.getDate()).padStart(2,'0') + '-' + 
+                                String(now.getHours()).padStart(2,'0') + 
+                                String(now.getMinutes()).padStart(2,'0');
+                a.download = `houseplant_backup_${dateStr}.json`;
+                
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                localStorage.setItem('last_export_time', Date.now());
+                renderLastUpdateTime();
+                showNotification('エクスポートが完了しました。', 'success');
+            } catch (e) {
+                console.error(e);
+                showNotification('エクスポートに失敗しました。', 'error');
+            }
+        };
+    }
+
+    if (importButton) {
+        importButton.onclick = () => {
+            importFileInput.click();
+        };
+    }
+
+    if (importFileInput) {
+        importFileInput.onchange = (e) => {
+            if (importFileInput.files.length > 0) {
+                importFileNameDisplay.textContent = importFileInput.files[0].name;
+                processImportFile(importFileInput.files[0]);
+            } else {
+                importFileNameDisplay.textContent = 'ファイル未選択';
+            }
+        };
+    }
+
+    const processImportFile = (file) => {
+        const reader = new FileReader();
+        reader.onload = async (e) => { // asyncにする
+            try {
+                const importedData = JSON.parse(e.target.result);
+                let loadedPlants = [];
+                
+                if (importedData.userPlants && Array.isArray(importedData.userPlants)) {
+                    loadedPlants = importedData.userPlants;
+                } else if (Array.isArray(importedData)) {
+                    // 古い形式のサポート
+                    loadedPlants = importedData;
+                } else {
+                    throw new Error('データ形式が正しくありません。');
+                }
+                
+                showCustomConfirm('現在のデータを上書きします。よろしいですか？', async () => { // async callback
+                    try {
+                        // 1. まずデータを正規化
+                        loadedPlants = normalizePlantData(loadedPlants);
+                        
+                        // 2. 画像データの復元処理
+                        for (const plant of loadedPlants) {
+                            // エクスポートデータに画像が含まれている場合
+                            if (plant._exportImageData) {
+                                await saveImageToDB(plant.id, plant._exportImageData);
+                                plant.hasCustomImage = true;
+                                // 不要になった一時データを削除（localStorage節約）
+                                delete plant._exportImageData; 
+                            }
+                        }
+                        
+                        // 3. 状態更新
+                        userPlants = loadedPlants;
+                        saveUserPlants(userPlants);
+                        renderPlantCards();
+                        showNotification('インポートが完了しました。', 'success');
+                        
+                    } catch (err) {
+                        console.error(err);
+                        showNotification('画像の復元中にエラーが発生しました。', 'error');
+                    }
+                });
+
+            } catch (error) {
+                showNotification('インポート失敗: ' + error.message, 'error', 5000); 
+            } finally {
+                if(importFileInput) {
+                    importFileInput.value = '';
+                    importFileNameDisplay.textContent = 'ファイル未選択';
+                }
+            }
+        };
+        reader.readAsText(file);
+    };
+
+    // ----------------------------------------------------
     // カードレンダリング (Async対応)
     // ----------------------------------------------------
     function renderPlantCards() {
@@ -641,7 +804,41 @@ document.addEventListener('DOMContentLoaded', () => {
         plantCardList.innerHTML = '';
         plantCardList.appendChild(cardContainer);
         
-        // SortableJS setup (省略 - 既存と同じ)
+        if (currentSort !== 'nextWateringDate') {
+            new Sortable(cardContainer, {
+                animation: 150,
+                handle: '.drag-handle', 
+                delay: 100, 
+                delayOnTouchOnly: true,
+                touchStartThreshold: 5, 
+                ghostClass: 'sortable-ghost', 
+                onEnd: function (evt) {
+                    const newOrderIds = Array.from(cardContainer.children).map(card => String(card.dataset.id));
+                    const visibleItemsInMain = [];
+                    const idToIndexMap = new Map(newOrderIds.map((id, index) => [id, index]));
+
+                    userPlants.forEach((p, index) => {
+                        if (idToIndexMap.has(String(p.id))) {
+                            visibleItemsInMain.push({ plant: p, originalIndex: index });
+                        }
+                    });
+
+                    const slotIndices = visibleItemsInMain.map(item => item.originalIndex).sort((a, b) => a - b);
+
+                    visibleItemsInMain.sort((a, b) => {
+                        const indexA = idToIndexMap.get(String(a.plant.id));
+                        const indexB = idToIndexMap.get(String(b.plant.id));
+                        return indexA - indexB;
+                    });
+
+                    slotIndices.forEach((slotIndex, i) => {
+                        userPlants[slotIndex] = visibleItemsInMain[i].plant;
+                    });
+
+                    saveUserPlants(userPlants);
+                }
+            });
+        }
     }
 
     function createPlantCardSkeleton(userPlant, data, activeSeasonKey) {
@@ -717,7 +914,38 @@ document.addEventListener('DOMContentLoaded', () => {
                 return d.minTemp >= th;
             });
         }
-        // Sort logic... (省略: 既存と同様)
+        
+        filtered.sort((a, b) => {
+            if (currentSort === 'name') {
+                return a.name.localeCompare(b.name);
+            } else if (currentSort === 'entryDate') {
+                return new Date(b.entryDate) - new Date(a.entryDate); 
+            } else if (currentSort === 'minTemp') {
+                const dataA = PLANT_DATA.find(pd => String(pd.id) === String(a.speciesId));
+                const dataB = PLANT_DATA.find(pd => String(pd.id) === String(b.speciesId));
+                return dataA.minTemp - dataB.minTemp; 
+            } else if (currentSort === 'nextWateringDate') {
+                // ここは簡易計算（厳密なソートのためには本来ここでAsync計算が必要だが、複雑化を避けるため既存ロジック踏襲）
+                // 実際にはrender時に計算されるが、ソート用には同期的に計算できる範囲で行う
+                return 0; // 暫定
+            }
+            return 0;
+        });
+        
+        // nextWateringDateソートの再実装（簡易版）
+        if (currentSort === 'nextWateringDate') {
+            const seasonKey = getCurrentSeason();
+            filtered.sort((a, b) => {
+                const getNextDate = (plant) => {
+                    const d = PLANT_DATA.find(pd => String(pd.id) === String(plant.speciesId));
+                    const last = plant.waterLog[0] || { date: plant.entryDate };
+                    const next = calculateNextWateringDate(last.date, d.management[seasonKey].waterIntervalDays);
+                    return next ? new Date(next).getTime() : 9999999999999;
+                };
+                return getNextDate(a) - getNextDate(b);
+            });
+        }
+
         return filtered;
     }
 
@@ -764,8 +992,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // ----------------------------------------------------
     // その他 既存の補助関数 (省略せず実装が必要)
     // ----------------------------------------------------
-    // ... deletePlantCard, deleteWaterLog, setupNotificationUI 等は
-    // 前回のロジックを維持しつつ、IDB削除処理を追加する
     
     function deletePlantCard(id) {
         const index = userPlants.findIndex(p => String(p.id) === String(id));
@@ -779,7 +1005,6 @@ document.addEventListener('DOMContentLoaded', () => {
         saveUserPlants(userPlants);
         
         // IDBからはまだ削除しない (Undoのため)
-        // 完全削除は別途ガベージコレクションが必要だが、簡易的にUndoタイムアウト後に削除
         
         renderPlantCards();
         
@@ -792,8 +1017,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         
-        // 5秒後にIDBから削除するロジックを入れるのが理想
+        // 5秒後にIDBから削除するロジック（ガベージコレクションがあるため厳密には不要だが念のため）
         setTimeout(() => {
+            // Undoされずに残っているか確認
             if (!userPlants.find(p => String(p.id) === String(id))) {
                 deleteImageFromDB(id);
             }
@@ -847,31 +1073,32 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeApp();
     
     // ----------------------------------------------------
-    // ヘルパー関数定義 (前回コード参照: formatJapaneseDate, getSeasonRisk等)
+    // ヘルパー関数定義
     // ----------------------------------------------------
     function getSeasonRisk(seasonKey, data) {
         if (seasonKey === 'WINTER') return data.minTemp >= 10 ? '厳重な保温が必要' : '寒さ対策';
         if (seasonKey === 'SUMMER') return '水切れ・蒸れに注意';
         return '成長期';
     }
-    function formatJapaneseDate(d) {
-        const date = new Date(d);
-        return `${date.getFullYear()}年${date.getMonth()+1}月${date.getDate()}日`;
-    }
+    
     function renderWaterHistory(logs, id) {
         if (!waterHistoryList) return;
         waterHistoryList.innerHTML = logs.length ? '' : '<li>なし</li>';
         logs.forEach((log, idx) => {
             const li = document.createElement('li');
-            li.innerHTML = `${formatJapaneseDate(log.date)} <button onclick="deleteLog('${id}',${idx})">×</button>`; 
-            // ※ onclickハンドラはクロージャ内で定義できないため、
-            // 実際は addEventListener で実装するか、windowオブジェクトに関数を生やす必要がある。
-            // ここでは簡略化のため addEventListener を推奨。
-            const btn = li.querySelector('button');
+            // イベントリスナーでの実装を推奨
+            const span = document.createElement('span');
+            span.textContent = formatJapaneseDate(log.date);
+            const btn = document.createElement('button');
+            btn.textContent = '×';
+            btn.className = 'delete-log-btn';
             btn.onclick = (e) => { e.stopPropagation(); deleteWaterLog(id, idx); };
+            li.appendChild(span);
+            li.appendChild(btn);
             waterHistoryList.appendChild(li);
         });
     }
+    
     function renderRepottingHistory(logs) {
         if (!repottingHistoryList) return;
         repottingHistoryList.innerHTML = logs.length ? '' : '<li>なし</li>';
@@ -881,15 +1108,18 @@ document.addEventListener('DOMContentLoaded', () => {
             repottingHistoryList.appendChild(li);
         });
     }
+    
     function openLightbox(src) {
         if(lightboxModal && lightboxImage) {
             lightboxImage.src = src;
             lightboxModal.classList.add('active');
         }
     }
+    
     function closeLightbox() {
         if(lightboxModal) lightboxModal.classList.remove('active');
     }
+    
     function deleteWaterLog(id, idx) {
         const pIndex = userPlants.findIndex(p => String(p.id) === String(id));
         if (pIndex > -1 && confirm('削除しますか？')) {
@@ -897,27 +1127,5 @@ document.addEventListener('DOMContentLoaded', () => {
             saveUserPlants(userPlants);
             showDetailsModal(userPlants[pIndex], PLANT_DATA.find(d => String(d.id) === userPlants[pIndex].speciesId));
         }
-    }
-    // インポート処理などは前回コードと同様に実装してください（バリデーション追加推奨）
-    if (importFileInput) {
-        importFileInput.onchange = (e) => {
-            const file = e.target.files[0];
-            if(!file) return;
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                try {
-                    const json = JSON.parse(ev.target.result);
-                    // バリデーション: 必須プロパティチェック
-                    if (!Array.isArray(json.userPlants)) throw new Error('Invalid Format');
-                    userPlants = normalizePlantData(json.userPlants);
-                    saveUserPlants(userPlants);
-                    renderPlantCards();
-                    showNotification('インポート完了', 'success');
-                } catch(err) {
-                    showNotification('ファイル形式が不正です', 'error');
-                }
-            };
-            reader.readAsText(file);
-        };
     }
 });
