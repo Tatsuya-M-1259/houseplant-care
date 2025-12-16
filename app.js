@@ -1001,6 +1001,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const timeSinceEntry = calculateTimeSince(userPlant.entryDate);
         const repottingReminder = checkRepottingStatus(data, userPlant.id);
 
+        // ▼ 追加: 葉水データの取得（データがない場合はデフォルトメッセージを表示）
+        const mistingInfo = seasonData.mist || 'データなし'; 
+
         return `
             <div class="card-image">
                 <img src="${imgSrc}" alt="${data.species}" loading="lazy" style="object-fit: contain;">
@@ -1018,6 +1021,9 @@ document.addEventListener('DOMContentLoaded', () => {
             <ul>
                 <li>**水やり量:** ${waterMethodSummary}</li>
                 <li>**推奨頻度:** ${seasonData.water} <span style="font-size:0.9em; font-weight:normal;">${intervalDisplay}</span></li>
+                
+                <li>**葉水:** ${mistingInfo}</li>
+                
                 <li><strong>前回水やり:</strong> ${formatJapaneseDate(lastLog.date)} 
                     <strong class="last-watered-type">
                         <span class="water-type-badge ${lastWateringType.class}">
