@@ -33,9 +33,6 @@ export const INTERVAL_WATER_STOP = 999;
  * @type {PlantData[]}
  */
 export const PLANT_DATA = [
-    // waterIntervalDays: 推奨される水やり頻度の日数。INTERVAL_WATER_STOP (999) は断水期間を意味します。
-    // mist: 季節ごとの葉水の頻度と注意点。
-
     // No. 1: コルジリネ
     {
         id: 1, species: 'コルジリネ', scientific: 'Cordyline terminalis', minTemp: 5, difficulty: 'やや容易', feature: '鋭い葉、鉢植えが一般的', img: 'cordyline.jpg',
@@ -82,7 +79,7 @@ export const PLANT_DATA = [
             AUTUMN: { water: '土表面が乾いてから1日後', waterIntervalDays: 10, light: '半日陰', mist: '2-3日に1回。' },
             WINTER: { water: '土中が乾いてから2-3日後 (少量)', waterIntervalDays: 14, light: '半日陰', tempRisk: '夜間窓際隔離（最低5℃確保）', mist: '週1-2回。葉の埃を落とす程度に。' }
         },
-        maintenance: { fertilizer: '5月, 9月', repotting: '5月〜8月', pruning: '5月〜8月 (徒長枝剪定)' }
+        maintenance: { fertilizer: '5月, 9月', repotting: '5月〜8月', pruning: '5月〜9月 (徒長枝剪定)' }
     },
     // No. 5: サンスベリア
     {
