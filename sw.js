@@ -1,7 +1,7 @@
 // sw.js
 
-// 🌟 更新: キャッシュバージョンを v10 に更新してリフレッシュを強制
-const CACHE_NAME = 'houseplant-care-v10'; 
+// 🌟 更新: キャッシュバージョンを v11 に更新
+const CACHE_NAME = 'houseplant-care-v11'; 
 const SORTABLE_CDN = 'https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js';
 
 const CORE_ASSETS = [
@@ -15,6 +15,15 @@ const CORE_ASSETS = [
     'icon-512x512.png',
     SORTABLE_CDN 
 ];
+
+// SVGプレースホルダー定義 (画像読み込み失敗時に表示)
+const PLACEHOLDER_SVG = `
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="200" viewBox="0 0 300 200">
+  <rect width="300" height="200" fill="#f0f0f0"/>
+  <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="16" fill="#888">
+    Image Offline
+  </text>
+</svg>`;
 
 // インストールイベント: コアアセットのプリロード
 self.addEventListener('install', (event) => {
@@ -44,10 +53,11 @@ self.addEventListener('fetch', (event) => {
                             cache.put(event.request, networkResponse.clone());
                             return networkResponse;
                         })
-                        // 🌟 修正: オフライン等で画像取得に失敗した場合のエラーハンドリング
-                        // nullを返すことで、アプリ側の img.onerror を発火させて代替画像を表示する
+                        // 🌟 修正: オフライン等で画像取得に失敗した場合はSVGプレースホルダーを返す
                         .catch(() => {
-                            return null;
+                            return new Response(PLACEHOLDER_SVG, {
+                                headers: { 'Content-Type': 'image/svg+xml' }
+                            });
                         });
                 });
             })
