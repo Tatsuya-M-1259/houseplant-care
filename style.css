@@ -48,6 +48,7 @@
     }
     .detail-image {
         border-color: #333 !important;
+        background-color: #2c2c2c !important;
     }
     .quick-sort-buttons button {
         background-color: #2c2c2c !important;
@@ -299,7 +300,16 @@ form select {
 }
 
 .detail-image-container { text-align: center; margin-bottom: 15px; cursor: zoom-in; }
-.detail-image { max-height: 250px; border: 1px solid var(--color-border); max-width: 100%; border-radius: 8px; }
+/* 詳細画像のスタイル改善: 画像が大きくても全体を表示し、はみ出さないように */
+.detail-image {
+    width: 100%;
+    height: auto;
+    max-height: 400px; /* 高さを制限 */
+    object-fit: contain; /* アスペクト比を維持して全体を表示 */
+    background-color: #f0f0f0;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+}
 
 /* アコーディオン */
 .accordion-item { margin-top: 15px; border: 1px solid var(--color-border); border-radius: var(--border-radius); overflow: hidden; }
@@ -381,11 +391,35 @@ form select {
 #change-photo-button:hover {
     background-color: #5a6268;
 }
-/* 詳細画像の表示調整 */
-.detail-image {
-    width: 100%;
-    max-height: 300px;
-    object-fit: cover; /* 縦長写真も枠内に収める */
-    border-radius: 8px;
-    border: 1px solid var(--color-border);
+
+/* 🌟 トップへ戻るボタン */
+#scroll-to-top {
+    position: fixed;
+    bottom: 80px; /* 通知エリアより上 */
+    right: 20px;
+    width: 45px;
+    height: 45px;
+    background-color: var(--color-primary);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    cursor: pointer;
+    font-size: 1.2rem;
+    z-index: 900;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.3s ease;
+    pointer-events: none;
+}
+#scroll-to-top.visible {
+    opacity: 0.9;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+#scroll-to-top:hover {
+    opacity: 1;
+    background-color: #0c8a66;
 }
