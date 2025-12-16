@@ -1,7 +1,7 @@
 // sw.js
 
-// 🌟 更新: キャッシュバージョンを v11 に更新
-const CACHE_NAME = 'houseplant-care-v11'; 
+// 🌟 更新: キャッシュバージョンを v12 に更新 (app.jsの修正を反映させるため)
+const CACHE_NAME = 'houseplant-care-v12'; 
 const SORTABLE_CDN = 'https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js';
 
 const CORE_ASSETS = [
