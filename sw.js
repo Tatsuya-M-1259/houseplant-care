@@ -1,7 +1,7 @@
 // sw.js
 
-// 🌟 更新: ファイル変更を反映させるため v16 に更新
-const CACHE_NAME = 'houseplant-care-v16'; 
+// 🌟 更新: ファイル変更を反映させるため v17 に更新
+const CACHE_NAME = 'houseplant-care-v17'; 
 const SORTABLE_CDN = 'https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js';
 
 const CORE_ASSETS = [
