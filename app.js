@@ -272,9 +272,11 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const isDetailOpen = detailsModal.style.display === 'block';
             if (isDetailOpen) {
-                 // 詳細画面が開いている場合、データをリロードして画面更新
                  const plantData = PLANT_DATA.find(p => String(p.id) === String(userPlants[plantIndex].speciesId));
-                 showDetailsModal(userPlants[plantIndex], plantData);
+                 // 🌟 修正: データの安全確認
+                 if (plantData) {
+                    showDetailsModal(userPlants[plantIndex], plantData);
+                 }
             } else {
                  toggleBodyScroll(false); 
             }
@@ -300,7 +302,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const detailsModal = document.getElementById('details-modal'); 
     const closeDetailButton = detailsModal ? detailsModal.querySelector('.close-button') : null; 
     const plantDetails = document.getElementById('plant-details'); 
-    // 🌟 追加: 詳細画面のタイトル要素
     const detailPlantName = document.getElementById('detail-plant-name');
     const detailSpeciesName = document.getElementById('detail-species-name');
     const prevPlantBtn = document.getElementById('prev-plant-btn');
@@ -604,22 +605,28 @@ document.addEventListener('DOMContentLoaded', () => {
         if (closePurchaseDateButton) closePurchaseDateButton.onclick = () => purchaseDateModal.style.display = 'none';
         if (closeRepottingDateButton) closeRepottingDateButton.onclick = () => repottingDateModal.style.display = 'none';
 
-        // 🌟 追加: 前へ・次へボタンの動作実装
         const handlePrevNextPlant = (direction) => {
             if (!currentPlantId) return;
-            const sortedPlants = sortAndFilterPlants(); // 現在の表示順を取得
+            const sortedPlants = sortAndFilterPlants(); 
             const currentIndex = sortedPlants.findIndex(p => String(p.id) === String(currentPlantId));
             
             if (currentIndex === -1) return;
             
             let newIndex = currentIndex + direction;
-            if (newIndex < 0) newIndex = sortedPlants.length - 1; // 先頭なら末尾へ
-            if (newIndex >= sortedPlants.length) newIndex = 0; // 末尾なら先頭へ
+            if (newIndex < 0) newIndex = sortedPlants.length - 1; 
+            if (newIndex >= sortedPlants.length) newIndex = 0; 
             
             const targetPlant = sortedPlants[newIndex];
+            // 🌟 修正: データの安全確認
             const targetData = PLANT_DATA.find(pd => String(pd.id) === String(targetPlant.speciesId));
             
-            showDetailsModal(targetPlant, targetData);
+            if (targetData) {
+                showDetailsModal(targetPlant, targetData);
+            } else {
+                // データがない場合はスキップするか、通知を出す
+                // 今回はシンプルに何も起きないようにする（エラー防止）
+                console.warn("Plant data not found for:", targetPlant.name);
+            }
         };
 
         if (prevPlantBtn) prevPlantBtn.onclick = (e) => { e.stopPropagation(); handlePrevNextPlant(-1); };
@@ -674,7 +681,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                     const contentElement = card.querySelector('.card-content-wrapper');
                     const plantData = PLANT_DATA.find(pd => String(pd.id) === String(plant.speciesId));
-                    renderCardContentAsync(contentElement, plant, plantData, selectedSeason);
+                    // 🌟 修正: データの安全確認
+                    if (plantData) {
+                        renderCardContentAsync(contentElement, plant, plantData, selectedSeason);
+                    }
                     return;
                 }
                 if (e.target.closest('.water-done-btn')) {
@@ -682,7 +692,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     showWaterTypeSelectionModal(plantId);
                     return;
                 }
-                showDetailsModal(plant, PLANT_DATA.find(pd => String(pd.id) === String(plant.speciesId)));
+                
+                const plantData = PLANT_DATA.find(pd => String(pd.id) === String(plant.speciesId));
+                if (plantData) {
+                    showDetailsModal(plant, plantData);
+                } else {
+                    showNotification("植物データの読み込みに失敗しました", "error");
+                }
             });
         }
         
@@ -908,10 +924,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         sortedPlants.forEach(userPlant => {
             const data = PLANT_DATA.find(d => String(d.id) === String(userPlant.speciesId));
-            const card = createPlantCardSkeleton(userPlant, data, seasonKey);
-            cardContainer.appendChild(card);
-            const contentWrapper = card.querySelector('.card-content-wrapper');
-            renderCardContentAsync(contentWrapper, userPlant, data, seasonKey);
+            // 🌟 修正: データの安全確認。データがない場合はカードを生成しない
+            if (data) {
+                const card = createPlantCardSkeleton(userPlant, data, seasonKey);
+                cardContainer.appendChild(card);
+                const contentWrapper = card.querySelector('.card-content-wrapper');
+                renderCardContentAsync(contentWrapper, userPlant, data, seasonKey);
+            }
         });
 
         plantCardList.innerHTML = '';
@@ -1022,6 +1041,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (th !== undefined) {
                 filtered = filtered.filter(p => {
                     const d = PLANT_DATA.find(pd => String(pd.id) === String(p.speciesId));
+                    // 🌟 修正: データがない場合はフィルタリングから除外
+                    if (!d) return false;
                     return d.minTemp >= th;
                 });
             }
@@ -1032,6 +1053,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (currentSort === 'minTemp') {
                 const dataA = PLANT_DATA.find(pd => String(pd.id) === String(a.speciesId));
                 const dataB = PLANT_DATA.find(pd => String(pd.id) === String(b.speciesId));
+                if (!dataA || !dataB) return 0;
                 return dataA.minTemp - dataB.minTemp; 
             }
             return 0;
@@ -1041,6 +1063,7 @@ document.addEventListener('DOMContentLoaded', () => {
             filtered.sort((a, b) => {
                 const getNextDate = (plant) => {
                     const d = PLANT_DATA.find(pd => String(pd.id) === String(plant.speciesId));
+                    if (!d) return 9999999999999;
                     const last = plant.waterLog[0] || { date: plant.entryDate };
                     const next = calculateNextWateringDate(last.date, d.management[seasonKey].waterIntervalDays);
                     return next ? new Date(next).getTime() : 9999999999999;
@@ -1055,7 +1078,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!detailsModal) return;
         currentPlantId = userPlant.id;
         
-        // 🌟 追加: ヘッダー情報の更新
         if (detailPlantName) detailPlantName.textContent = userPlant.name;
         if (detailSpeciesName) detailSpeciesName.textContent = plantData.species;
 
