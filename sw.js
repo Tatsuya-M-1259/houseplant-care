@@ -1,7 +1,7 @@
 // sw.js
 
-// 🌟 更新: 修正を確実に届けるため v14 に更新
-const CACHE_NAME = 'houseplant-care-v14'; 
+// 🌟 更新: 修正を反映させるため v15 に更新
+const CACHE_NAME = 'houseplant-care-v15'; 
 const SORTABLE_CDN = 'https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js';
 
 const CORE_ASSETS = [
@@ -100,7 +100,7 @@ self.addEventListener('activate', (event) => {
                     }
                 })
             );
-        })
+        }).then(() => self.clients.claim()) // 🌟 修正: 更新後すぐにページを制御下に置く
     );
 });
 
