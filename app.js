@@ -273,7 +273,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const isDetailOpen = detailsModal.style.display === 'block';
             if (isDetailOpen) {
                  const plantData = PLANT_DATA.find(p => String(p.id) === String(userPlants[plantIndex].speciesId));
-                 // 🌟 修正: データの安全確認
                  if (plantData) {
                     showDetailsModal(userPlants[plantIndex], plantData);
                  }
@@ -287,6 +286,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // DOM Elements
     // ----------------------------------------------------
     const plantCardList = document.getElementById('plant-card-list'); 
+    // ▼▼ 追加・修正 ▼▼
+    const plantNameInput = document.getElementById('plant-name'); // 新規登録の名前入力欄
+    const editNameButton = document.getElementById('edit-plant-name-button'); // 名前変更ボタン
+    // ▲▲ 追加・修正 ▲▲
     const speciesSelect = document.getElementById('species-select');
     const addPlantForm = document.getElementById('add-plant-form');
     const sortSelect = document.getElementById('sort-select');
@@ -479,6 +482,28 @@ document.addEventListener('DOMContentLoaded', () => {
         renderPlantCards();
         setupNotificationUI();
         
+        // ▼▼ 追加: 名前変更ボタンの処理 ▼▼
+        if (editNameButton) {
+            editNameButton.onclick = () => {
+                if (!currentPlantId) return;
+                const plantIndex = userPlants.findIndex(p => String(p.id) === String(currentPlantId));
+                if (plantIndex === -1) return;
+
+                const currentName = userPlants[plantIndex].name;
+                const newName = window.prompt("新しい名前を入力してください:", currentName);
+
+                if (newName !== null && newName.trim() !== "") {
+                    userPlants[plantIndex].name = newName.trim();
+                    saveUserPlants(userPlants);
+
+                    if (detailPlantName) detailPlantName.textContent = newName.trim();
+                    renderPlantCards();
+                    showNotification("名前を変更しました", "success");
+                }
+            };
+        }
+        // ▲▲ 追加ここまで ▲▲
+
         if (globalSeasonSelect) {
             globalSeasonSelect.addEventListener('change', (e) => {
                 currentGlobalSeason = e.target.value;
@@ -617,14 +642,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (newIndex >= sortedPlants.length) newIndex = 0; 
             
             const targetPlant = sortedPlants[newIndex];
-            // 🌟 修正: データの安全確認
             const targetData = PLANT_DATA.find(pd => String(pd.id) === String(targetPlant.speciesId));
             
             if (targetData) {
                 showDetailsModal(targetPlant, targetData);
             } else {
-                // データがない場合はスキップするか、通知を出す
-                // 今回はシンプルに何も起きないようにする（エラー防止）
                 console.warn("Plant data not found for:", targetPlant.name);
             }
         };
@@ -681,7 +703,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                     const contentElement = card.querySelector('.card-content-wrapper');
                     const plantData = PLANT_DATA.find(pd => String(pd.id) === String(plant.speciesId));
-                    // 🌟 修正: データの安全確認
                     if (plantData) {
                         renderCardContentAsync(contentElement, plant, plantData, selectedSeason);
                     }
@@ -707,13 +728,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.preventDefault();
                 const speciesId = speciesSelect.value;
                 const lastWateredDate = lastWateredInput.value;
-        
+                // ▼▼ 追加: 入力された名前を取得 ▼▼
+                const inputName = plantNameInput.value.trim(); 
+
                 if (speciesId && lastWateredDate) {
                     const selectedPlantData = PLANT_DATA.find(p => String(p.id) === String(speciesId));
                     const newPlant = {
                         id: generateUUID(),
                         speciesId: speciesId,
-                        name: selectedPlantData ? selectedPlantData.species : '植物',
+                        // ▼▼ 修正: 入力があればそれを、なければ種別名をデフォルトにする ▼▼
+                        name: inputName || (selectedPlantData ? selectedPlantData.species : '植物'),
                         entryDate: getLocalTodayDate(),
                         waterLog: [{ date: lastWateredDate, type: 'WaterOnly' }],
                         repottingLog: [],
@@ -726,6 +750,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     renderPlantCards();
                     showNotification('植物を追加しました！', 'success');
         
+                    // ▼▼ 追加: フォームをリセット ▼▼
+                    plantNameInput.value = ''; 
                     speciesSelect.value = '';
                     nextWateringPreview.textContent = '';
                 }
@@ -924,7 +950,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         sortedPlants.forEach(userPlant => {
             const data = PLANT_DATA.find(d => String(d.id) === String(userPlant.speciesId));
-            // 🌟 修正: データの安全確認。データがない場合はカードを生成しない
             if (data) {
                 const card = createPlantCardSkeleton(userPlant, data, seasonKey);
                 cardContainer.appendChild(card);
@@ -1041,7 +1066,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (th !== undefined) {
                 filtered = filtered.filter(p => {
                     const d = PLANT_DATA.find(pd => String(pd.id) === String(p.speciesId));
-                    // 🌟 修正: データがない場合はフィルタリングから除外
                     if (!d) return false;
                     return d.minTemp >= th;
                 });
