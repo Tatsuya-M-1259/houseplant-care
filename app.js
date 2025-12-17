@@ -22,6 +22,13 @@ document.addEventListener('DOMContentLoaded', () => {
         WINTER: { name: '冬 (12月〜2月)', startMonth: 12, endMonth: 2 }
     };
 
+    // 🌟 修正: マジックナンバーを定数化
+    const TEMP_FILTER_MAP = { 
+        'temp10': 10, 
+        'temp5': 5, 
+        'temp0': 0 
+    };
+
     const IMAGE_BASE_PATH = './'; 
     const DB_NAME = 'HouseplantDB';
     const DB_VERSION = 1;
@@ -36,7 +43,58 @@ document.addEventListener('DOMContentLoaded', () => {
     let db = null; 
 
     // ----------------------------------------------------
-    // 1. IndexedDB Utilities
+    // 1. Utilities (UUID, Image)
+    // ----------------------------------------------------
+
+    // 🌟 修正: 互換性のある安全なUUID生成関数
+    function generateUUID() {
+        if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+            return crypto.randomUUID();
+        }
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+
+    // 🌟 修正: Blobとして画像を圧縮・保存 (パフォーマンス改善)
+    function compressImage(file, maxWidth = 1024, quality = 0.8) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (event) => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    let width = img.width;
+                    let height = img.height;
+                    if (width > maxWidth) {
+                        height *= maxWidth / width;
+                        width = maxWidth;
+                    }
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // 🌟 変更: toDataURL(Base64) ではなく toBlob(Binary) を使用
+                    canvas.toBlob((blob) => {
+                        if (blob) {
+                            resolve(blob);
+                        } else {
+                            reject(new Error('Canvas to Blob conversion failed'));
+                        }
+                    }, 'image/jpeg', quality);
+                };
+                img.onerror = (err) => reject(err);
+            };
+            reader.onerror = (err) => reject(err);
+        });
+    }
+
+    // ----------------------------------------------------
+    // 2. IndexedDB Utilities
     // ----------------------------------------------------
     function initDB() {
         return new Promise((resolve, reject) => {
@@ -106,36 +164,8 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    function compressImage(file, maxWidth = 1024, quality = 0.8) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = (event) => {
-                const img = new Image();
-                img.src = event.target.result;
-                img.onload = () => {
-                    let width = img.width;
-                    let height = img.height;
-                    if (width > maxWidth) {
-                        height *= maxWidth / width;
-                        width = maxWidth;
-                    }
-                    const canvas = document.createElement('canvas');
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    const dataUrl = canvas.toDataURL('image/jpeg', quality);
-                    resolve(dataUrl);
-                };
-                img.onerror = (err) => reject(err);
-            };
-            reader.onerror = (err) => reject(err);
-        });
-    }
-
     // ----------------------------------------------------
-    // ユーティリティ
+    // 3. General Logic
     // ----------------------------------------------------
     function getLocalTodayDate() {
         const d = new Date();
@@ -235,7 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ----------------------------------------------------
-    // DOM要素
+    // DOM Elements
     // ----------------------------------------------------
     const plantCardList = document.getElementById('plant-card-list'); 
     const speciesSelect = document.getElementById('species-select');
@@ -322,7 +352,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function validatePlantData(plant) {
         if (!plant || typeof plant !== 'object') return null;
         const safePlant = { ...plant };
-        if (!safePlant.id) safePlant.id = crypto.randomUUID ? crypto.randomUUID() : String(Date.now());
+        // 🌟 修正: 既存データのID生成も安全な関数を使用（新規割り当て時）
+        if (!safePlant.id) safePlant.id = generateUUID();
         else safePlant.id = String(safePlant.id); 
         if (!safePlant.speciesId) safePlant.speciesId = '1';
         else safePlant.speciesId = String(safePlant.speciesId);
@@ -341,7 +372,7 @@ document.addEventListener('DOMContentLoaded', () => {
     userPlants = normalizePlantData(userPlants);
     
     // ----------------------------------------------------
-    // ロジック
+    // Logic: Season & Dates
     // ----------------------------------------------------
 
     function getCurrentSeason() {
@@ -396,6 +427,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }).replace(/\//g, '/').replace(',', ' ');
     }
 
+    // ----------------------------------------------------
+    // 4. Initialize App
+    // ----------------------------------------------------
     async function initializeApp() {
         try {
             await initDB();
@@ -422,7 +456,6 @@ document.addEventListener('DOMContentLoaded', () => {
         renderPlantCards();
         setupNotificationUI();
         
-        // 🌟 イベントリスナー: 変更監視
         if (globalSeasonSelect) {
             globalSeasonSelect.addEventListener('change', (e) => {
                 currentGlobalSeason = e.target.value;
@@ -481,10 +514,8 @@ document.addEventListener('DOMContentLoaded', () => {
              speciesSelect.addEventListener('change', updatePreview);
         }
 
-        // 🌟 グローバルクリックイベント制御 (Event Delegation)
-        // ここですべての動的ボタンのクリックをハンドリングする
+        // Global Event Delegation
         window.addEventListener('click', (e) => {
-            // 1. サブモーダル背景クリック
             if (e.target === waterTypeModal) {
                 waterTypeModal.style.display = 'none';
                 return;
@@ -501,21 +532,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 closeLightbox();
                 return;
             }
-            // 2. 詳細モーダル背景クリック
             if (e.target === detailsModal) {
                 closeDetailModal();
                 return;
             }
 
-            // 3. 詳細画面内の動的生成ボタン制御
-            // 水やり記録ボタン (data-action属性を使うとより安全だが、クラス名で判定)
             const waterBtn = e.target.closest('.water-done-btn-detail');
             if (waterBtn && currentPlantId) {
                 showWaterTypeSelectionModal(currentPlantId);
                 return;
             }
             
-            // 履歴削除ボタン
             const deleteLogBtn = e.target.closest('.delete-log-btn');
             if (deleteLogBtn) {
                 const id = deleteLogBtn.dataset.plantid;
@@ -527,7 +554,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // 「戻る」ボタン (popstate)
         window.addEventListener('popstate', (e) => {
             if (detailsModal.style.display === 'block') {
                 detailsModal.style.display = 'none';
@@ -580,7 +606,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // リスト画面のイベントデリゲーション
         if (plantCardList) {
             plantCardList.addEventListener('click', (e) => {
                 const card = e.target.closest('.plant-card');
@@ -608,7 +633,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     renderCardContentAsync(contentElement, plant, plantData, selectedSeason);
                     return;
                 }
-                // リストカード内の水やりボタン
                 if (e.target.closest('.water-done-btn')) {
                     e.stopPropagation();
                     showWaterTypeSelectionModal(plantId);
@@ -618,7 +642,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
         
-        // 5. 新規登録フォーム送信
+        // 🌟 新規登録フォーム: generateUUIDの使用
         if (addPlantForm) {
             addPlantForm.addEventListener('submit', (e) => {
                 e.preventDefault();
@@ -628,7 +652,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (speciesId && lastWateredDate) {
                     const selectedPlantData = PLANT_DATA.find(p => String(p.id) === String(speciesId));
                     const newPlant = {
-                        id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+                        id: generateUUID(), // 🌟 修正: 安全なID生成
                         speciesId: speciesId,
                         name: selectedPlantData ? selectedPlantData.species : '植物',
                         entryDate: getLocalTodayDate(),
@@ -643,14 +667,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     renderPlantCards();
                     showNotification('植物を追加しました！', 'success');
         
-                    // フォームリセット
                     speciesSelect.value = '';
                     nextWateringPreview.textContent = '';
                 }
             });
         }
         
-        // 通知設定UI (ダミー実装)
         function setupNotificationUI() {
             if (!notificationControlContainer) return;
             notificationControlContainer.innerHTML = '';
@@ -673,16 +695,18 @@ document.addEventListener('DOMContentLoaded', () => {
             const file = customImageInput.files[0];
             try {
                 showNotification('画像を処理中...', 'success', 1000);
-                const compressedDataUrl = await compressImage(file);
+                const compressedBlob = await compressImage(file); // 🌟 修正: Blobを受け取る
                 if (currentPlantId !== null) {
-                    await saveImageToDB(currentPlantId, compressedDataUrl);
+                    await saveImageToDB(currentPlantId, compressedBlob);
                     const plantIndex = userPlants.findIndex(p => String(p.id) === String(currentPlantId));
                     if (plantIndex !== -1) {
                         userPlants[plantIndex].hasCustomImage = true;
                         saveUserPlants(userPlants);
                         
                         const detailImage = plantDetails.querySelector('.detail-image');
-                        if (detailImage) detailImage.src = compressedDataUrl;
+                        // 🌟 修正: BlobからURLを生成して表示
+                        if (detailImage) detailImage.src = URL.createObjectURL(compressedBlob);
+                        
                         renderPlantCards(); 
                         showNotification('写真を変更しました！', 'success');
                     }
@@ -702,14 +726,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (plant.hasCustomImage) {
                     try {
                         const imageData = await getImageFromDB(plant.id);
-                        if (imageData) plant._exportImageData = imageData;
+                        // Blobの場合はBase64に変換してJSONに入れる必要がある（エクスポート用）
+                        // ※ここでは簡易化のため、Blobの場合は一旦対象外にするか、Readerで変換が必要
+                        // 今回のスコープでは、IndexedDB内のBlobをJSONにするのは複雑なため
+                        // Blob保存に切り替えた場合、JSONエクスポートは「画像を含めない」推奨となるが、
+                        // 互換性のため FileReader で Base64化して入れる処理を追加
+                         if (imageData instanceof Blob) {
+                            const reader = new FileReader();
+                            plant._exportImageData = await new Promise(resolve => {
+                                reader.onload = e => resolve(e.target.result);
+                                reader.readAsDataURL(imageData);
+                            });
+                         } else if (imageData) {
+                             plant._exportImageData = imageData; // 旧形式(Base64文字列)
+                         }
                     } catch (e) {
                         console.warn(`画像のエクスポートに失敗: ${plant.name}`, e);
                     }
                 }
             }
         }
-        return { userPlants: plantsToExport, version: 1.0, exportedAt: Date.now() };
+        return { userPlants: plantsToExport, version: 1.1, exportedAt: Date.now() };
     };
 
     if (exportButton) {
@@ -781,6 +818,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         loadedPlants = normalizePlantData(loadedPlants);
                         for (const plant of loadedPlants) {
                             if (plant._exportImageData) {
+                                // インポートされたBase64画像をBlobに変換して保存も可能だが
+                                // 既存関数 compressImage を使うか、そのままBase64で保存してもアプリは動作する
+                                // ここでは互換性維持のためそのまま保存（次回更新時にBlob化される）
                                 await saveImageToDB(plant.id, plant._exportImageData);
                                 plant.hasCustomImage = true;
                                 delete plant._exportImageData; 
@@ -891,14 +931,20 @@ document.addEventListener('DOMContentLoaded', () => {
     async function renderCardContentAsync(container, userPlant, data, seasonKey) {
         let imgSrc = `${IMAGE_BASE_PATH}${data.img}`;
         if (userPlant.hasCustomImage) {
-            const customImg = await getImageFromDB(userPlant.id);
-            if (customImg) imgSrc = customImg;
+            const storedData = await getImageFromDB(userPlant.id);
+            if (storedData) {
+                // 🌟 修正: BlobならURLを生成、文字列ならBase64として扱う
+                if (storedData instanceof Blob) {
+                    imgSrc = URL.createObjectURL(storedData);
+                } else {
+                    imgSrc = storedData;
+                }
+            }
         }
 
         const seasonData = data.management[seasonKey];
         const lastLog = userPlant.waterLog[0] || { date: userPlant.entryDate, type: 'WaterOnly' };
         const nextDateString = calculateNextWateringDate(lastLog.date, seasonData.waterIntervalDays);
-        const waterMethodSummary = (data.water_method || '').split('。')[0] + '。';
         const mistingInfo = seasonData.mist || 'データなし';
         
         const html = `
@@ -928,12 +974,14 @@ document.addEventListener('DOMContentLoaded', () => {
     function sortAndFilterPlants() {
         let filtered = [...userPlants];
         if (currentFilter !== 'all') {
-            const tempMap = { 'temp10': 10, 'temp5': 5, 'temp0': 0 };
-            const th = tempMap[currentFilter];
-            filtered = filtered.filter(p => {
-                const d = PLANT_DATA.find(pd => String(pd.id) === String(p.speciesId));
-                return d.minTemp >= th;
-            });
+            // 🌟 修正: 定数マップを使用
+            const th = TEMP_FILTER_MAP[currentFilter];
+            if (th !== undefined) {
+                filtered = filtered.filter(p => {
+                    const d = PLANT_DATA.find(pd => String(pd.id) === String(p.speciesId));
+                    return d.minTemp >= th;
+                });
+            }
         }
         filtered.sort((a, b) => {
             if (currentSort === 'name') return a.name.localeCompare(b.name);
@@ -966,8 +1014,15 @@ document.addEventListener('DOMContentLoaded', () => {
         
         let imgSrc = `${IMAGE_BASE_PATH}${plantData.img}`;
         if (userPlant.hasCustomImage) {
-            const customImg = await getImageFromDB(userPlant.id);
-            if (customImg) imgSrc = customImg;
+            const storedData = await getImageFromDB(userPlant.id);
+            if (storedData) {
+                // 🌟 修正: 詳細モーダルでもBlob対応
+                if (storedData instanceof Blob) {
+                    imgSrc = URL.createObjectURL(storedData);
+                } else {
+                    imgSrc = storedData;
+                }
+            }
         }
 
         const detailImageContainer = document.createElement('div');
@@ -1033,10 +1088,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (waterDoneInDetailContainer) {
             waterDoneInDetailContainer.innerHTML = ''; 
             const waterButton = document.createElement('button');
-            // 🌟 修正: クラス名を変更してグローバルイベントでキャッチする
             waterButton.className = 'action-button water-done-btn-detail'; 
             waterButton.textContent = '💧 水やり完了 (内容選択)';
-            // onclick は設定せず、グローバルリスナーに任せる
             waterDoneInDetailContainer.appendChild(waterButton);
         }
 
@@ -1143,6 +1196,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const index = userPlants.findIndex(p => String(p.id) === String(id));
         if (index === -1) return;
         
+        // 🌟 修正: 削除前の確認ダイアログ
+        if (!window.confirm(`${userPlants[index].name} を削除しますか？\nこの操作は取り消せますが、画像データは一時的に保持されるだけです。`)) {
+            return;
+        }
+        
         deletedPlantBackup = userPlants[index];
         deletedPlantIndex = index;
         
@@ -1177,7 +1235,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const btn = document.createElement('button');
             btn.textContent = '×';
             btn.className = 'delete-log-btn';
-            // 🌟 修正: data属性にIDを持たせてグローバルイベントでキャッチする
             btn.dataset.plantid = id;
             btn.dataset.index = idx;
             li.appendChild(span);
@@ -1209,7 +1266,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function deleteWaterLog(id, idx) {
         const pIndex = userPlants.findIndex(p => String(p.id) === String(id));
-        if (pIndex > -1 && confirm('削除しますか？')) {
+        if (pIndex > -1 && confirm('この水やり記録を削除しますか？')) {
             userPlants[pIndex].waterLog.splice(idx, 1);
             saveUserPlants(userPlants);
             showDetailsModal(userPlants[pIndex], PLANT_DATA.find(d => String(d.id) === userPlants[pIndex].speciesId));
@@ -1250,6 +1307,5 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 🌟 修正: この行を追加して、初期化関数を実行します
     initializeApp();
 });
