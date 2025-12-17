@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let deletedPlantIndex = -1;
     let db = null; 
 
-    // 🌟 修正: メモリリーク対策用のURL管理セット
+    // メモリリーク対策用のURL管理セット
     const objectUrls = new Set();
 
     // ----------------------------------------------------
@@ -57,14 +57,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 🌟 修正: 管理されたBlobURLを生成（メモリリーク対策）
     function createManagedObjectURL(blob) {
         const url = URL.createObjectURL(blob);
         objectUrls.add(url);
         return url;
     }
 
-    // 🌟 修正: 不要になったBlobURLを一括解放
     function revokeAllObjectUrls() {
         objectUrls.forEach(url => URL.revokeObjectURL(url));
         objectUrls.clear();
@@ -104,7 +102,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 🌟 修正: Base64文字列をBlobに変換（インポート用）
     function base64ToBlob(base64, mimeType = 'image/jpeg') {
         const bin = atob(base64.split(',')[1]);
         const buffer = new Uint8Array(bin.length);
@@ -275,6 +272,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const isDetailOpen = detailsModal.style.display === 'block';
             if (isDetailOpen) {
+                 // 詳細画面が開いている場合、データをリロードして画面更新
                  const plantData = PLANT_DATA.find(p => String(p.id) === String(userPlants[plantIndex].speciesId));
                  showDetailsModal(userPlants[plantIndex], plantData);
             } else {
@@ -302,6 +300,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const detailsModal = document.getElementById('details-modal'); 
     const closeDetailButton = detailsModal ? detailsModal.querySelector('.close-button') : null; 
     const plantDetails = document.getElementById('plant-details'); 
+    // 🌟 追加: 詳細画面のタイトル要素
+    const detailPlantName = document.getElementById('detail-plant-name');
+    const detailSpeciesName = document.getElementById('detail-species-name');
+    const prevPlantBtn = document.getElementById('prev-plant-btn');
+    const nextPlantBtn = document.getElementById('next-plant-btn');
+
     const lightboxModal = document.getElementById('lightbox-modal');
     const lightboxImage = document.getElementById('lightbox-image');
     const lightboxClose = document.getElementById('lightbox-close');
@@ -599,6 +603,28 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (closePurchaseDateButton) closePurchaseDateButton.onclick = () => purchaseDateModal.style.display = 'none';
         if (closeRepottingDateButton) closeRepottingDateButton.onclick = () => repottingDateModal.style.display = 'none';
+
+        // 🌟 追加: 前へ・次へボタンの動作実装
+        const handlePrevNextPlant = (direction) => {
+            if (!currentPlantId) return;
+            const sortedPlants = sortAndFilterPlants(); // 現在の表示順を取得
+            const currentIndex = sortedPlants.findIndex(p => String(p.id) === String(currentPlantId));
+            
+            if (currentIndex === -1) return;
+            
+            let newIndex = currentIndex + direction;
+            if (newIndex < 0) newIndex = sortedPlants.length - 1; // 先頭なら末尾へ
+            if (newIndex >= sortedPlants.length) newIndex = 0; // 末尾なら先頭へ
+            
+            const targetPlant = sortedPlants[newIndex];
+            const targetData = PLANT_DATA.find(pd => String(pd.id) === String(targetPlant.speciesId));
+            
+            showDetailsModal(targetPlant, targetData);
+        };
+
+        if (prevPlantBtn) prevPlantBtn.onclick = (e) => { e.stopPropagation(); handlePrevNextPlant(-1); };
+        if (nextPlantBtn) nextPlantBtn.onclick = (e) => { e.stopPropagation(); handlePrevNextPlant(1); };
+
         
         document.querySelectorAll('.modal-content').forEach(modal => {
             modal.addEventListener('click', (e) => {
@@ -721,7 +747,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         saveUserPlants(userPlants);
                         
                         const detailImage = plantDetails.querySelector('.detail-image');
-                        // 🌟 修正: 管理関数を使用
                         if (detailImage) detailImage.src = createManagedObjectURL(compressedBlob);
                         
                         renderPlantCards(); 
@@ -830,14 +855,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         loadedPlants = normalizePlantData(loadedPlants);
                         for (const plant of loadedPlants) {
                             if (plant._exportImageData) {
-                                // 🌟 修正: Base64画像をBlobに変換して保存
+                                // Base64画像をBlobに変換して保存
                                 try {
                                     const blob = base64ToBlob(plant._exportImageData);
                                     await saveImageToDB(plant.id, blob);
                                     plant.hasCustomImage = true;
                                 } catch (err) {
                                     console.warn("画像変換エラー:", err);
-                                    // 失敗時は旧形式で保持（互換性）
                                     await saveImageToDB(plant.id, plant._exportImageData);
                                     plant.hasCustomImage = true;
                                 }
@@ -868,7 +892,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderPlantCards() {
         if (!plantCardList) return;
         
-        // 🌟 修正: 再描画前に古いBlob URLを一括解放
         revokeAllObjectUrls();
 
         const seasonKey = getCurrentSeason();
@@ -956,7 +979,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const storedData = await getImageFromDB(userPlant.id);
             if (storedData) {
                 if (storedData instanceof Blob) {
-                    // 🌟 修正: 管理関数を使用
                     imgSrc = createManagedObjectURL(storedData);
                 } else {
                     imgSrc = storedData;
@@ -1033,12 +1055,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!detailsModal) return;
         currentPlantId = userPlant.id;
         
+        // 🌟 追加: ヘッダー情報の更新
+        if (detailPlantName) detailPlantName.textContent = userPlant.name;
+        if (detailSpeciesName) detailSpeciesName.textContent = plantData.species;
+
         let imgSrc = `${IMAGE_BASE_PATH}${plantData.img}`;
         if (userPlant.hasCustomImage) {
             const storedData = await getImageFromDB(userPlant.id);
             if (storedData) {
                 if (storedData instanceof Blob) {
-                    // 🌟 修正: 管理関数を使用
                     imgSrc = createManagedObjectURL(storedData);
                 } else {
                     imgSrc = storedData;
@@ -1057,6 +1082,18 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const seasonData = plantData.management[getCurrentSeason()];
         const maintenance = plantData.maintenance;
+        
+        if(entryDateDisplay) {
+            entryDateDisplay.textContent = formatJapaneseDate(userPlant.entryDate);
+            const diffTime = Math.abs(new Date() - new Date(userPlant.entryDate));
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+            timeSinceEntryDisplay.textContent = `${diffDays}日目`;
+        }
+        if(purchaseDateDisplay) purchaseDateDisplay.textContent = userPlant.purchaseDate ? formatJapaneseDate(userPlant.purchaseDate) : '未設定';
+        if(repottingDateDisplay) {
+            const lastRepot = userPlant.repottingLog[0] ? formatJapaneseDate(userPlant.repottingLog[0].date) : '未設定';
+            repottingDateDisplay.textContent = lastRepot;
+        }
 
         const seasonContent = document.getElementById('season-care-content');
         if(seasonContent) {
