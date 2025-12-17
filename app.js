@@ -1,6 +1,5 @@
 // app.js
 
-// 🌟 データのインポート
 import { PLANT_DATA, INTERVAL_WATER_STOP } from './data.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -22,7 +21,6 @@ document.addEventListener('DOMContentLoaded', () => {
         WINTER: { name: '冬 (12月〜2月)', startMonth: 12, endMonth: 2 }
     };
 
-    // 🌟 修正: マジックナンバーを定数化
     const TEMP_FILTER_MAP = { 
         'temp10': 10, 
         'temp5': 5, 
@@ -42,11 +40,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let deletedPlantIndex = -1;
     let db = null; 
 
+    // 🌟 修正: メモリリーク対策用のURL管理セット
+    const objectUrls = new Set();
+
     // ----------------------------------------------------
-    // 1. Utilities (UUID, Image)
+    // 1. Utilities (UUID, Image, Memory Mgmt)
     // ----------------------------------------------------
 
-    // 🌟 修正: 互換性のある安全なUUID生成関数
     function generateUUID() {
         if (typeof crypto !== 'undefined' && crypto.randomUUID) {
             return crypto.randomUUID();
@@ -57,7 +57,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 🌟 修正: Blobとして画像を圧縮・保存 (パフォーマンス改善)
+    // 🌟 修正: 管理されたBlobURLを生成（メモリリーク対策）
+    function createManagedObjectURL(blob) {
+        const url = URL.createObjectURL(blob);
+        objectUrls.add(url);
+        return url;
+    }
+
+    // 🌟 修正: 不要になったBlobURLを一括解放
+    function revokeAllObjectUrls() {
+        objectUrls.forEach(url => URL.revokeObjectURL(url));
+        objectUrls.clear();
+    }
+
     function compressImage(file, maxWidth = 1024, quality = 0.8) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -78,7 +90,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
                     
-                    // 🌟 変更: toDataURL(Base64) ではなく toBlob(Binary) を使用
                     canvas.toBlob((blob) => {
                         if (blob) {
                             resolve(blob);
@@ -91,6 +102,14 @@ document.addEventListener('DOMContentLoaded', () => {
             };
             reader.onerror = (err) => reject(err);
         });
+    }
+
+    // 🌟 修正: Base64文字列をBlobに変換（インポート用）
+    function base64ToBlob(base64, mimeType = 'image/jpeg') {
+        const bin = atob(base64.split(',')[1]);
+        const buffer = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) buffer[i] = bin.charCodeAt(i);
+        return new Blob([buffer], { type: mimeType });
     }
 
     // ----------------------------------------------------
@@ -352,7 +371,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function validatePlantData(plant) {
         if (!plant || typeof plant !== 'object') return null;
         const safePlant = { ...plant };
-        // 🌟 修正: 既存データのID生成も安全な関数を使用（新規割り当て時）
         if (!safePlant.id) safePlant.id = generateUUID();
         else safePlant.id = String(safePlant.id); 
         if (!safePlant.speciesId) safePlant.speciesId = '1';
@@ -642,7 +660,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
         
-        // 🌟 新規登録フォーム: generateUUIDの使用
         if (addPlantForm) {
             addPlantForm.addEventListener('submit', (e) => {
                 e.preventDefault();
@@ -652,7 +669,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (speciesId && lastWateredDate) {
                     const selectedPlantData = PLANT_DATA.find(p => String(p.id) === String(speciesId));
                     const newPlant = {
-                        id: generateUUID(), // 🌟 修正: 安全なID生成
+                        id: generateUUID(),
                         speciesId: speciesId,
                         name: selectedPlantData ? selectedPlantData.species : '植物',
                         entryDate: getLocalTodayDate(),
@@ -695,7 +712,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const file = customImageInput.files[0];
             try {
                 showNotification('画像を処理中...', 'success', 1000);
-                const compressedBlob = await compressImage(file); // 🌟 修正: Blobを受け取る
+                const compressedBlob = await compressImage(file);
                 if (currentPlantId !== null) {
                     await saveImageToDB(currentPlantId, compressedBlob);
                     const plantIndex = userPlants.findIndex(p => String(p.id) === String(currentPlantId));
@@ -704,8 +721,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         saveUserPlants(userPlants);
                         
                         const detailImage = plantDetails.querySelector('.detail-image');
-                        // 🌟 修正: BlobからURLを生成して表示
-                        if (detailImage) detailImage.src = URL.createObjectURL(compressedBlob);
+                        // 🌟 修正: 管理関数を使用
+                        if (detailImage) detailImage.src = createManagedObjectURL(compressedBlob);
                         
                         renderPlantCards(); 
                         showNotification('写真を変更しました！', 'success');
@@ -726,11 +743,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (plant.hasCustomImage) {
                     try {
                         const imageData = await getImageFromDB(plant.id);
-                        // Blobの場合はBase64に変換してJSONに入れる必要がある（エクスポート用）
-                        // ※ここでは簡易化のため、Blobの場合は一旦対象外にするか、Readerで変換が必要
-                        // 今回のスコープでは、IndexedDB内のBlobをJSONにするのは複雑なため
-                        // Blob保存に切り替えた場合、JSONエクスポートは「画像を含めない」推奨となるが、
-                        // 互換性のため FileReader で Base64化して入れる処理を追加
                          if (imageData instanceof Blob) {
                             const reader = new FileReader();
                             plant._exportImageData = await new Promise(resolve => {
@@ -738,7 +750,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 reader.readAsDataURL(imageData);
                             });
                          } else if (imageData) {
-                             plant._exportImageData = imageData; // 旧形式(Base64文字列)
+                             plant._exportImageData = imageData; 
                          }
                     } catch (e) {
                         console.warn(`画像のエクスポートに失敗: ${plant.name}`, e);
@@ -818,11 +830,17 @@ document.addEventListener('DOMContentLoaded', () => {
                         loadedPlants = normalizePlantData(loadedPlants);
                         for (const plant of loadedPlants) {
                             if (plant._exportImageData) {
-                                // インポートされたBase64画像をBlobに変換して保存も可能だが
-                                // 既存関数 compressImage を使うか、そのままBase64で保存してもアプリは動作する
-                                // ここでは互換性維持のためそのまま保存（次回更新時にBlob化される）
-                                await saveImageToDB(plant.id, plant._exportImageData);
-                                plant.hasCustomImage = true;
+                                // 🌟 修正: Base64画像をBlobに変換して保存
+                                try {
+                                    const blob = base64ToBlob(plant._exportImageData);
+                                    await saveImageToDB(plant.id, blob);
+                                    plant.hasCustomImage = true;
+                                } catch (err) {
+                                    console.warn("画像変換エラー:", err);
+                                    // 失敗時は旧形式で保持（互換性）
+                                    await saveImageToDB(plant.id, plant._exportImageData);
+                                    plant.hasCustomImage = true;
+                                }
                                 delete plant._exportImageData; 
                             }
                         }
@@ -849,6 +867,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderPlantCards() {
         if (!plantCardList) return;
+        
+        // 🌟 修正: 再描画前に古いBlob URLを一括解放
+        revokeAllObjectUrls();
+
         const seasonKey = getCurrentSeason();
         const sortedPlants = sortAndFilterPlants();
 
@@ -933,9 +955,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (userPlant.hasCustomImage) {
             const storedData = await getImageFromDB(userPlant.id);
             if (storedData) {
-                // 🌟 修正: BlobならURLを生成、文字列ならBase64として扱う
                 if (storedData instanceof Blob) {
-                    imgSrc = URL.createObjectURL(storedData);
+                    // 🌟 修正: 管理関数を使用
+                    imgSrc = createManagedObjectURL(storedData);
                 } else {
                     imgSrc = storedData;
                 }
@@ -974,7 +996,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function sortAndFilterPlants() {
         let filtered = [...userPlants];
         if (currentFilter !== 'all') {
-            // 🌟 修正: 定数マップを使用
             const th = TEMP_FILTER_MAP[currentFilter];
             if (th !== undefined) {
                 filtered = filtered.filter(p => {
@@ -1016,9 +1037,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (userPlant.hasCustomImage) {
             const storedData = await getImageFromDB(userPlant.id);
             if (storedData) {
-                // 🌟 修正: 詳細モーダルでもBlob対応
                 if (storedData instanceof Blob) {
-                    imgSrc = URL.createObjectURL(storedData);
+                    // 🌟 修正: 管理関数を使用
+                    imgSrc = createManagedObjectURL(storedData);
                 } else {
                     imgSrc = storedData;
                 }
@@ -1196,7 +1217,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const index = userPlants.findIndex(p => String(p.id) === String(id));
         if (index === -1) return;
         
-        // 🌟 修正: 削除前の確認ダイアログ
         if (!window.confirm(`${userPlants[index].name} を削除しますか？\nこの操作は取り消せますが、画像データは一時的に保持されるだけです。`)) {
             return;
         }
