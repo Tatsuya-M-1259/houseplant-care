@@ -1,7 +1,7 @@
 // sw.js
 
-// キャッシュ名の定義（バージョンアップ時に変更する）
-const CACHE_NAME = 'houseplant-care-v18'; // v17からv18へ変更
+// キャッシュ名の定義（バージョンアップを認識させるため v18 に更新）
+const CACHE_NAME = 'houseplant-care-v18';
 
 // キャッシュするアセットのリスト
 const ASSETS_TO_CACHE = [
@@ -34,12 +34,11 @@ const ASSETS_TO_CACHE = [
     './araucaria.jpg',
     './adenium.jpg.jpeg',
     './echeveria.jpg.jpeg',
-    './cordyline.jpg'
-    // ※ 新規追加した kalanchoe.jpg を追加しても良いですが、
-    // ファイルがない場合はエラーになるため、画像ファイルを用意してから追記してください。
+    './cordyline.jpg',
+    './kalanchoe.jpg' // カランコエの画像ファイル名を追加
 ];
 
-// プレースホルダー画像 (オフライン時に使用)
+// プレースホルダー画像 (オフライン/画像未準備時に使用)
 const PLACEHOLDER_SVG = `
 <svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
   <rect width="100%" height="100%" fill="#eee"/>
@@ -52,14 +51,15 @@ self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then((cache) => {
-                console.log('Opened cache');
+                console.log('V18 Cache: Fetching and caching assets');
                 return cache.addAll(ASSETS_TO_CACHE);
             })
+            // 待機状態をスキップして、新しいSWをすぐにアクティブにする
             .then(() => self.skipWaiting())
     );
 });
 
-// Service Worker アクティベート時（古いキャッシュの削除）
+// Service Worker アクティベート時（古いキャッシュを即時削除）
 self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches.keys().then((cacheNames) => {
@@ -71,7 +71,9 @@ self.addEventListener('activate', (event) => {
                     }
                 })
             );
-        }).then(() => self.clients.claim())
+        })
+        // アクティブになった瞬間からすべてのクライアントを制御下に置く
+        .then(() => self.clients.claim())
     );
 });
 
@@ -85,9 +87,8 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
         caches.match(event.request)
             .then((response) => {
-                // キャッシュがあればそれを返す
+                // キャッシュがあればそれを返す (Stale-while-revalidate戦略)
                 if (response) {
-                    // バックグラウンドで最新版を取得してキャッシュを更新する (Stale-while-revalidate)
                     fetch(event.request).then((newResponse) => {
                         if (newResponse && newResponse.status === 200) {
                             caches.open(CACHE_NAME).then((cache) => {
@@ -100,7 +101,6 @@ self.addEventListener('fetch', (event) => {
 
                 // キャッシュがなければネットワークから取得
                 return fetch(event.request).then((networkResponse) => {
-                    // 画像ファイルへのリクエストが失敗した場合の処理
                     if (!networkResponse || networkResponse.status !== 200) {
                         if (event.request.destination === 'image') {
                             return new Response(PLACEHOLDER_SVG, {
@@ -110,7 +110,6 @@ self.addEventListener('fetch', (event) => {
                     }
                     return networkResponse;
                 }).catch(() => {
-                    // オフラインかつキャッシュなしの場合
                     if (event.request.destination === 'image') {
                         return new Response(PLACEHOLDER_SVG, {
                             headers: { 'Content-Type': 'image/svg+xml' }
