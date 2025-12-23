@@ -2,38 +2,13 @@
 
 /**
  * 季節区分の定義
- * @typedef {Object} SeasonManagement
- * @property {string} water - 水やりの目安（テキスト）
- * @property {number} waterIntervalDays - 水やり間隔日数 (INTERVAL_WATER_STOPは断水)
- * @property {string} light - 光量の目安
- * @property {string} [mist] - 葉水の頻度と注意点 (Optional)
- * @property {string} [tempRisk] - 温度管理の注意点 (Optional)
  */
-
-/**
- * 植物データの型定義
- * @typedef {Object} PlantData
- * @property {number} id - 植物ID
- * @property {string} species - 植物名
- * @property {string} scientific - 学名
- * @property {number} minTemp - 最低越冬温度
- * @property {string} difficulty - 難易度
- * @property {string} feature - 特徴
- * @property {string} img - 画像ファイル名
- * @property {string} water_method - 基本的な水やり方法
- * @property {Object.<string, SeasonManagement>} management - 季節ごとの管理情報 (SPRING, SUMMER, AUTUMN, WINTER)
- * @property {Object} maintenance - メンテナンス情報 (fertilizer, repotting, pruning)
- */
-
-// 🌟 定数定義: 断水期間を表す数値
 export const INTERVAL_WATER_STOP = 999;
 
 /**
  * 全23種の観葉植物データセット
- * @type {PlantData[]}
  */
 export const PLANT_DATA = [
-    // No. 1: コルジリネ
     {
         id: 1, species: 'コルジリネ', scientific: 'Cordyline terminalis', minTemp: 5, difficulty: 'やや容易', feature: '鋭い葉、鉢植えが一般的', img: 'cordyline.jpg',
         water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', 
@@ -45,7 +20,6 @@ export const PLANT_DATA = [
         },
         maintenance: { fertilizer: '4月, 9月', repotting: '5月〜7月', pruning: '9月〜12月 (下葉除去)' }
     },
-    // No. 2: パキラ
     {
         id: 2, species: 'パキラ', scientific: 'Pachira glabra/aquatica', minTemp: 5, difficulty: '容易', feature: '乾燥に強く、耐陰性あり', img: 'pachira.jpg',
         water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', 
@@ -57,7 +31,6 @@ export const PLANT_DATA = [
         },
         maintenance: { fertilizer: '5月, 8月', repotting: '5月〜8月', pruning: '5月〜9月 (樹形維持)' }
     },
-    // No. 3: モンステラ
     {
         id: 3, species: 'モンステラ', scientific: 'Monstera deliciosa', minTemp: 10, difficulty: '中程度', feature: '多湿を好む、根腐れ注意', img: 'monstera.jpg',
         water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', 
@@ -69,7 +42,6 @@ export const PLANT_DATA = [
         },
         maintenance: { fertilizer: '4月, 9月', repotting: '5月〜8月', pruning: '5月〜8月 (過密部整理)' }
     },
-    // No. 4: ガジュマル
     {
         id: 4, species: 'ガジュマル', scientific: 'Ficus microcarpa', minTemp: 5, difficulty: '容易', feature: '強い耐陰性、多幸の木', img: 'gajumaru.jpg',
         water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', 
@@ -81,7 +53,6 @@ export const PLANT_DATA = [
         },
         maintenance: { fertilizer: '5月, 9月', repotting: '5月〜8月', pruning: '5月〜9月 (徒長枝剪定)' }
     },
-    // No. 5: サンスベリア
     {
         id: 5, species: 'サンスベリア', scientific: 'Sansevieria trifasciata', minTemp: 5, difficulty: '容易', feature: '極めて乾燥に強い、休眠誘導', img: 'sansevieria.jpeg',
         water_method: '鉢底から水が流れ出るまでたっぷりと。葉のシワや土中の乾燥具合を見て水やりを行う。',
@@ -93,7 +64,6 @@ export const PLANT_DATA = [
         },
         maintenance: { fertilizer: '施肥不要 (または5月)', repotting: '5月〜7月', pruning: '不要' }
     },
-    // No. 6: ドラセナ
     {
         id: 6, species: 'ドラセナ', scientific: 'Dracaena fragrans', minTemp: 10, difficulty: '中程度', feature: '幸福の木、葉水必須', img: 'dracaena.jpg',
         water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', 
@@ -105,7 +75,6 @@ export const PLANT_DATA = [
         },
         maintenance: { fertilizer: '5月, 8月', repotting: '5月〜8月', pruning: '5月〜8月 (切り戻し)' }
     },
-    // No. 7: シェフレラ
     {
         id: 7, species: 'シェフレラ', scientific: 'Schefflera arboricola', minTemp: 5, difficulty: '容易', feature: '非常に丈夫、耐陰性強い', img: 'schefflera.jpg',
         water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', 
@@ -117,7 +86,6 @@ export const PLANT_DATA = [
         },
         maintenance: { fertilizer: '4月, 9月', repotting: '5月〜7月', pruning: '9月〜12月 (樹形維持)' }
     },
-    // No. 8: ユッカ
     {
         id: 8, species: 'ユッカ', scientific: 'Yucca', minTemp: -3, difficulty: '容易', feature: '乾燥管理、強い耐寒性', img: 'yucca.jpg',
         water_method: '鉢底から水が流れ出るまでたっぷりと。葉のシワや土中の乾燥具合を見て水やりを行う。',
@@ -129,7 +97,6 @@ export const PLANT_DATA = [
         },
         maintenance: { fertilizer: '4月, 9月', repotting: '5月〜7月', pruning: '9月〜11月 (古葉除去)' }
     },
-    // No. 9: アンスリウム
     {
         id: 9, species: 'アンスリウム', scientific: 'Anthurium', minTemp: 10, difficulty: '中程度', feature: '花を観賞、多湿を好む', img: 'anthurium.jpg',
         water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', 
@@ -141,7 +108,6 @@ export const PLANT_DATA = [
         },
         maintenance: { fertilizer: '4月, 9月', repotting: '5月〜8月', pruning: '花後の剪定' }
     },
-    // No. 10: ポトス
     {
         id: 10, species: 'ポトス', scientific: 'Epipremnum aureum', minTemp: 10, difficulty: '容易', feature: '耐陰性あり、つる性', img: 'pothos.jpg',
         water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', 
@@ -153,7 +119,6 @@ export const PLANT_DATA = [
         },
         maintenance: { fertilizer: '4月, 9月', repotting: '5月〜7月', pruning: '5月〜9月 (つる整理)' }
     },
-    // No. 11: アロカシア
     {
         id: 11, species: 'アロカシア', scientific: 'Alocasia odora', minTemp: 10, difficulty: '中程度', feature: '葉の質感に多様性、休眠管理種あり', img: 'alocasia.jpg',
         water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', 
@@ -165,7 +130,6 @@ export const PLANT_DATA = [
         },
         maintenance: { fertilizer: '5月, 8月', repotting: '5月〜8月', pruning: '随時 (傷んだ葉除去)' }
     },
-    // No. 12: インドゴムノキ
     {
         id: 12, species: 'インドゴムノキ', scientific: 'Ficus elastica', minTemp: 5, difficulty: '容易', feature: '日光で樹形が整う、葉が大きい', img: 'indian_rubber.jpg',
         water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', 
@@ -177,7 +141,6 @@ export const PLANT_DATA = [
         },
         maintenance: { fertilizer: '4月, 9月', repotting: '5月〜8月', pruning: '5月〜8月 (樹形維持)' }
     },
-    // No. 13: エバーフレッシュ
     {
         id: 13, species: 'エバーフレッシュ', scientific: 'Cojoba arborea', minTemp: 10, difficulty: '中程度', feature: '夜に葉を閉じる、日陰で育つ', img: 'everfresh.jpg',
         water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', 
@@ -189,7 +152,6 @@ export const PLANT_DATA = [
         },
         maintenance: { fertilizer: '5月, 8月', repotting: '5月〜8月', pruning: '5月〜9月 (過密部整理)' }
     },
-    // No. 14: クロトン
     {
         id: 14, species: 'クロトン', scientific: 'Codiaeum variegatum', minTemp: 10, difficulty: '中程度', feature: '鮮やかな葉色、日光必須', img: 'croton.jpg',
         water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', 
@@ -201,7 +163,6 @@ export const PLANT_DATA = [
         },
         maintenance: { fertilizer: '5月, 8月', repotting: '5月〜8月', pruning: '5月〜9月 (樹形維持)' }
     },
-    // No. 15: コーヒーノキ
     {
         id: 15, species: 'コーヒーノキ', scientific: 'Coffea arabica', minTemp: 10, difficulty: '難しい', feature: '日当たりを好む、熱帯植物', img: 'coffee_tree.jpg',
         water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', 
@@ -213,19 +174,17 @@ export const PLANT_DATA = [
         },
         maintenance: { fertilizer: '5月, 8月', repotting: '5月〜8月', pruning: '5月〜8月 (徒長枝剪定)' }
     },
-    // No. 16: トックリラン
     {
         id: 16, species: 'トックリラン', scientific: 'Beaucarnea recurvata', minTemp: -3, difficulty: '容易', feature: '極めて乾燥に強い、基部肥大化', img: 'ponytail_palm.jpg',
         water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', 
         management: {
-            SPRING: { water: '土表面が乾いたらすぐ', waterIntervalDays: 10, light: '日当たり良好', mist: '週1回。あまり必要ない。' },
+            SPRING: { water: '土表面が乾いたらすぐ', waterIntervalDays: 10, light: '日当たり良好', mist: '週1回. あまり必要ない。' },
             SUMMER: { water: '土表面が乾いたらすぐ', waterIntervalDays: 10, light: '日当たり良好', mist: '週1-2回。' },
             AUTUMN: { water: '土表面が乾いてから2日後', waterIntervalDays: 14, light: '日当たり良好', mist: '週1回。' },
             WINTER: { water: '土中が乾いてから3日後 (少量)', waterIntervalDays: 14, light: '日当たり良好', tempRisk: '断水で休眠誘導。管理容易。', mist: '不要。' }
         },
         maintenance: { fertilizer: '4月, 9月', repotting: '5月〜7月', pruning: '9月〜11月 (古葉除去)' }
     },
-    // No. 17: フィカス・ウンベラータ
     {
         id: 17, species: 'ウンベラータ', scientific: 'Ficus umbellata', minTemp: 10, difficulty: '中程度', feature: '成長早い、剪定必須', img: 'ficus_umbellata.jpg',
         water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', 
@@ -237,7 +196,6 @@ export const PLANT_DATA = [
         },
         maintenance: { fertilizer: '4月, 9月', repotting: '5月〜8月', pruning: '5月〜8月 (積極的な剪定)' }
     },
-    // No. 18: オーガスタ
     {
         id: 18, species: 'オーガスタ', scientific: 'Strelitzia nicolai', minTemp: 5, difficulty: 'やや容易', feature: '極楽鳥花の仲間、大型化', img: 'augusta.jpg',
         water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', 
@@ -249,7 +207,6 @@ export const PLANT_DATA = [
         },
         maintenance: { fertilizer: '4月, 9月', repotting: '5月〜8月', pruning: '随時 (古葉除去)' }
     },
-    // No. 19: ビカクシダ
     {
         id: 19, species: 'ビカクシダ', scientific: 'Platycerium', minTemp: 10, difficulty: '難しい', feature: '着生植物、水やり方法が特殊', img: 'staghorn_fern.jpg',
         water_method: '水苔が乾いたら、バケツに水を張り貯水葉ごと全体を浸す（ソーキング）。',
@@ -261,7 +218,6 @@ export const PLANT_DATA = [
         },
         maintenance: { fertilizer: '施肥不要 (または液肥)', repotting: '5月〜8月', pruning: '不要' }
     },
-    // No. 20: アローカリア
     {
         id: 20, species: 'アローカリア', scientific: 'Araucaria heterophylla', minTemp: 0, difficulty: '容易', feature: '強い耐寒性、コニファー', img: 'araucaria.jpg',
         water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', 
@@ -273,7 +229,6 @@ export const PLANT_DATA = [
         },
         maintenance: { fertilizer: '4月, 9月', repotting: '5月〜7月', pruning: '不要' }
     },
-    // No. 21: アデニウム
     {
         id: 21, species: 'アデニウム', scientific: 'Adenium obesum', minTemp: 10, difficulty: 'やや容易', feature: '塊根植物、砂漠のバラ、乾燥に非常に強い', img: 'adenium.jpg.jpeg',
         water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', 
@@ -285,7 +240,6 @@ export const PLANT_DATA = [
         },
         maintenance: { fertilizer: '5月, 8月', repotting: '5月〜7月', pruning: '5月〜9月 (樹形維持)' }
     },
-    // No. 22: エケベリア
     {
         id: 22, species: 'エケベリア', scientific: 'Echeveria', minTemp: 5, difficulty: '容易', feature: '春秋型、ロゼット状、紅葉する多肉植物', img: 'echeveria.jpg.jpeg',
         water_method: '鉢底から水が流れ出るまでたっぷりと. 葉のシワや土中の乾燥具合を見て水やりを行う。',
@@ -297,9 +251,15 @@ export const PLANT_DATA = [
         },
         maintenance: { fertilizer: '4月, 9月 (秋は早めに)', repotting: '3月〜5月, 9月〜11月', pruning: '不要 (古葉除去)' }
     },
-    // No. 23: カランコエ (新規追加)
+    // No. 23: カランコエを追加
     {
-        id: 23, species: 'カランコエ', scientific: 'Kalanchoe blossfeldiana', minTemp: 5, difficulty: '容易', feature: '多肉植物、短日植物、色鮮やかな花を咲かせる', img: 'kalanchoe.jpg',
+        id: 23, 
+        species: 'カランコエ', 
+        scientific: 'Kalanchoe blossfeldiana', 
+        minTemp: 5, 
+        difficulty: '容易', 
+        feature: '多肉植物、短日植物、色鮮やかな花を咲かせる', 
+        img: 'kalanchoe.jpg',
         water_method: '鉢底から水が流れ出るまでたっぷりと。葉に水がかからないように注意する。', 
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', waterIntervalDays: 7, light: '日当たり良好', mist: '不要。蒸れに弱いため避ける。' },
