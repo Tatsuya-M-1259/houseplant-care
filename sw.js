@@ -1,121 +1,122 @@
 // sw.js
 
-// 🌟 更新: ファイル変更を反映させるため v17 に更新
-const CACHE_NAME = 'houseplant-care-v17'; 
-const SORTABLE_CDN = 'https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js';
+// キャッシュ名の定義（バージョンアップ時に変更する）
+const CACHE_NAME = 'houseplant-care-v18'; // v17からv18へ変更
 
-const CORE_ASSETS = [
-    './', // index.html
-    'index.html',
-    'style.css',
-    'app.js',
-    'data.js', 
-    'manifest.json',
-    'icon-192x192.png',
-    'icon-512x512.png',
-    SORTABLE_CDN 
+// キャッシュするアセットのリスト
+const ASSETS_TO_CACHE = [
+    './',
+    './index.html',
+    './style.css',
+    './app.js',
+    './data.js',
+    './manifest.json',
+    './icon-192x192.png',
+    './icon-512x512.png',
+    './pachira.jpg',
+    './monstera.jpg',
+    './gajumaru.jpg',
+    './sansevieria.jpeg',
+    './dracaena.jpg',
+    './schefflera.jpg',
+    './yucca.jpg',
+    './anthurium.jpg',
+    './pothos.jpg',
+    './alocasia.jpg',
+    './indian_rubber.jpg',
+    './everfresh.jpg',
+    './croton.jpg',
+    './coffee_tree.jpg',
+    './ponytail_palm.jpg',
+    './ficus_umbellata.jpg',
+    './augusta.jpg',
+    './staghorn_fern.jpg',
+    './araucaria.jpg',
+    './adenium.jpg.jpeg',
+    './echeveria.jpg.jpeg',
+    './cordyline.jpg'
+    // ※ 新規追加した kalanchoe.jpg を追加しても良いですが、
+    // ファイルがない場合はエラーになるため、画像ファイルを用意してから追記してください。
 ];
 
-// SVGプレースホルダー定義
+// プレースホルダー画像 (オフライン時に使用)
 const PLACEHOLDER_SVG = `
-<svg xmlns="http://www.w3.org/2000/svg" width="300" height="200" viewBox="0 0 300 200">
-  <rect width="300" height="200" fill="#f0f0f0"/>
-  <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="16" fill="#888">
-    Image Offline
-  </text>
-</svg>`;
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <rect width="100%" height="100%" fill="#eee"/>
+  <text x="50%" y="50%" font-family="sans-serif" font-size="14" fill="#999" text-anchor="middle" dy=".3em">Image Offline</text>
+</svg>
+`;
 
+// Service Worker インストール時
 self.addEventListener('install', (event) => {
-    self.skipWaiting(); 
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then((cache) => {
-                console.log('Service Worker: コアアセットをプリロードしました。');
-                return cache.addAll(CORE_ASSETS);
+                console.log('Opened cache');
+                return cache.addAll(ASSETS_TO_CACHE);
             })
+            .then(() => self.skipWaiting())
     );
 });
 
-self.addEventListener('fetch', (event) => {
-    const url = new URL(event.request.url);
-    const path = url.pathname;
-
-    if (path.match(/\.(jpg|jpeg|png)$/i)) {
-        event.respondWith(
-            caches.open(CACHE_NAME).then((cache) => {
-                return cache.match(event.request).then((response) => {
-                    return response || fetch(event.request)
-                        .then((networkResponse) => {
-                            cache.put(event.request, networkResponse.clone());
-                            return networkResponse;
-                        })
-                        .catch(() => {
-                            return new Response(PLACEHOLDER_SVG, {
-                                headers: { 'Content-Type': 'image/svg+xml' }
-                            });
-                        });
-                });
-            })
-        );
-        return; 
-    }
-
-    if (path.includes('data.js')) {
-        event.respondWith(staleWhileRevalidate(event.request));
-    } 
-    else if (event.request.url === SORTABLE_CDN || CORE_ASSETS.includes(path)) {
-         event.respondWith(caches.match(event.request).then((response) => {
-            return response || fetch(event.request);
-        }));
-    }
-    else {
-        event.respondWith(caches.match(event.request).then((response) => {
-            return response || fetch(event.request);
-        }));
-    }
-});
-
-function staleWhileRevalidate(request) {
-    return caches.match(request).then((cacheResponse) => {
-        const fetchPromise = fetch(request).then((networkResponse) => {
-            caches.open(CACHE_NAME).then((cache) => {
-                cache.put(request, networkResponse.clone());
-            });
-            return networkResponse;
-        }).catch(error => {
-            console.warn('SWR: ネットワークリクエスト失敗。', error);
-        });
-        return cacheResponse || fetchPromise;
-    });
-}
-
+// Service Worker アクティベート時（古いキャッシュの削除）
 self.addEventListener('activate', (event) => {
-    const cacheWhitelist = [CACHE_NAME];
     event.waitUntil(
         caches.keys().then((cacheNames) => {
             return Promise.all(
                 cacheNames.map((cacheName) => {
-                    if (cacheWhitelist.indexOf(cacheName) === -1) {
+                    if (cacheName !== CACHE_NAME) {
+                        console.log('Deleting old cache:', cacheName);
                         return caches.delete(cacheName);
                     }
                 })
             );
-        }).then(() => self.clients.claim()) 
+        }).then(() => self.clients.claim())
     );
 });
 
-self.addEventListener('notificationclick', (event) => {
-    event.notification.close();
-    event.waitUntil(
-        clients.matchAll({ type: 'window' }).then(clientList => {
-            for (const client of clientList) {
-                if (client.url === self.location.origin + self.location.pathname && 'focus' in client) {
-                    return client.focus();
+// フェッチ要求に対するレスポンス戦略
+self.addEventListener('fetch', (event) => {
+    // 外部APIなどへのリクエストはキャッシュしない
+    if (!event.request.url.startsWith(self.location.origin)) {
+        return;
+    }
+
+    event.respondWith(
+        caches.match(event.request)
+            .then((response) => {
+                // キャッシュがあればそれを返す
+                if (response) {
+                    // バックグラウンドで最新版を取得してキャッシュを更新する (Stale-while-revalidate)
+                    fetch(event.request).then((newResponse) => {
+                        if (newResponse && newResponse.status === 200) {
+                            caches.open(CACHE_NAME).then((cache) => {
+                                cache.put(event.request, newResponse);
+                            });
+                        }
+                    });
+                    return response;
                 }
-            }
-            if (clients.openWindow) {
-                return clients.openWindow(self.location.origin + self.location.pathname);
-            }
-        })
+
+                // キャッシュがなければネットワークから取得
+                return fetch(event.request).then((networkResponse) => {
+                    // 画像ファイルへのリクエストが失敗した場合の処理
+                    if (!networkResponse || networkResponse.status !== 200) {
+                        if (event.request.destination === 'image') {
+                            return new Response(PLACEHOLDER_SVG, {
+                                headers: { 'Content-Type': 'image/svg+xml' }
+                            });
+                        }
+                    }
+                    return networkResponse;
+                }).catch(() => {
+                    // オフラインかつキャッシュなしの場合
+                    if (event.request.destination === 'image') {
+                        return new Response(PLACEHOLDER_SVG, {
+                            headers: { 'Content-Type': 'image/svg+xml' }
+                        });
+                    }
+                });
+            })
     );
 });
