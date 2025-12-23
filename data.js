@@ -29,7 +29,7 @@
 export const INTERVAL_WATER_STOP = 999;
 
 /**
- * 全22種の観葉植物データセット
+ * 全23種の観葉植物データセット
  * @type {PlantData[]}
  */
 export const PLANT_DATA = [
@@ -288,7 +288,7 @@ export const PLANT_DATA = [
     // No. 22: エケベリア
     {
         id: 22, species: 'エケベリア', scientific: 'Echeveria', minTemp: 5, difficulty: '容易', feature: '春秋型、ロゼット状、紅葉する多肉植物', img: 'echeveria.jpg.jpeg',
-        water_method: '鉢底から水が流れ出るまでたっぷりと。葉のシワや土中の乾燥具合を見て水やりを行う。',
+        water_method: '鉢底から水が流れ出るまでたっぷりと. 葉のシワや土中の乾燥具合を見て水やりを行う。',
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', waterIntervalDays: 7, light: '日当たり良好 (風通し良く)', mist: '不要。水が溜まると腐る。' },
             SUMMER: { water: '断水/控えめ (月に1回程度、夕方)', waterIntervalDays: 30, light: '半日陰 (蒸れ注意)', mist: '不要。蒸れ厳禁。' },
@@ -296,5 +296,17 @@ export const PLANT_DATA = [
             WINTER: { water: '断水/控えめ (葉にシワが出たら少量)', waterIntervalDays: 30, light: '日当たり良好', tempRisk: '夜間窓際隔離（最低5℃確保）', mist: '不要。' }
         },
         maintenance: { fertilizer: '4月, 9月 (秋は早めに)', repotting: '3月〜5月, 9月〜11月', pruning: '不要 (古葉除去)' }
+    },
+    // No. 23: カランコエ (新規追加)
+    {
+        id: 23, species: 'カランコエ', scientific: 'Kalanchoe blossfeldiana', minTemp: 5, difficulty: '容易', feature: '多肉植物、短日植物、色鮮やかな花を咲かせる', img: 'kalanchoe.jpg',
+        water_method: '鉢底から水が流れ出るまでたっぷりと。葉に水がかからないように注意する。', 
+        management: {
+            SPRING: { water: '土表面が乾いたらすぐ', waterIntervalDays: 7, light: '日当たり良好', mist: '不要。蒸れに弱いため避ける。' },
+            SUMMER: { water: '土表面が乾いてから2-3日後', waterIntervalDays: 10, light: '半日陰 (風通し良く)', mist: '不要。' },
+            AUTUMN: { water: '土表面が乾いたらすぐ', waterIntervalDays: 7, light: '日当たり良好', mist: '不要。' },
+            WINTER: { water: '土中が乾いてから2-3日後 (少量)', waterIntervalDays: 14, light: '日当たり良好', tempRisk: '夜間窓際隔離（最低5℃確保）', mist: '不要。' }
+        },
+        maintenance: { fertilizer: '5月〜9月 (花期を除く)', repotting: '5月〜6月', pruning: '花後の切り戻し' }
     }
 ];
