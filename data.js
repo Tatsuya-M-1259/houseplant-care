@@ -6,7 +6,7 @@
 export const INTERVAL_WATER_STOP = 999;
 
 /**
- * 全23種の観葉植物データセット
+ * 全24種の観葉植物データセット
  */
 export const PLANT_DATA = [
     {
@@ -245,13 +245,12 @@ export const PLANT_DATA = [
         water_method: '鉢底から水が流れ出るまでたっぷりと. 葉のシワや土中の乾燥具合を見て水やりを行う。',
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', waterIntervalDays: 7, light: '日当たり良好 (風通し良く)', mist: '不要。水が溜まると腐る。' },
-            SUMMER: { water: '断水/控えめ (月に1回程度、夕方)', waterIntervalDays: 30, light: '半日陰 (蒸れ注意)', mist: '不要。蒸れ厳禁。' },
+            SUMMER: { water: '断水/控えめ (月に1回程度、夕方)', waterIntervalDays: 30, light: '半日陰 (蒸れ注意)', mist: '不要. 蒸れ厳禁。' },
             AUTUMN: { water: '土表面が乾いたらすぐ (紅葉のために控えめ)', waterIntervalDays: 7, light: '日当たり良好 (寒さに当てる)', mist: '不要。' },
             WINTER: { water: '断水/控えめ (葉にシワが出たら少量)', waterIntervalDays: 30, light: '日当たり良好', tempRisk: '夜間窓際隔離（最低5℃確保）', mist: '不要。' }
         },
         maintenance: { fertilizer: '4月, 9月 (秋は早めに)', repotting: '3月〜5月, 9月〜11月', pruning: '不要 (古葉除去)' }
     },
-    // No. 23: カランコエを追加
     {
         id: 23, 
         species: 'カランコエ', 
@@ -268,5 +267,22 @@ export const PLANT_DATA = [
             WINTER: { water: '土中が乾いてから2-3日後 (少量)', waterIntervalDays: 14, light: '日当たり良好', tempRisk: '夜間窓際隔離（最低5℃確保）', mist: '不要。' }
         },
         maintenance: { fertilizer: '5月〜9月 (花期を除く)', repotting: '5月〜6月', pruning: '花後の切り戻し' }
+    },
+    {
+        id: 24, 
+        species: 'マランタ', 
+        scientific: 'Maranta leuconeura', 
+        minTemp: 10, 
+        difficulty: '中程度', 
+        feature: '祈り植物（夜に葉を閉じる）、美しい葉の模様', 
+        img: 'maranta.jpg',
+        water_method: '鉢底から水が流れ出るまでたっぷりと。土の表面が乾き始めたら与える。', 
+        management: {
+            SPRING: { water: '土表面が乾き始めたらすぐ', waterIntervalDays: 5, light: '明るい日陰 (直射日光厳禁)', mist: '毎日1回。湿度維持が非常に重要。' },
+            SUMMER: { water: '土表面が乾き始めたらすぐ', waterIntervalDays: 3, light: '明るい日陰', mist: '毎日朝夕。空中の湿度を高く保つ。' },
+            AUTUMN: { water: '土表面が乾いたらすぐ', waterIntervalDays: 7, light: '明るい日陰', mist: '毎日1回。' },
+            WINTER: { water: '土中が乾いてから1-2日後 (少量)', waterIntervalDays: 10, light: '明るい日陰', tempRisk: '厳重な温度管理（最低10-15℃確保）', mist: '毎日1回。暖房による乾燥に注意。' }
+        },
+        maintenance: { fertilizer: '5月〜9月 (2ヶ月に1回)', repotting: '5月〜6月 (1-2年に1回)', pruning: '随時 (枯れた葉の除去)' }
     }
 ];
