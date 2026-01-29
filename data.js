@@ -6,7 +6,7 @@
 export const INTERVAL_WATER_STOP = 999;
 
 /**
- * 全24種の観葉植物データセット
+ * 全25種の観葉植物データセット
  */
 export const PLANT_DATA = [
     {
@@ -284,5 +284,22 @@ export const PLANT_DATA = [
             WINTER: { water: '土中が乾いてから1-2日後 (少量)', waterIntervalDays: 10, light: '明るい日陰', tempRisk: '厳重な温度管理（最低10-15℃確保）', mist: '毎日1回。暖房による乾燥に注意。' }
         },
         maintenance: { fertilizer: '5月〜9月 (2ヶ月に1回)', repotting: '5月〜6月 (1-2年に1回)', pruning: '随時 (枯れた葉の除去)' }
+    },
+    {
+        id: 25, 
+        species: 'ソフォラ・リトルベイビー', 
+        scientific: 'Sophora prostrata \'Little Baby\'', 
+        minTemp: 5, 
+        difficulty: '難しい', 
+        feature: 'ジグザグに育つ細い枝、小さな葉。メルヘンの木とも呼ばれる', 
+        img: 'sophora.jpg',
+        water_method: '鉢底から水が流れ出るまでたっぷりと。水切れに非常に弱いため注意が必要。', 
+        management: {
+            SPRING: { water: '土表面が乾いたらすぐ', waterIntervalDays: 3, light: '日当たり良好（風通し良く）', mist: '毎日1〜2回。乾燥による落葉を防ぐ。' },
+            SUMMER: { water: '土表面が乾き始めたらすぐ', waterIntervalDays: 2, light: '半日陰（極端な暑さを避ける）', mist: '毎日朝夕。湿度を高く保つ。' },
+            AUTUMN: { water: '土表面が乾いたらすぐ', waterIntervalDays: 5, light: '日当たり良好', mist: '毎日1回。' },
+            WINTER: { water: '土表面が乾いてから1〜2日後（控えめに）', waterIntervalDays: 10, light: '明るい日向（室内）', tempRisk: '夜間窓際隔離（最低5℃確保）', mist: '毎日1回。暖房による乾燥に注意。' }
+        },
+        maintenance: { fertilizer: '5月〜9月（薄めの液肥）', repotting: '4月〜6月（2年に1回）', pruning: '5月〜7月（伸びすぎた枝を整理）' }
     }
 ];
