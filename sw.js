@@ -1,7 +1,7 @@
 // sw.js
 
-// キャッシュ名の定義（バージョンアップを認識させるため v19 に更新）
-const CACHE_NAME = 'houseplant-care-v19';
+// キャッシュ名の定義（バージョンアップを認識させるため v20 に更新）
+const CACHE_NAME = 'houseplant-care-v20';
 
 // キャッシュするアセットのリスト
 const ASSETS_TO_CACHE = [
@@ -36,7 +36,8 @@ const ASSETS_TO_CACHE = [
     './echeveria.jpg.jpeg',
     './cordyline.jpg',
     './kalanchoe.jpg',
-    './maranta.jpg' // マランタの画像ファイル名を追加
+    './maranta.jpg',
+    './sophora.jpg' // 追加したソフォラの画像
 ];
 
 // プレースホルダー画像 (オフライン/画像未準備時に使用)
@@ -52,7 +53,7 @@ self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then((cache) => {
-                console.log('V19 Cache: Fetching and caching assets');
+                console.log('Cache: Fetching and caching assets');
                 return cache.addAll(ASSETS_TO_CACHE);
             })
             // 待機状態をスキップして、新しいSWをすぐにアクティブにする
