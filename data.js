@@ -6,7 +6,7 @@
 export const INTERVAL_WATER_STOP = 999;
 
 /**
- * 全25種の観葉植物データセット
+ * 全27種の観葉植物データセット
  */
 export const PLANT_DATA = [
     {
@@ -236,7 +236,7 @@ export const PLANT_DATA = [
             SPRING: { water: '土表面が乾いたらすぐ (完全に乾いてから)', waterIntervalDays: 10, light: '日当たり良好 (屋外/風通し良く)', mist: '不要（または週1回）。' },
             SUMMER: { water: '土表面が乾いたらすぐ (完全に乾いてから)', waterIntervalDays: 7, light: '日当たり良好 (屋外/直射日光可)', mist: '週1-2回。夕方に軽く。' },
             AUTUMN: { water: '土表面が乾いてから2-3日後 (徐々に頻度減)', waterIntervalDays: 14, light: '日当たり良好', mist: '不要。' },
-            WINTER: { water: '**断水** (落葉時)。葉が残る場合は少量。', waterIntervalDays: INTERVAL_WATER_STOP, light: '日当たり良好', tempRisk: '厳重な温度管理（最低10℃確保）', mist: '不要。' }
+            WINTER: { water: '**断水** (落葉時)。葉が残る場合は少量。', waterIntervalDays: INTERVAL_WATER_STOP, light: '日当たり良好', tempRisk: '厳重な温度管理（最低10℃確保）', mist: '不要. ' }
         },
         maintenance: { fertilizer: '5月, 8月', repotting: '5月〜7月', pruning: '5月〜9月 (樹形維持)' }
     },
@@ -301,5 +301,39 @@ export const PLANT_DATA = [
             WINTER: { water: '土表面が乾いてから1〜2日後（控えめに）', waterIntervalDays: 10, light: '明るい日向（室内）', tempRisk: '夜間窓際隔離（最低5℃確保）', mist: '毎日1回。暖房による乾燥に注意。' }
         },
         maintenance: { fertilizer: '5月〜9月（薄めの液肥）', repotting: '4月〜6月（2年に1回）', pruning: '5月〜7月（伸びすぎた枝を整理）' }
+    },
+    {
+        id: 26,
+        species: 'ユーフォルビア・ホワイトゴースト',
+        scientific: 'Euphorbia lactea \'White Ghost\'',
+        minTemp: 10,
+        difficulty: '容易',
+        feature: '白いサボテンのような独特なフォルム、多肉植物。',
+        img: 'white_ghost.jpg',
+        water_method: '鉢底から水が流れ出るまでたっぷりと。乾燥気味に管理。',
+        management: {
+            SPRING: { water: '土表面が乾いたらすぐ', waterIntervalDays: 10, light: '日当たり良好', mist: '不要。蒸れに注意。' },
+            SUMMER: { water: '土表面が乾いたらすぐ', waterIntervalDays: 7, light: '明るい日なた/半日陰', mist: '不要。夕方の涼しい時間に。' },
+            AUTUMN: { water: '土表面が乾いてから2-3日後', waterIntervalDays: 14, light: '日当たり良好', mist: '不要。' },
+            WINTER: { water: '断水/控えめ（月1回程度）', waterIntervalDays: 30, light: '明るい日向（室内）', tempRisk: '厳重な温度管理（最低10℃確保）', mist: '不要。' }
+        },
+        maintenance: { fertilizer: '5月, 8月', repotting: '5月〜7月', pruning: '随時（切り口の白い液に注意）' }
+    },
+    {
+        id: 27,
+        species: 'ペペロミア',
+        scientific: 'Peperomia',
+        minTemp: 10,
+        difficulty: '容易',
+        feature: '肉厚な葉、耐陰性があり育てやすい。',
+        img: 'peperomia.jpg',
+        water_method: '鉢底から水が流れ出るまでたっぷりと。土が完全に乾いてから与える。',
+        management: {
+            SPRING: { water: '土表面が乾いたらすぐ', waterIntervalDays: 7, light: '明るい日陰', mist: '2-3日に1回。' },
+            SUMMER: { water: '土表面が乾いてから1-2日後', waterIntervalDays: 10, light: '明るい日陰（風通し良く）', mist: '毎日1回。' },
+            AUTUMN: { water: '土表面が乾いたらすぐ', waterIntervalDays: 7, light: '明るい日陰', mist: '2-3日に1回。' },
+            WINTER: { water: '土中が乾いてから2-3日後', waterIntervalDays: 14, light: '明るい日陰', tempRisk: '厳重な温度管理（最低10℃確保）', mist: '週1-2回。' }
+        },
+        maintenance: { fertilizer: '5月〜9月', repotting: '5月〜8月', pruning: '随時' }
     }
 ];
