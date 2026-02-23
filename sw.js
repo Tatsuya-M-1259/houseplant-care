@@ -1,7 +1,7 @@
 // sw.js
 
-// キャッシュ名の定義（バージョンアップを認識させるため v20 に更新）
-const CACHE_NAME = 'houseplant-care-v20';
+// キャッシュ名の定義（バージョンアップを認識させるため v21 に更新）
+const CACHE_NAME = 'houseplant-care-v21';
 
 // キャッシュするアセットのリスト
 const ASSETS_TO_CACHE = [
@@ -37,7 +37,9 @@ const ASSETS_TO_CACHE = [
     './cordyline.jpg',
     './kalanchoe.jpg',
     './maranta.jpg',
-    './sophora.jpg' // 追加したソフォラの画像
+    './sophora.jpg',
+    './white_ghost.jpg', // 新しく追加したユーフォルビアの画像
+    './peperomia.jpg'    // 新しく追加したペペロミアの画像
 ];
 
 // プレースホルダー画像 (オフライン/画像未準備時に使用)
