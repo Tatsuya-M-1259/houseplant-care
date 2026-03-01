@@ -38,8 +38,6 @@ header {
     position: sticky;
     top: 0;
     z-index: 100;
-    
-    /* 🌟 修正: iOSのステータスバー（ノッチ）分の余白を確保 */
     padding-top: max(1rem, env(safe-area-inset-top)); 
 }
 
@@ -175,7 +173,7 @@ input:focus, select:focus {
 /* Plant Card List */
 .plant-card-container {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* スマホで1列、PCで複数列 */
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 1.5rem;
 }
 
@@ -196,7 +194,6 @@ input:focus, select:focus {
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
-/* Sortable ghost style */
 .sortable-ghost {
     opacity: 0.4;
     background-color: #f0fdf4;
@@ -222,7 +219,6 @@ input:focus, select:focus {
     font-size: 1.2rem;
     color: #aaa;
     padding: 0 5px;
-    /* 🌟 修正: ハンドル上でのタッチスクロールを無効化（ドラッグ専用にする） */
     touch-action: none; 
 }
 .drag-handle:active {
@@ -283,6 +279,25 @@ input:focus, select:focus {
     font-weight: 600;
 }
 
+/* 【修正】季節移行期のアラート表示用スタイル */
+.alert-box {
+    margin: 0 1rem 0.5rem;
+    padding: 0.5rem;
+    background-color: #fffbeb;
+    border: 1px solid #fcd34d;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    color: #92400e;
+    font-weight: 600;
+    text-align: center;
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
 .card-content-wrapper h4 {
     margin: 0 1rem 0.5rem;
     font-size: 1rem;
@@ -306,7 +321,6 @@ input:focus, select:focus {
     text-align: center;
 }
 
-/* Season Selector in Card */
 .season-selector {
     position: absolute;
     top: 10px;
@@ -334,7 +348,6 @@ input:focus, select:focus {
     font-weight: bold;
 }
 
-/* Modal Styles */
 .modal {
     display: none;
     position: fixed;
@@ -345,8 +358,6 @@ input:focus, select:focus {
     height: 100%;
     background-color: rgba(0,0,0,0.5);
     backdrop-filter: blur(5px);
-    
-    /* 🌟 修正: モーダル自体のスクロール制御とiOS慣性スクロール */
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
@@ -354,7 +365,7 @@ input:focus, select:focus {
 
 .modal-content {
     background-color: #fff;
-    margin: 5% auto 80px; /* 下部に余白 */
+    margin: 5% auto 80px; 
     padding: 2rem;
     border-radius: var(--border-radius);
     width: 90%;
@@ -377,12 +388,7 @@ input:focus, select:focus {
     cursor: pointer;
     line-height: 1;
 }
-.close-button:hover, .close-button:focus {
-    color: black;
-    text-decoration: none;
-}
 
-/* Detail Modal Specifics */
 .detail-image-container {
     width: 100%;
     height: 250px;
@@ -404,7 +410,6 @@ input:focus, select:focus {
     padding-bottom: 1rem;
 }
 
-/* Accordion in Modal */
 .accordion-item {
     margin-bottom: 1rem;
     border: 1px solid #e5e7eb;
@@ -447,7 +452,6 @@ input:focus, select:focus {
     animation: fadeIn 0.3s;
 }
 
-/* Water History List */
 .water-history-list {
     list-style: none;
     padding: 0;
@@ -470,7 +474,6 @@ input:focus, select:focus {
     font-size: 1.1rem;
 }
 
-/* Modal Navigation Buttons */
 .modal-nav-btn {
     position: fixed;
     top: 50%;
@@ -504,7 +507,6 @@ input:focus, select:focus {
     .next-btn { right: 20px; }
 }
 
-/* Notification Toast */
 .toast {
     position: fixed;
     bottom: 20px;
@@ -541,7 +543,6 @@ input:focus, select:focus {
     font-size: 0.85rem;
 }
 
-/* Lightbox */
 #lightbox-modal {
     display: none;
     position: fixed;
@@ -571,7 +572,6 @@ input:focus, select:focus {
     cursor: pointer;
 }
 
-/* Input with Button */
 .input-with-button {
     display: flex;
     gap: 10px;
@@ -650,7 +650,6 @@ input:focus, select:focus {
     border-radius: 8px;
 }
 
-/* Scroll to top */
 #scroll-to-top {
     position: fixed;
     bottom: 20px;
