@@ -47,7 +47,7 @@ export const PLANT_DATA = [
         id: 4, species: 'ガジュマル', scientific: 'Ficus microcarpa', minTemp: 5, difficulty: '容易', feature: '強い耐陰性、多幸の木', img: 'gajumaru.jpg',
         water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', 
         management: {
-            SPRING: { water: '土表面が乾いたらすぐ', waterIntervalDays: 7, light: '半日陰', mist: '毎日1回。カイガラムシ予防に有効. ' },
+            SPRING: { water: '土表面が乾いたらすぐ', waterIntervalDays: 7, light: '半日陰', mist: '毎日1回。カイガラムシ予防に有効。' },
             SUMMER: { water: '土表面が乾いたらすぐ', waterIntervalDays: 7, light: '半日陰', mist: '毎日朝夕。気根があればそこにも。' },
             AUTUMN: { water: '土表面が乾いてから1日後', waterIntervalDays: 10, light: '半日陰', mist: '2-3日に1回。' },
             WINTER: { water: '土中が乾いてから2-3日後 (少量)', waterIntervalDays: 14, light: '半日陰', tempRisk: '夜間窓際隔離（最低5℃確保）', mist: '週1-2回。葉の埃を落とす程度に。' }
@@ -92,7 +92,7 @@ export const PLANT_DATA = [
         water_method: '鉢底から水が流れ出るまでたっぷりと。葉のシワや土中の乾燥具合を見て水やりを行う。',
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', waterIntervalDays: 7, light: '日当たり良好', mist: '週1-2回。あまり必要としない。' },
-            SUMMER: { water: '土表面が乾いたらすぐ', waterIntervalDays: 7, light: '日当たり良好', mist: '週2-3回. 夕方の涼しい時間帯に。' },
+            SUMMER: { water: '土表面が乾いたらすぐ', waterIntervalDays: 7, light: '日当たり良好', mist: '週2-3回。夕方の涼しい時間帯に。' },
             AUTUMN: { water: '土表面が乾いてから2日後', waterIntervalDays: 14, light: '日当たり良好', mist: '週1回。' },
             WINTER: { water: '土中が乾いてから3日後 (少量)', waterIntervalDays: 14, light: '日当たり良好', tempRisk: '断水で休眠誘導。管理容易。', mist: '不要（または月1回）。' } 
         },
@@ -127,7 +127,7 @@ export const PLANT_DATA = [
             SPRING: { water: '土表面が乾いたらすぐ', waterIntervalDays: 7, light: '日当たり良好 (緑葉種)', mist: '毎日1回。ハダニがつきやすいので裏面も。' },
             SUMMER: { water: '土を乾かさないように', waterIntervalDays: 5, light: '日当たり良好 (緑葉種)', mist: '毎日朝夕。たっぷりと。' },
             AUTUMN: { water: '土表面が乾いたらすぐ', waterIntervalDays: 7, light: '日当たり良好', mist: '毎日1回。' },
-            WINTER: { water: '乾かし気味/休眠管理 (金属光沢種)', waterIntervalDays: 14, light: '日当たり良好', tempRisk: '厳重な温度管理（最低10℃確保）', mist: '週1-2回. 休眠中は控えめに。' }
+            WINTER: { water: '乾かし気味/休眠管理 (金属光沢種)', waterIntervalDays: 14, light: '日当たり良好', tempRisk: '厳重な温度管理（最低10℃確保）', mist: '週1-2回。休眠中は控えめに。' }
         },
         maintenance: { fertilizer: '5月, 8月', repotting: '5月〜8月', pruning: '随時 (傷んだ葉除去)' }
     },
@@ -155,7 +155,7 @@ export const PLANT_DATA = [
     },
     {
         id: 14, species: 'クロトン', scientific: 'Codiaeum variegatum', minTemp: 10, difficulty: '中程度', feature: '鮮やかな葉色、日光必須', img: 'croton.jpg',
-        water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', 
+        water_method: '鉢底から水が流れ出るまでたっぷりと. 受け皿の水はすぐに捨てる。', 
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', waterIntervalDays: 7, light: '日当たり良好 (必須)', mist: '毎日1回。ハダニ予防。' },
             SUMMER: { water: '土を乾かさないように', waterIntervalDays: 5, light: '日当たり良好 (必須)', mist: '毎日朝夕。' },
@@ -179,7 +179,7 @@ export const PLANT_DATA = [
         id: 16, species: 'トックリラン', scientific: 'Beaucarnea recurvata', minTemp: -3, difficulty: '容易', feature: '極めて乾燥に強い、基部肥大化', img: 'ponytail_palm.jpg',
         water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', 
         management: {
-            SPRING: { water: '土表面が乾いたらすぐ', waterIntervalDays: 10, light: '日当たり良好', mist: '週1回. あまり必要ない。' },
+            SPRING: { water: '土表面が乾いたらすぐ', waterIntervalDays: 10, light: '日当たり良好', mist: '週1回。あまり必要ない。' },
             SUMMER: { water: '土表面が乾いたらすぐ', waterIntervalDays: 10, light: '日当たり良好', mist: '週1-2回。' },
             AUTUMN: { water: '土表面が乾いてから2日後', waterIntervalDays: 14, light: '日当たり良好', mist: '週1回。' },
             WINTER: { water: '土中が乾いてから3日後 (少量)', waterIntervalDays: 14, light: '日当たり良好', tempRisk: '断水で休眠誘導。管理容易。', mist: '不要。' }
@@ -202,7 +202,7 @@ export const PLANT_DATA = [
         water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', 
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', waterIntervalDays: 7, light: '日当たり良好', mist: '2-3日に1回。' },
-            SUMMER: { water: '土を乾かさないように', waterIntervalDays: 5, light: '日当たり良好', mist: '毎日1回. 葉割れ防止に湿度を保つ。' },
+            SUMMER: { water: '土を乾かさないように', waterIntervalDays: 5, light: '日当たり良好', mist: '毎日1回。葉割れ防止に湿度を保つ。' },
             AUTUMN: { water: '土表面が乾いたらすぐ', waterIntervalDays: 7, light: '日当たり良好', mist: '2-3日に1回。' },
             WINTER: { water: '土中が乾いてから2-3日後 (少量)', waterIntervalDays: 14, light: '日当たり良好', tempRisk: '夜間窓際隔離（最低5℃確保）', mist: '週1回。' }
         },
@@ -221,7 +221,7 @@ export const PLANT_DATA = [
     },
     {
         id: 20, species: 'アローカリア', scientific: 'Araucaria heterophylla', minTemp: 0, difficulty: '容易', feature: '強い耐寒性、コニファー', img: 'araucaria.jpg',
-        water_method: '鉢底から水が流れ出るまでたっぷりと。受け皿の水はすぐに捨てる。', 
+        water_method: '鉢底から水が流れ出るまでたっぷりと. 受け皿の水はすぐに捨てる。', 
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', waterIntervalDays: 7, light: '日当たり良好', mist: '2-3日に1回。' },
             SUMMER: { water: '土表面が乾いたらすぐ', waterIntervalDays: 7, light: '日当たり良好', mist: '毎日1回。' },
@@ -237,16 +237,16 @@ export const PLANT_DATA = [
             SPRING: { water: '土表面が乾いたらすぐ (完全に乾いてから)', waterIntervalDays: 10, light: '日当たり良好 (屋外/風通し良く)', mist: '不要（または週1回）。' },
             SUMMER: { water: '土表面が乾いたらすぐ (完全に乾いてから)', waterIntervalDays: 7, light: '日当たり良好 (屋外/直射日光可)', mist: '週1-2回。夕方に軽く。' },
             AUTUMN: { water: '土表面が乾いてから2-3日後 (徐々に頻度減)', waterIntervalDays: 14, light: '日当たり良好', mist: '不要。' },
-            WINTER: { water: '**断水** (落葉時)。葉が残る場合は少量。', waterIntervalDays: INTERVAL_WATER_STOP, light: '日当たり良好', tempRisk: '厳重な温度管理（最低10℃確保）', mist: '不要. ' }
+            WINTER: { water: '**断水** (落葉時)。葉が残る場合は少量。', waterIntervalDays: INTERVAL_WATER_STOP, light: '日当たり良好', tempRisk: '厳重な温度管理（最低10℃確保）', mist: '不要。' }
         },
         maintenance: { fertilizer: '5月, 8月', repotting: '5月〜7月', pruning: '5月〜9月 (樹形維持)' }
     },
     {
         id: 22, species: 'エケベリア', scientific: 'Echeveria', minTemp: 5, difficulty: '容易', feature: '春秋型、ロゼット状、紅葉する多肉植物', img: 'echeveria.jpg.jpeg',
-        water_method: '鉢底から水が流れ出るまでたっぷりと. 葉のシワや土中の乾燥具合を見て水やりを行う。',
+        water_method: '鉢底から水が流れ出るまでたっぷりと。葉のシワや土中の乾燥具合を見て水やりを行う。',
         management: {
             SPRING: { water: '土表面が乾いたらすぐ', waterIntervalDays: 7, light: '日当たり良好 (風通し良く)', mist: '不要。水が溜まると腐る。' },
-            SUMMER: { water: '断水/控えめ (月に1回程度、夕方)', waterIntervalDays: 30, light: '半日陰 (蒸れ注意)', mist: '不要. 蒸れ厳禁。' },
+            SUMMER: { water: '断水/控えめ (月に1回程度、夕方)', waterIntervalDays: 30, light: '半日陰 (蒸れ注意)', mist: '不要。蒸れ厳禁。' },
             AUTUMN: { water: '土表面が乾いたらすぐ (紅葉のために控えめ)', waterIntervalDays: 7, light: '日当たり良好 (寒さに当てる)', mist: '不要。' },
             WINTER: { water: '断水/控えめ (葉にシワが出たら少量)', waterIntervalDays: 30, light: '日当たり良好', tempRisk: '夜間窓際隔離（最低5℃確保）', mist: '不要。' }
         },
@@ -296,11 +296,11 @@ export const PLANT_DATA = [
         img: 'sophora.jpg',
         water_method: '鉢底から水が流れ出るまでたっぷりと。水切れに非常に弱いため注意が必要。', 
         management: {
-            // 【修正】移行期の急激な落葉を防ぐため、SPRINGの間隔を3日から5日に微調整
+            // 【改善】3月の急激な環境変化による落葉を防ぐため、SPRINGの間隔を3日から5日に緩和
             SPRING: { water: '土表面が乾いたらすぐ', waterIntervalDays: 5, light: '日当たり良好（風通し良く）', mist: '毎日1〜2回。乾燥による落葉を防ぐ。' },
             SUMMER: { water: '土表面が乾き始めたらすぐ', waterIntervalDays: 2, light: '半日陰（極端な暑さを避ける）', mist: '毎日朝夕。湿度を高く保つ。' },
             AUTUMN: { water: '土表面が乾いたらすぐ', waterIntervalDays: 5, light: '日当たり良好', mist: '毎日1回。' },
-            WINTER: { water: '土表面が乾いてから1〜2日後（控えめに）', waterIntervalDays: 10, light: '明るい日向（室内）', tempRisk: '夜間窓際隔離（最低5℃確保）', mist: '毎日1回. 暖房による乾燥に注意。' }
+            WINTER: { water: '土表面が乾いてから1〜2日後（控えめに）', waterIntervalDays: 10, light: '明るい日向（室内）', tempRisk: '夜間窓際隔離（最低5℃確保）', mist: '毎日1回。暖房による乾燥に注意。' }
         },
         maintenance: { fertilizer: '5月〜9月（薄めの液肥）', repotting: '4月〜6月（2年に1回）', pruning: '5月〜7月（伸びすぎた枝を整理）' }
     },
