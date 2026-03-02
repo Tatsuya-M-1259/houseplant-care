@@ -31,13 +31,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let db = null; 
     let userPlants = [];
     let currentPlantId = null;
-    let deletedPlantBackup = null; // Undo用
+    let deletedPlantBackup = null; 
     let deletedPlantIndex = -1;
 
     const objectUrls = new Set();
 
     // ----------------------------------------------------
-    // 1. Utilities
+    // 1. Utilities (UUID, Date, Memory)
     // ----------------------------------------------------
     function generateUUID() { return crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15); }
     function getLocalTodayDate() { return new Date().toISOString().split('T')[0]; }
@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ----------------------------------------------------
-    // 2. Notifications (Undo付き)
+    // 2. Notifications & PWA Update logic
     // ----------------------------------------------------
     function showNotification(message, type = 'success', duration = 3000, action = null) {
         const toast = document.createElement('div');
@@ -93,6 +93,26 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // PWA更新チェック
+    function registerServiceWorker() {
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js').then(reg => {
+                reg.addEventListener('updatefound', () => {
+                    const newWorker = reg.installing;
+                    newWorker.addEventListener('statechange', () => {
+                        // 新しいSWがインストール済み状態で、かつ既存の制御者がいる（初回ではない）場合
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            showNotification('アプリが更新されました。', 'info', 0, {
+                                text: '再読み込み',
+                                callback: () => window.location.reload()
+                            });
+                        }
+                    });
+                });
+            }).catch(err => console.error('SW registration failed', err));
+        }
+    }
+
     // ----------------------------------------------------
     // 3. UI Rendering & Dashboard
     // ----------------------------------------------------
@@ -108,7 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const activeSeasonKey = getCurrentSeason();
         const sortedPlants = sortAndFilterPlants();
 
-        // ダッシュボード（緊急）の更新
+        // 緊急ダッシュボード
         const urgentPlants = sortedPlants.filter(p => {
             const d = PLANT_DATA.find(sd => String(sd.id) === String(p.speciesId));
             const next = calculateNextWateringDate(p.waterLog[0]?.date || p.entryDate, d.management[activeSeasonKey].waterIntervalDays);
@@ -122,7 +142,6 @@ document.addEventListener('DOMContentLoaded', () => {
             dashboard.style.display = 'none';
         }
 
-        // メインリストの描画
         list.innerHTML = '';
         const container = document.createElement('div');
         container.className = 'plant-card-container';
@@ -132,7 +151,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         list.appendChild(container);
 
-        // Sortable（ドラッグ＆ドロップ）の有効化
         if (currentSort === 'manual') {
             new Sortable(container, {
                 animation: 150, handle: '.drag-handle',
@@ -219,8 +237,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const sData = speciesData.management[getCurrentSeason()];
         document.getElementById('season-care-content').innerHTML = `
             <ul>
-                <li><strong>水やり:</strong> ${sData.water}</li>
-                <li><strong>葉水:</strong> ${sData.mist || 'なし'}</li>
+                <li><strong>水やり方法:</strong> ${speciesData.water_method}</li>
+                <li><strong>季節の頻度:</strong> ${sData.water}</li>
+                <li><strong>葉水目安:</strong> ${sData.mist || 'なし'}</li>
                 <li><strong>置き場所:</strong> ${sData.light}</li>
                 <li><strong>最低温度:</strong> ${speciesData.minTemp}℃以上</li>
             </ul>
@@ -231,6 +250,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <p><strong>特徴:</strong> ${speciesData.feature}</p>
                 <p><strong>肥料:</strong> ${speciesData.maintenance.fertilizer}</p>
                 <p><strong>植え替え:</strong> ${speciesData.maintenance.repotting}</p>
+                <p><strong>剪定:</strong> ${speciesData.maintenance.pruning}</p>
             </div>
         `;
 
@@ -256,7 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ----------------------------------------------------
-    // 5. Data Logic & Events
+    // 5. Data Logic & Initialization
     // ----------------------------------------------------
     async function initDB() {
         return new Promise((resolve) => {
@@ -280,6 +300,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function saveUserPlants(plants) {
         localStorage.setItem('userPlants', JSON.stringify(plants));
         localStorage.setItem('last_update_time', Date.now());
+        renderLastUpdateTime();
     }
 
     function sortAndFilterPlants() {
@@ -301,7 +322,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function showWaterTypeModal(plantId) {
         currentPlantId = plantId;
+        const plant = userPlants.find(p => String(p.id) === String(plantId));
         const modal = document.getElementById('water-type-modal');
+        document.getElementById('water-type-modal-title').textContent = `「${plant.name}」の記録`;
         modal.style.display = 'block';
         const options = document.getElementById('water-type-options');
         options.innerHTML = '';
@@ -326,7 +349,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const init = async () => {
         await initDB();
         userPlants = JSON.parse(localStorage.getItem('userPlants')) || [];
-        
+        registerServiceWorker(); // SW登録
+
         document.getElementById('global-season-select')?.addEventListener('change', (e) => {
             currentGlobalSeason = e.target.value;
             localStorage.setItem('global-season-select', currentGlobalSeason);
@@ -377,7 +401,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // 植物種のセレクトボックス初期化
         const speciesSelect = document.getElementById('species-select');
         if (speciesSelect) {
             PLANT_DATA.forEach(p => {
@@ -388,7 +411,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         renderPlantCards();
+        renderLastUpdateTime();
     };
+
+    function renderLastUpdateTime() {
+        const display = document.getElementById('last-update-display');
+        if (!display) return;
+        const time = localStorage.getItem('last_update_time');
+        display.textContent = time ? `最終更新: ${new Date(parseInt(time)).toLocaleString('ja-JP')}` : '';
+    }
 
     init();
 });
