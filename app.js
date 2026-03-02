@@ -89,6 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function formatDateToISO(date) {
+        if (!date) return null;
         const y = date.getFullYear();
         const m = String(date.getMonth() + 1).padStart(2, '0');
         const d = String(date.getDate()).padStart(2, '0');
@@ -99,7 +100,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return formatDateToISO(new Date());
     }
 
-    // 【改善】季節移行時の平滑化ロジックを取り入れた計算関数
     function calculateNextWateringDate(lastDateString, intervalDays) {
         if (!lastDateString || intervalDays === INTERVAL_WATER_STOP || intervalDays == null || isNaN(intervalDays)) return null;
         
@@ -113,7 +113,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function formatJapaneseDate(d) {
-        const date = parseDateAsLocal(d) || new Date(d);
+        const date = parseDateAsLocal(d);
+        if (!date) return '日付なし';
         return `${date.getFullYear()}年${date.getMonth()+1}月${date.getDate()}日`;
     }
 
@@ -123,7 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ----------------------------------------------------
-    // 2. Data Persistence (IndexedDB & LocalStorage)
+    // 2. Data Persistence
     // ----------------------------------------------------
     async function initDB() {
         return new Promise((resolve, reject) => {
@@ -145,12 +146,6 @@ document.addEventListener('DOMContentLoaded', () => {
             request.onsuccess = () => resolve(request.result);
             request.onerror = () => resolve(null);
         });
-    }
-
-    async function saveImageToDB(plantId, imageData) {
-        if (!db) return;
-        const transaction = db.transaction([STORE_NAME], "readwrite");
-        transaction.objectStore(STORE_NAME).put(imageData, plantId);
     }
 
     function saveUserPlants(plants) {
@@ -187,11 +182,21 @@ document.addEventListener('DOMContentLoaded', () => {
             if (storedData) imgSrc = (storedData instanceof Blob) ? URL.createObjectURL(storedData) : storedData;
         }
 
-        // 【改善】計算前に履歴を確実に最新順へソート
-        const sortedLog = [...userPlant.waterLog].sort((a, b) => parseDateAsLocal(b.date) - parseDateAsLocal(a.date));
+        // 計算前に履歴を確実に最新順へソート
+        const sortedLog = [...userPlant.waterLog].sort((a, b) => {
+            const dateA = parseDateAsLocal(a.date);
+            const dateB = parseDateAsLocal(b.date);
+            return dateB - dateA;
+        });
         const lastLog = sortedLog[0] || { date: userPlant.entryDate };
         
         const seasonData = data.management[seasonKey];
+        // 取得したseasonDataが未定義でないかガード
+        if (!seasonData) {
+            container.innerHTML = '<div class="alert-box">管理データが見つかりません</div>';
+            return;
+        }
+
         const nextDateString = calculateNextWateringDate(lastLog.date, seasonData.waterIntervalDays);
         
         const currentMonth = new Date().getMonth() + 1;
@@ -255,15 +260,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
         filtered.sort((a, b) => {
             if (currentSort === 'name') return a.name.localeCompare(b.name);
-            if (currentSort === 'entryDate') return parseDateAsLocal(b.entryDate) - parseDateAsLocal(a.entryDate);
+            if (currentSort === 'entryDate') {
+                const dateA = parseDateAsLocal(a.entryDate);
+                const dateB = parseDateAsLocal(b.entryDate);
+                return dateB - dateA;
+            }
             if (currentSort === 'nextWateringDate') {
-                const getNext = (p) => {
+                const getNextTimestamp = (p) => {
                     const d = PLANT_DATA.find(pd => String(pd.id) === String(p.speciesId));
-                    const last = [...p.waterLog].sort((x, y) => parseDateAsLocal(y.date) - parseDateAsLocal(x.date))[0] || { date: p.entryDate };
-                    const next = calculateNextWateringDate(last.date, d.management[getCurrentSeason()].waterIntervalDays);
-                    return next ? parseDateAsLocal(next).getTime() : 9e15;
+                    if (!d) return 9e15;
+                    
+                    const sortedLog = [...p.waterLog].sort((x, y) => parseDateAsLocal(y.date) - parseDateAsLocal(x.date));
+                    const last = sortedLog[0] || { date: p.entryDate };
+                    
+                    const seasonKey = getCurrentSeason();
+                    const interval = d.management[seasonKey].waterIntervalDays;
+                    const nextStr = calculateNextWateringDate(last.date, interval);
+                    const nextDate = parseDateAsLocal(nextStr);
+                    
+                    return nextDate ? nextDate.getTime() : 9e15;
                 };
-                return getNext(a) - getNext(b);
+                return getNextTimestamp(a) - getNextTimestamp(b);
             }
             return 0;
         });
@@ -275,6 +292,36 @@ document.addEventListener('DOMContentLoaded', () => {
     // ----------------------------------------------------
     async function initializeApp() {
         await initDB();
+        
+        // グローバルな季節設定の初期化
+        if (globalSeasonSelect) {
+            globalSeasonSelect.value = currentGlobalSeason;
+            globalSeasonSelect.addEventListener('change', (e) => {
+                currentGlobalSeason = e.target.value;
+                localStorage.setItem('global-season-select', currentGlobalSeason);
+                renderPlantCards();
+            });
+        }
+
+        // ソート/フィルタの初期化
+        if (sortSelect) {
+            sortSelect.value = currentSort;
+            sortSelect.addEventListener('change', (e) => {
+                currentSort = e.target.value;
+                localStorage.setItem('sort-select', currentSort);
+                renderPlantCards();
+                renderQuickSortButtons();
+            });
+        }
+        if (filterSelect) {
+            filterSelect.value = currentFilter;
+            filterSelect.addEventListener('change', (e) => {
+                currentFilter = e.target.value;
+                localStorage.setItem('filter-select', currentFilter);
+                renderPlantCards();
+            });
+        }
+
         renderLastUpdateTime();
         renderPlantCards();
         renderQuickSortButtons();
@@ -285,13 +332,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const lastDate = lastWateredInput.value;
             if (!speciesId || !lastDate) return;
             const data = PLANT_DATA.find(p => String(p.id) === speciesId);
-            const interval = data.management[getCurrentSeason()].waterIntervalDays;
+            if (!data) return;
+            const seasonKey = getCurrentSeason();
+            const interval = data.management[seasonKey].waterIntervalDays;
             const next = calculateNextWateringDate(lastDate, interval);
-            nextWateringPreview.textContent = next ? `次回予定日: ${formatJapaneseDate(next)}` : `次回予定: ${data.management[getCurrentSeason()].water}`;
+            nextWateringPreview.textContent = next ? `次回予定日: ${formatJapaneseDate(next)}` : `次回予定: ${data.management[seasonKey].water}`;
         };
 
-        lastWateredInput.addEventListener('change', updatePreview);
-        speciesSelect.addEventListener('change', updatePreview);
+        if (lastWateredInput) lastWateredInput.addEventListener('change', updatePreview);
+        if (speciesSelect) speciesSelect.addEventListener('change', updatePreview);
     }
 
     function renderLastUpdateTime() {
@@ -309,8 +358,18 @@ document.addEventListener('DOMContentLoaded', () => {
             { v: 'entryDate', l: '📅 登録順' }
         ];
         quickSortButtonsContainer.innerHTML = options.map(o => 
-            `<button class="${currentSort === o.v ? 'active' : ''}" data-sort="${o.v}">${o.l}</button>`
+            `<button class="action-button secondary ${currentSort === o.v ? 'active' : ''}" data-sort="${o.v}">${o.l}</button>`
         ).join('');
+
+        quickSortButtonsContainer.querySelectorAll('button').forEach(btn => {
+            btn.onclick = () => {
+                currentSort = btn.dataset.sort;
+                localStorage.setItem('sort-select', currentSort);
+                if (sortSelect) sortSelect.value = currentSort;
+                renderPlantCards();
+                renderQuickSortButtons();
+            };
+        });
     }
 
     initializeApp();
