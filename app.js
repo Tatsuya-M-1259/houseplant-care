@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let db = null; 
     let userPlants = [];
     let currentPlantId = null;
-    let deletedPlantBackup = null; // Undo用
+    let deletedPlantBackup = null; 
     let deletedPlantIndex = -1;
 
     const objectUrls = new Set();
@@ -93,7 +93,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // PWA更新チェック: ユーザーに確実に届ける仕組み
     function registerServiceWorker() {
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('./sw.js').then(reg => {
@@ -127,7 +126,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const activeSeasonKey = getCurrentSeason();
         const sortedPlants = sortAndFilterPlants();
 
-        // 緊急ダッシュボード（今日またはそれ以前の予定がある植物）
         const urgentPlants = sortedPlants.filter(p => {
             const d = PLANT_DATA.find(sd => String(sd.id) === String(p.speciesId));
             const next = calculateNextWateringDate(p.waterLog[0]?.date || p.entryDate, d.management[activeSeasonKey].waterIntervalDays);
@@ -150,7 +148,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         list.appendChild(container);
 
-        // 手動並び替え時のドラッグ＆ドロップ有効化
         if (currentSort === 'manual') {
             new Sortable(container, {
                 animation: 150, handle: '.drag-handle',
@@ -189,7 +186,6 @@ document.addEventListener('DOMContentLoaded', () => {
             renderCardContent(wrapper, userPlant, speciesData, btn.dataset.season);
         });
 
-        // カルテ展開
         card.addEventListener('click', (e) => {
             if (!e.target.closest('.controls') && !e.target.closest('.season-selector') && !e.target.closest('.card-footer')) {
                 showDetailsModal(userPlant, speciesData);
@@ -199,9 +195,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return card;
     }
 
-    /**
-     * 推奨日表示の核心ロジック（シーズン移行アラート実装）
-     */
     async function renderCardContent(container, userPlant, speciesData, seasonKey) {
         let imgSrc = `./${speciesData.img}`;
         const blob = await getImageFromDB(userPlant.id);
@@ -213,7 +206,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const today = new Date(getLocalTodayDate());
         const nextDate = nextDateStr ? new Date(nextDateStr) : null;
 
-        // --- シーズン移行判定とステータスの構築 ---
         let statusText = '🌿 順調';
         let statusClass = '';
         let dateDisplayText = nextDateStr ? formatDateJp(nextDateStr) : '不要';
@@ -222,9 +214,7 @@ document.addEventListener('DOMContentLoaded', () => {
             statusText = '❄️ 断水・休眠中';
         } else if (nextDate && nextDate <= today) {
             const diffDays = Math.floor((today - nextDate) / (1000 * 60 * 60 * 24));
-            
             if (diffDays > 7) { 
-                // 推奨日が1週間以上過去＝シーズン移行で間隔が急に短縮されたケース
                 statusText = `🌸 ${SEASONS[seasonKey].name.split(' ')[0]}の開始：今すぐ！`;
                 statusClass = 'alert-bg';
                 dateDisplayText = 'シーズン移行のため即時';
@@ -233,7 +223,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 statusClass = 'alert-bg';
             }
         }
-        // ----------------------------------------
 
         container.innerHTML = `
             <div class="card-image"><img src="${imgSrc}" loading="lazy"></div>
@@ -242,6 +231,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 ${statusText}
             </div>
             <div class="care-info">
+                <p><strong>必要な光量:</strong> ${sData.light || 'なし'}</p>
+                <p><strong>適切な湿度:</strong> ${sData.humidity || 'なし'}</p>
                 <p><strong>水やり:</strong> ${sData.water}</p>
                 <p><strong>葉水目安:</strong> ${sData.mist || 'なし'}</p>
                 <p><strong>推奨目安:</strong> <span class="${statusClass ? 'alert-text' : ''}">${dateDisplayText}</span></p>
@@ -264,6 +255,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const sData = speciesData.management[getCurrentSeason()];
         document.getElementById('season-care-content').innerHTML = `
             <ul>
+                <li><strong>必要な光量:</strong> ${sData.light || 'なし'}</li>
+                <li><strong>適切な湿度:</strong> ${sData.humidity || 'なし'}</li>
                 <li><strong>水やり方法:</strong> ${speciesData.water_method}</li>
                 <li><strong>季節の頻度:</strong> ${sData.water}</li>
                 <li><strong>葉水目安:</strong> ${sData.mist || 'なし'}</li>
@@ -302,9 +295,6 @@ document.addEventListener('DOMContentLoaded', () => {
         historyContainer.prepend(logBtn);
     }
 
-    // ----------------------------------------------------
-    // 5. Data Logic & Initialization
-    // ----------------------------------------------------
     async function initDB() {
         return new Promise((resolve) => {
             const request = indexedDB.open(DB_NAME, DB_VERSION);
@@ -376,7 +366,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const init = async () => {
         await initDB();
         userPlants = JSON.parse(localStorage.getItem('userPlants')) || [];
-        registerServiceWorker(); // 更新通知用
+        registerServiceWorker();
 
         document.getElementById('global-season-select')?.addEventListener('change', (e) => {
             currentGlobalSeason = e.target.value;
