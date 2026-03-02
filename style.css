@@ -1,160 +1,85 @@
 /* style.css */
-
 :root {
     --primary-color: #10b981;
-    --primary-dark: #059669;
-    --secondary-color: #ecfdf5;
-    --text-color: #1f2937;
-    --light-text-color: #6b7280;
-    --background-color: #f3f4f6;
-    --card-background: #ffffff;
-    --danger-color: #ef4444;
-    --warning-color: #f59e0b;
-    --border-radius: 12px;
-    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    --font-family: 'Inter', 'Noto Sans JP', sans-serif;
-}
-
-* {
-    box-sizing: border-box;
+    --background-color: #f9fafb;
+    --card-bg: #ffffff;
+    --text-main: #111827;
+    --text-sub: #6b7280;
 }
 
 body {
-    font-family: var(--font-family);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     background-color: var(--background-color);
-    color: var(--text-color);
+    color: var(--text-main);
     margin: 0;
-    padding: 0;
-    line-height: 1.6;
-    -webkit-font-smoothing: antialiased;
-}
-
-header {
-    background-color: var(--primary-color);
-    color: white;
-    text-align: center;
-    padding: 1rem 0;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    position: sticky;
-    top: 0;
-    z-index: 100;
-}
-
-.container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 20px;
-}
-
-/* 植物カード */
-.plant-card-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 1.5rem;
+    padding-bottom: 20px;
 }
 
 .plant-card {
-    background: var(--card-background);
-    border-radius: var(--border-radius);
-    overflow: hidden;
-    box-shadow: var(--shadow);
-    position: relative;
-    border: 1px solid #eee;
-}
-
-/* 季節移行期のアラート視認性向上 */
-.alert-box {
-    margin: 0.8rem 1rem;
-    padding: 0.8rem;
-    background-color: #fff7ed;
-    border: 2px solid #fb923c;
+    background: var(--card-bg);
     border-radius: 12px;
-    font-size: 0.9rem;
-    color: #9a3412;
-    text-align: center;
-    box-shadow: 0 2px 4px rgba(251, 146, 60, 0.2);
-    animation: fadeIn 0.4s ease-in;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-5px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* ソート状態のフィードバック */
-.action-button.secondary.active {
-    background-color: var(--primary-color);
-    color: white;
-    font-weight: bold;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
-}
-
-/* 断水期の特別なラベル表示 */
-.status-dormant {
-    display: inline-block;
-    padding: 2px 8px;
-    background-color: #e5e7eb;
-    border-radius: 4px;
-    font-size: 0.85rem;
-    color: #4b5563;
-    font-weight: 600;
-}
-
-/* 季節セレクターUI */
-.season-selector {
-    display: flex;
-    justify-content: center;
-    gap: 4px;
-    background: #f3f4f6;
-    padding: 4px;
-    border-radius: 10px;
-    margin: 10px;
-}
-
-.season-selector button {
-    border: none;
-    background: none;
-    padding: 6px 8px;
-    font-size: 0.75rem;
-    cursor: pointer;
-    border-radius: 6px;
-}
-
-.season-selector button.active {
-    background: white;
-    color: var(--primary-color);
-    font-weight: bold;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    margin: 15px auto;
+    max-width: 350px;
+    overflow: hidden;
 }
 
 .card-image img {
     width: 100%;
-    height: 200px;
+    height: 180px;
     object-fit: cover;
 }
 
 .card-header {
-    padding: 1rem;
+    padding: 12px 16px;
 }
 
-.status-box {
-    margin: 0 1rem 1rem;
-    padding: 0.5rem;
-    background-color: var(--secondary-color);
-    border-radius: 6px;
+.card-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.status-badge {
+    display: inline-block;
+    background: #ecfdf5;
+    color: var(--primary-color);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    margin: 0 16px 10px;
+    font-weight: bold;
+}
+
+.transition-note {
+    background: #fffbeb;
+    color: #92400e;
+    padding: 8px 16px;
+    font-size: 0.8rem;
+    border-left: 4px solid #f59e0b;
+}
+
+.card-details ul {
+    list-style: none;
+    padding: 0 16px;
+    margin-bottom: 16px;
     font-size: 0.9rem;
-    color: var(--primary-dark);
-    font-weight: 600;
 }
 
-.card-content-wrapper ul {
-    margin: 0 1rem 1rem;
-    padding-left: 1.2rem;
-    font-size: 0.95rem;
+.card-details li {
+    margin-bottom: 6px;
 }
 
 .card-footer {
-    padding: 1rem;
+    padding: 10px 16px;
     border-top: 1px solid #f3f4f6;
-    text-align: center;
+    text-align: right;
+}
+
+.action-button.tertiary {
+    background: none;
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color);
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
 }
