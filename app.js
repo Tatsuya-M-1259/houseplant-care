@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let db = null; 
     let userPlants = [];
     let currentPlantId = null;
-    let deletedPlantBackup = null; 
+    let deletedPlantBackup = null; // Undo用
     let deletedPlantIndex = -1;
 
     const objectUrls = new Set();
@@ -93,16 +93,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // PWA更新チェック
+    // PWA更新チェック: ユーザーに確実に届ける仕組み
     function registerServiceWorker() {
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('./sw.js').then(reg => {
                 reg.addEventListener('updatefound', () => {
                     const newWorker = reg.installing;
                     newWorker.addEventListener('statechange', () => {
-                        // 新しいSWがインストール済み状態で、かつ既存の制御者がいる（初回ではない）場合
                         if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                            showNotification('アプリが更新されました。', 'info', 0, {
+                            showNotification('新しいバージョンがあります。', 'info', 0, {
                                 text: '再読み込み',
                                 callback: () => window.location.reload()
                             });
@@ -128,7 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const activeSeasonKey = getCurrentSeason();
         const sortedPlants = sortAndFilterPlants();
 
-        // 緊急ダッシュボード
+        // 緊急ダッシュボード（今日またはそれ以前の予定がある植物）
         const urgentPlants = sortedPlants.filter(p => {
             const d = PLANT_DATA.find(sd => String(sd.id) === String(p.speciesId));
             const next = calculateNextWateringDate(p.waterLog[0]?.date || p.entryDate, d.management[activeSeasonKey].waterIntervalDays);
@@ -151,6 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         list.appendChild(container);
 
+        // 手動並び替え時のドラッグ＆ドロップ有効化
         if (currentSort === 'manual') {
             new Sortable(container, {
                 animation: 150, handle: '.drag-handle',
@@ -189,6 +189,7 @@ document.addEventListener('DOMContentLoaded', () => {
             renderCardContent(wrapper, userPlant, speciesData, btn.dataset.season);
         });
 
+        // カルテ展開
         card.addEventListener('click', (e) => {
             if (!e.target.closest('.controls') && !e.target.closest('.season-selector') && !e.target.closest('.card-footer')) {
                 showDetailsModal(userPlant, speciesData);
@@ -198,6 +199,9 @@ document.addEventListener('DOMContentLoaded', () => {
         return card;
     }
 
+    /**
+     * 推奨日表示の核心ロジック（シーズン移行アラート実装）
+     */
     async function renderCardContent(container, userPlant, speciesData, seasonKey) {
         let imgSrc = `./${speciesData.img}`;
         const blob = await getImageFromDB(userPlant.id);
@@ -205,19 +209,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const sData = speciesData.management[seasonKey];
         const lastLog = userPlant.waterLog[0] || { date: userPlant.entryDate };
-        const nextDate = calculateNextWateringDate(lastLog.date, sData.waterIntervalDays);
-        const isAlert = nextDate && new Date(nextDate) <= new Date(getLocalTodayDate());
+        const nextDateStr = calculateNextWateringDate(lastLog.date, sData.waterIntervalDays);
+        const today = new Date(getLocalTodayDate());
+        const nextDate = nextDateStr ? new Date(nextDateStr) : null;
+
+        // --- シーズン移行判定とステータスの構築 ---
+        let statusText = '🌿 順調';
+        let statusClass = '';
+        let dateDisplayText = nextDateStr ? formatDateJp(nextDateStr) : '不要';
+
+        if (sData.waterIntervalDays === INTERVAL_WATER_STOP) {
+            statusText = '❄️ 断水・休眠中';
+        } else if (nextDate && nextDate <= today) {
+            const diffDays = Math.floor((today - nextDate) / (1000 * 60 * 60 * 24));
+            
+            if (diffDays > 7) { 
+                // 推奨日が1週間以上過去＝シーズン移行で間隔が急に短縮されたケース
+                statusText = `🌸 ${SEASONS[seasonKey].name.split(' ')[0]}の開始：今すぐ！`;
+                statusClass = 'alert-bg';
+                dateDisplayText = 'シーズン移行のため即時';
+            } else {
+                statusText = '⚠️ 水やり時期';
+                statusClass = 'alert-bg';
+            }
+        }
+        // ----------------------------------------
 
         container.innerHTML = `
             <div class="card-image"><img src="${imgSrc}" loading="lazy"></div>
             <div class="card-header"><h3>${userPlant.name}</h3><p>${speciesData.species}</p></div>
-            <div class="status-box ${isAlert ? 'alert-bg' : ''}">
-                ${sData.waterIntervalDays === INTERVAL_WATER_STOP ? '❄️ 断水・休眠中' : isAlert ? '⚠️ 水やり時期' : '🌿 順調'}
+            <div class="status-box ${statusClass}">
+                ${statusText}
             </div>
             <div class="care-info">
-                <p><strong>水:</strong> ${sData.water}</p>
-                <p><strong>葉水:</strong> ${sData.mist || 'なし'}</p>
-                <p><strong>次回:</strong> <span class="${isAlert ? 'alert-text' : ''}">${nextDate ? formatDateJp(nextDate) : '不要'}</span></p>
+                <p><strong>水やり:</strong> ${sData.water}</p>
+                <p><strong>葉水目安:</strong> ${sData.mist || 'なし'}</p>
+                <p><strong>推奨目安:</strong> <span class="${statusClass ? 'alert-text' : ''}">${dateDisplayText}</span></p>
             </div>
         `;
     }
@@ -349,7 +376,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const init = async () => {
         await initDB();
         userPlants = JSON.parse(localStorage.getItem('userPlants')) || [];
-        registerServiceWorker(); // SW登録
+        registerServiceWorker(); // 更新通知用
 
         document.getElementById('global-season-select')?.addEventListener('change', (e) => {
             currentGlobalSeason = e.target.value;
