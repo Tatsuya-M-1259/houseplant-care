@@ -1,12 +1,8 @@
 // app.js
-
 import { PLANT_DATA, INTERVAL_WATER_STOP } from './data.js';
 
 document.addEventListener('DOMContentLoaded', () => {
-    
-    // ----------------------------------------------------
-    // 0. 基本設定とサービスワーカー更新検知
-    // ----------------------------------------------------
+    // サービスワーカーの更新検知
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./sw.js').then(reg => {
             reg.onupdatefound = () => {
@@ -33,12 +29,12 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentGlobalSeason = localStorage.getItem('global-season-select') || 'AUTO';
     let userPlants = JSON.parse(localStorage.getItem('userPlants')) || [];
 
-    // ----------------------------------------------------
-    // 1. 日付ロジック（パースの統一）
-    // ----------------------------------------------------
+    // 【修正】日付形式が混在（/ や -）していても正確に読み込むロジック
     function parseDateAsLocal(dateString) {
         if (!dateString) return null;
-        const [year, month, day] = dateString.split('-').map(Number);
+        const normalized = dateString.replace(/\//g, '-');
+        const [year, month, day] = normalized.split('-').map(Number);
+        if (isNaN(year) || isNaN(month) || isNaN(day)) return null;
         return new Date(year, month - 1, day);
     }
 
@@ -55,20 +51,17 @@ document.addEventListener('DOMContentLoaded', () => {
         return 'WINTER';
     }
 
-    // ----------------------------------------------------
-    // 2. 水やり推奨日計算（移行期の平滑化）
-    // ----------------------------------------------------
     function calculateNextWateringDate(lastDateString, intervalDays) {
         if (!lastDateString || intervalDays === INTERVAL_WATER_STOP || intervalDays == null || isNaN(intervalDays)) return null;
         const lastDate = parseDateAsLocal(lastDateString);
+        if (!lastDate) return null;
         lastDate.setDate(lastDate.getDate() + parseInt(intervalDays));
         return formatDateToISO(lastDate);
     }
 
-    // ----------------------------------------------------
-    // 3. レンダリング
-    // ----------------------------------------------------
+    // 【修正】UIを以前のシンプルさに戻したレンダリング
     async function renderCardContentAsync(container, userPlant, data, seasonKey) {
+        // 履歴を確実にソートしてから最新を取得
         const sortedLog = [...userPlant.waterLog].sort((a, b) => parseDateAsLocal(b.date) - parseDateAsLocal(a.date));
         const lastLog = sortedLog[0] || { date: userPlant.entryDate };
         const seasonData = data.management[seasonKey];
@@ -76,12 +69,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const nextDateStr = calculateNextWateringDate(lastLog.date, seasonData.waterIntervalDays);
         const nextDateDisplay = nextDateStr 
             ? `${nextDateStr.replace(/-/g, '/')}頃` 
-            : `<span class="status-dormant">冬の休眠中（断水）</span>`;
+            : `冬の休眠中（断水）`;
 
         const currentMonth = new Date().getMonth() + 1;
-        // 3月かつ春設定の場合にアラートを表示
         const transitionAlert = (currentMonth === 3 && seasonKey === 'SPRING') 
-            ? `<div class="alert-box">⚠️ <strong>春の管理移行期</strong><br>土の乾きを直接指で触って確認してください</div>` 
+            ? `<div class="transition-note">⚠️ 春の移行期：土の乾きを確認</div>` 
             : '';
 
         container.innerHTML = `
@@ -91,24 +83,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 <p>${escapeHTML(data.species)}</p>
             </div>
             ${transitionAlert}
-            <div class="status-box">${SEASONS[seasonKey].icon} ${SEASONS[seasonKey].name.split(' ')[0]}の管理</div>
-            <div class="card-content-wrapper">
+            <div class="status-badge">${SEASONS[seasonKey].icon} ${SEASONS[seasonKey].name.split(' ')[0]}</div>
+            <div class="card-details">
                 <ul>
-                    <li>水やり: ${escapeHTML(seasonData.water)}</li>
-                    <li>葉水: ${escapeHTML(seasonData.mist || '必要なし')}</li>
-                    <li>次回目安: ${nextDateDisplay}</li>
+                    <li>💧 <strong>水やり:</strong> ${escapeHTML(seasonData.water)}</li>
+                    <li>📅 <strong>次回目安:</strong> ${nextDateDisplay}</li>
                 </ul>
             </div>
         `;
     }
-
-    // グローバルな季節設定を更新し再描画
-    window.updateGlobalSeason = (newSeason) => {
-        currentGlobalSeason = newSeason;
-        localStorage.setItem('global-season-select', newSeason);
-        renderPlantCards();
-        renderQuickSortButtons(); // ソートボタンの状態も更新
-    };
 
     function renderPlantCards() {
         const plantCardList = document.getElementById('plant-card-list');
@@ -122,15 +105,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const card = document.createElement('div');
             card.className = 'plant-card';
             card.innerHTML = `
-                <div class="season-selector">
-                    ${Object.keys(SEASONS).map(key => `
-                        <button class="${key === seasonKey ? 'active' : ''}" onclick="updateGlobalSeason('${key}')">
-                            ${SEASONS[key].name.split(' ')[0]}
-                        </button>
-                    `).join('')}
-                    <button class="${currentGlobalSeason === 'AUTO' ? 'active' : ''}" onclick="updateGlobalSeason('AUTO')">自動</button>
-                </div>
                 <div class="card-body"></div>
+                <div class="card-footer">
+                    <button class="action-button tertiary" onclick="showDetails('${userPlant.id}')">詳細・記録</button>
+                </div>
             `;
             plantCardList.appendChild(card);
             renderCardContentAsync(card.querySelector('.card-body'), userPlant, data, seasonKey);
@@ -153,30 +131,9 @@ document.addEventListener('DOMContentLoaded', () => {
         return filtered;
     }
 
-    function renderQuickSortButtons() {
-        const container = document.getElementById('quick-sort-buttons');
-        if (!container) return;
-        const options = [
-            { v: 'nextWateringDate', l: '💧 急ぎ順' },
-            { v: 'name', l: '🌱 名前順' },
-            { v: 'entryDate', l: '📅 登録順' }
-        ];
-        container.innerHTML = options.map(o => 
-            `<button class="action-button secondary ${currentSort === o.v ? 'active' : ''}" onclick="setSort('${o.v}')">${o.l}</button>`
-        ).join('');
-    }
-
-    window.setSort = (sortType) => {
-        currentSort = sortType;
-        localStorage.setItem('sort-select', sortType);
-        renderPlantCards();
-        renderQuickSortButtons();
-    };
-
     function escapeHTML(str) {
         return str.replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
     }
 
     renderPlantCards();
-    renderQuickSortButtons();
 });
