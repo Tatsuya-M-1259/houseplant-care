@@ -1,9 +1,8 @@
 // sw.js
 
-// キャッシュ名の定義
-const CACHE_NAME = 'houseplant-care-v21';
+const CACHE_NAME = 'houseplant-care-v22'; // バージョンアップ
 
-// キャッシュするアセットのリスト
+// インストール時に確実にキャッシュすべき「コアアセット」（App Shell）
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
@@ -12,34 +11,7 @@ const ASSETS_TO_CACHE = [
     './data.js',
     './manifest.json',
     './icon-192x192.png',
-    './icon-512x512.png',
-    './pachira.jpg',
-    './monstera.jpg',
-    './gajumaru.jpg',
-    './sansevieria.jpeg',
-    './dracaena.jpg',
-    './schefflera.jpg',
-    './yucca.jpg',
-    './anthurium.jpg',
-    './pothos.jpg',
-    './alocasia.jpg',
-    './indian_rubber.jpg',
-    './everfresh.jpg',
-    './croton.jpg',
-    './coffee_tree.jpg',
-    './ponytail_palm.jpg',
-    './ficus_umbellata.jpg',
-    './augusta.jpg',
-    './staghorn_fern.jpg',
-    './araucaria.jpg',
-    './adenium.jpg.jpeg',
-    './echeveria.jpg.jpeg',
-    './cordyline.jpg',
-    './kalanchoe.jpg',
-    './maranta.jpg',
-    './sophora.jpg',
-    './white_ghost.jpg', 
-    './peperomia.jpg'    
+    './icon-512x512.png'
 ];
 
 // Service Worker インストール時
@@ -47,13 +19,14 @@ self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then((cache) => {
+                // コアアセットのみを登録。画像が404でもインストールが失敗しないようにする
                 return cache.addAll(ASSETS_TO_CACHE);
             })
             .then(() => self.skipWaiting())
     );
 });
 
-// Service Worker アクティベート時
+// Service Worker アクティベート時（古いキャッシュの削除）
 self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches.keys().then((cacheNames) => {
@@ -69,19 +42,36 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// フェッチ要求
+// フェッチ要求（動的キャッシュ戦略）
 self.addEventListener('fetch', (event) => {
+    // 同一オリジンのリクエストのみ処理
     if (!event.request.url.startsWith(self.location.origin)) {
         return;
     }
 
     event.respondWith(
-        caches.match(event.request)
-            .then((response) => {
-                if (response) {
+        caches.match(event.request).then((cachedResponse) => {
+            // キャッシュがあればそれを返す
+            if (cachedResponse) {
+                return cachedResponse;
+            }
+
+            // キャッシュがない場合はネットワークから取得し、同時にキャッシュに保存（動的キャッシュ）
+            return fetch(event.request).then((response) => {
+                // 有効なレスポンス（画像等）のみキャッシュに保存
+                if (!response || response.status !== 200 || response.type !== 'basic') {
                     return response;
                 }
-                return fetch(event.request);
-            })
+
+                const responseToCache = response.clone();
+                caches.open(CACHE_NAME).then((cache) => {
+                    cache.put(event.request, responseToCache);
+                });
+
+                return response;
+            }).catch(() => {
+                // オフラインかつキャッシュなしの場合のフォールバック処理などが必要な場合はここに記述
+            });
+        })
     );
 });
