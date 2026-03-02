@@ -725,6 +725,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const speciesId = speciesSelect.value;
                 const lastWateredDate = lastWateredInput.value;
                 const inputName = plantNameInput.value.trim(); 
+                // 修正点1: 選択された水やり内容を取得
+                const waterTypeSelect = document.getElementById('water-type-select');
+                const waterType = waterTypeSelect ? waterTypeSelect.value : 'WaterOnly';
 
                 if (speciesId && lastWateredDate) {
                     const selectedPlantData = PLANT_DATA.find(p => String(p.id) === String(speciesId));
@@ -733,7 +736,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         speciesId: speciesId,
                         name: inputName || (selectedPlantData ? selectedPlantData.species : '植物'),
                         entryDate: getLocalTodayDate(),
-                        waterLog: [{ date: lastWateredDate, type: 'WaterOnly' }],
+                        // 修正点1: ハードコードを修正
+                        waterLog: [{ date: lastWateredDate, type: waterType }],
                         repottingLog: [],
                         hasCustomImage: false
                     };
