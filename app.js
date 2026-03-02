@@ -79,6 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
             : `<span class="status-dormant">冬の休眠中（断水）</span>`;
 
         const currentMonth = new Date().getMonth() + 1;
+        // 3月かつ春設定の場合にアラートを表示
         const transitionAlert = (currentMonth === 3 && seasonKey === 'SPRING') 
             ? `<div class="alert-box">⚠️ <strong>春の管理移行期</strong><br>土の乾きを直接指で触って確認してください</div>` 
             : '';
@@ -101,14 +102,17 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
     }
 
+    // グローバルな季節設定を更新し再描画
     window.updateGlobalSeason = (newSeason) => {
         currentGlobalSeason = newSeason;
         localStorage.setItem('global-season-select', newSeason);
         renderPlantCards();
+        renderQuickSortButtons(); // ソートボタンの状態も更新
     };
 
     function renderPlantCards() {
         const plantCardList = document.getElementById('plant-card-list');
+        if (!plantCardList) return;
         const seasonKey = getCurrentSeason();
         plantCardList.innerHTML = '';
         
@@ -149,9 +153,30 @@ document.addEventListener('DOMContentLoaded', () => {
         return filtered;
     }
 
+    function renderQuickSortButtons() {
+        const container = document.getElementById('quick-sort-buttons');
+        if (!container) return;
+        const options = [
+            { v: 'nextWateringDate', l: '💧 急ぎ順' },
+            { v: 'name', l: '🌱 名前順' },
+            { v: 'entryDate', l: '📅 登録順' }
+        ];
+        container.innerHTML = options.map(o => 
+            `<button class="action-button secondary ${currentSort === o.v ? 'active' : ''}" onclick="setSort('${o.v}')">${o.l}</button>`
+        ).join('');
+    }
+
+    window.setSort = (sortType) => {
+        currentSort = sortType;
+        localStorage.setItem('sort-select', sortType);
+        renderPlantCards();
+        renderQuickSortButtons();
+    };
+
     function escapeHTML(str) {
         return str.replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
     }
 
     renderPlantCards();
+    renderQuickSortButtons();
 });
