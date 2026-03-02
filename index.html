@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:;">
     <title>My Plant Care Pro</title>
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-192x192.png">
@@ -27,10 +28,10 @@
         </section>
 
         <section id="plant-registration" class="card primary-section">
-            <h2>🌱 新規登録</h2>
+            <h2>🌱 新規植物の登録</h2>
             <form id="add-plant-form">
                 <label for="plant-name">ニックネーム:</label>
-                <input type="text" id="plant-name" required placeholder="例：ガジュちゃん">
+                <input type="text" id="plant-name" required placeholder="例：ガジュちゃん" autocomplete="off">
                 
                 <label for="species-select">植物種:</label>
                 <select id="species-select" required></select>
@@ -41,45 +42,103 @@
                     <button type="button" id="set-today-button" class="action-button tertiary">今日</button>
                 </div>
                 
-                <p id="next-watering-preview" class="form-preview-message">植物と日付を選択してください。</p>
+                <p id="next-watering-preview" class="form-preview-message">植物種と水やり日を選択してください。</p>
                 
-                <button type="submit" class="action-button primary">カルテを作成</button>
+                <label for="water-type-select">水やり内容:</label>
+                <select id="water-type-select" required>
+                    <option value="WaterOnly">水のみ</option>
+                    <option value="WaterAndFertilizer">水と液肥</option>
+                    <option value="WaterAndActivator">水と活性剤</option>
+                    <option value="WaterFertilizerAndActivator">水・液肥・活性剤</option>
+                </select>
+                
+                <button type="submit" class="action-button primary">カルテに追加</button>
             </form>
         </section>
 
-        <section id="plant-card-list">
+        <hr class="separator">
+        
+        <section id="plant-list-section">
             <div class="list-header">
                 <h2>📝 登録済みの植物</h2>
                 <div id="quick-sort-buttons" class="quick-sort-buttons"></div>
             </div>
-            <div id="plant-cards-container"></div>
+            <div id="plant-card-list">
+                </div>
         </section>
 
-        <section id="settings-section" class="card secondary-section" style="margin-bottom: 100px;">
-            <h2>⚙️ アプリ設定</h2>
+        <section id="settings-section" class="card secondary-section">
+            <h2>⚙️ アプリ設定・管理</h2>
             <div class="control-group">
-                <label for="global-season-select">表示モード (季節):</label>
+                <label for="global-season-select">季節設定 (管理モード):</label>
                 <select id="global-season-select">
                     <option value="AUTO">📅 自動 (現在の月)</option>
-                    <option value="SPRING">🌸 春</option>
-                    <option value="SUMMER">🌻 夏</option>
-                    <option value="AUTUMN">🍁 秋</option>
-                    <option value="WINTER">❄️ 冬</option>
+                    <option value="SPRING">🌸 春 (3-5月)</option>
+                    <option value="SUMMER">🌻 夏 (6-8月)</option>
+                    <option value="AUTUMN">🍁 秋 (9-11月)</option>
+                    <option value="WINTER">❄️ 冬 (12-2月)</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label for="sort-select">並び替え:</label>
+                <select id="sort-select">
+                    <option value="nextWateringDate">💧 次回水やり順</option>
+                    <option value="name">🌱 名前順</option>
+                    <option value="entryDate">📅 登録日順</option>
+                    <option value="minTemp">🌡️ 耐寒温度順</option>
                 </select>
             </div>
             <div class="data-controls">
-                <button id="export-data-button" class="action-button secondary">📤 バックアップ保存</button>
+                <p id="last-update-display" class="file-name-display"></p>
+                <button id="export-data-button" class="action-button secondary">📤 データエクスポート</button>
+                <button id="import-data-button" class="action-button primary-outline">📥 データインポート</button>
+                <input type="file" id="import-file-input" accept=".json" style="display: none;">
             </div>
         </section>
     </main>
 
     <nav class="bottom-nav">
-        <a href="#dashboard" class="nav-item active">🏠 <span>ホーム</span></a>
-        <a href="#plant-registration" class="nav-item">➕ <span>登録</span></a>
-        <a href="#settings-section" class="nav-item">⚙️ <span>設定</span></a>
+        <a href="#dashboard" class="nav-item">🏠<span>ホーム</span></a>
+        <a href="#plant-registration" class="nav-item">➕<span>登録</span></a>
+        <a href="#plant-list-section" class="nav-item">🌿<span>一覧</span></a>
+        <a href="#settings-section" class="nav-item">⚙️<span>設定</span></a>
     </nav>
     
-    <div id="details-modal" class="modal">...</div>
-    <div id="water-type-modal" class="modal">...</div>
+    <div id="details-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <button id="prev-plant-btn" class="modal-nav-btn prev-btn">◀</button>
+            <button id="next-plant-btn" class="modal-nav-btn next-btn">▶</button>
+            <div id="detail-header-section">
+                <div class="detail-title-row">
+                    <h2 id="detail-plant-name"></h2>
+                    <button id="edit-plant-name-button">✏️</button>
+                </div>
+                <p id="detail-species-name"></p>
+            </div>
+            <div id="plant-details"></div>
+            <div class="user-data-section">
+                <button id="change-photo-button" class="action-button secondary">📷 写真を変更</button>
+                <p>登録日: <span id="entry-date-display"></span></p>
+                <div id="water-done-in-detail"></div>
+                <button id="edit-purchase-date-button" class="action-button tertiary">購入日設定</button>
+                <button id="edit-repotting-date-button" class="action-button tertiary">植え替え記録</button>
+            </div>
+            <div id="season-care-wrapper" class="accordion-item">
+                <button class="accordion-header" data-target="season-care-content"><h3>現在の季節別ケア</h3></button>
+                <div id="season-care-content" class="accordion-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="water-type-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button-water-type">&times;</span>
+            <h2 id="water-type-modal-title"></h2>
+            <div id="water-type-options" class="water-type-options-container"></div>
+        </div>
+    </div>
+
+    <div id="scroll-to-top">↑</div>
 </body>
 </html>
