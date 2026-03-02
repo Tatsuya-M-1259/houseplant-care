@@ -296,7 +296,7 @@ export const PLANT_DATA = [
         img: 'sophora.jpg',
         water_method: '鉢底から水が流れ出るまでたっぷりと。水切れに非常に弱いため注意が必要。', 
         management: {
-            // 【改善】3月の急激な環境変化による落葉を防ぐため、SPRINGの間隔を3日から5日に緩和
+            // 春の乾燥による落葉を防ぐため、間隔を5日に調整
             SPRING: { water: '土表面が乾いたらすぐ', waterIntervalDays: 5, light: '日当たり良好（風通し良く）', mist: '毎日1〜2回。乾燥による落葉を防ぐ。' },
             SUMMER: { water: '土表面が乾き始めたらすぐ', waterIntervalDays: 2, light: '半日陰（極端な暑さを避ける）', mist: '毎日朝夕。湿度を高く保つ。' },
             AUTUMN: { water: '土表面が乾いたらすぐ', waterIntervalDays: 5, light: '日当たり良好', mist: '毎日1回。' },
