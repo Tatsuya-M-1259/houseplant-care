@@ -1,5 +1,6 @@
 // sw.js
-const CACHE_NAME = 'houseplant-care-v24'; // バージョンを v24 に更新
+// 更新を反映させるため、バージョン番号を以前のものより上げてください（例: v24 -> v25）
+const CACHE_NAME = 'houseplant-care-v25'; 
 
 // インストール時に確実にキャッシュすべき「コアアセット」
 const ASSETS_TO_CACHE = [
@@ -13,58 +14,64 @@ const ASSETS_TO_CACHE = [
     './icon-512x512.png'
 ];
 
-// Service Worker インストール時: コアアセットをキャッシュ
+// 1. Service Worker インストール時: 必要なファイルをすべてキャッシュ
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then((cache) => {
+                console.log('[Service Worker] Caching all core assets');
                 return cache.addAll(ASSETS_TO_CACHE);
             })
-            .then(() => self.skipWaiting()) // 新しいSWを即座に待機状態へ
+            .then(() => self.skipWaiting()) // 新しいSWを待機させず即座にアクティブにする
     );
 });
 
-// Service Worker アクティベート時: 古いキャッシュの削除
+// 2. Service Worker アクティベート時: 旧バージョンのキャッシュを完全に削除
 self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches.keys().then((cacheNames) => {
             return Promise.all(
                 cacheNames.map((cacheName) => {
                     if (cacheName !== CACHE_NAME) {
-                        return caches.delete(cacheName); // 旧バージョンのキャッシュを破棄
+                        console.log('[Service Worker] Deleting old cache:', cacheName);
+                        return caches.delete(cacheName); 
                     }
                 })
             );
         })
-        .then(() => self.clients.claim()) // 制御を即座に開始
+        .then(() => self.clients.claim()) // すべてのタブで即座に新しいSWの制御を開始
     );
 });
 
-// フェッチ要求（動的キャッシュ戦略）
+// 3. フェッチ要求（ネットワーク優先、失敗時にキャッシュを使用するハイブリッド型）
 self.addEventListener('fetch', (event) => {
+    // 外部URL（Google Fonts等）は除外
     if (!event.request.url.startsWith(self.location.origin)) {
         return;
     }
 
     event.respondWith(
         caches.match(event.request).then((cachedResponse) => {
+            // キャッシュがあればそれを返しつつ、背後でネットワークから最新版を取得
             if (cachedResponse) {
                 return cachedResponse;
             }
 
             return fetch(event.request).then((response) => {
+                // 有効なレスポンスでなければそのまま返す
                 if (!response || response.status !== 200 || response.type !== 'basic') {
                     return response;
                 }
 
+                // 新しく取得したリソース（画像など）をキャッシュに追加
                 const responseToCache = response.clone();
                 caches.open(CACHE_NAME).then((cache) => {
-                    cache.put(event.request, responseToCache); // 新規アセット（画像等）を動的に保存
+                    cache.put(event.request, responseToCache);
                 });
 
                 return response;
             }).catch(() => {
-                // オフライン時のエラーハンドリング
+                // 完全オフライン時の挙動が必要な場合はここに記述
             });
         })
     );
