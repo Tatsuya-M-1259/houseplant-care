@@ -208,7 +208,7 @@ export const PLANT_DATA = [
         maintenance: { fertilizer: '4月〜9月', repotting: '5月〜8月', pruning: '随時' }
     },
     {
-        id: 19, species: 'ビカクシダ', scientific: 'Platycerium', minTemp: 10, difficulty: '中程度', feature: '微風と加湿器が着生植物には理想的.img: 'staghorn_fern.jpg',
+        id: 19, species: 'ビカクシダ', scientific: 'Platycerium', minTemp: 10, difficulty: '中程度', feature: '微風と加湿器が着生植物には理想的', img: 'staghorn_fern.jpg',
         water_method: '水苔が乾いたらソーキングまたはシャワー。',
         management: {
             SPRING: { water: '水苔が乾いたら', waterIntervalDays: 5, light: 'ライト10h（横から）', mist: '毎日2回', humidity: '70%前後' },
@@ -220,7 +220,7 @@ export const PLANT_DATA = [
     },
     {
         id: 20, species: 'アローカリア', scientific: 'Araucaria heterophylla', minTemp: 0, difficulty: '容易', feature: '微風により枝が強く育つ。', img: 'araucaria.jpg',
-        water_method: '鉢底からたっぷりと.management: {
+        water_method: '鉢底からたっぷりと', management: {
             SPRING: { water: '土表面が乾いたら', waterIntervalDays: 5, light: 'ライト10h＋窓際', mist: '2日に1回', humidity: '55%前後' },
             SUMMER: { water: '土表面が乾いたらすぐ', waterIntervalDays: 4, light: 'ライト10h＋窓際', mist: '毎日1回', humidity: '65%以上' },
             AUTUMN: { water: '土表面が乾いたら', waterIntervalDays: 6, light: 'ライト10h＋窓際', mist: '2日に1回', humidity: '55%前後' },
