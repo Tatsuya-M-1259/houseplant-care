@@ -105,7 +105,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return getNextTime(a) - getNextTime(b);
         });
 
-        // ダッシュボード（通知）
         const urgents = sorted.filter(p => {
             const data = PLANT_DATA.find(d => String(d.id) === String(p.speciesId));
             const next = calculateNextDate(p.waterLog[0]?.date || p.entryDate, data.management[season].waterIntervalDays);
@@ -155,13 +154,24 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('entry-date-display').textContent = formatDateJp(plant.entryDate);
         
         const mnt = species.management[getCurrentSeasonKey()];
+        // 季節別ケアの更新（葉水を追加）
         document.getElementById('season-care-content').innerHTML = `
             <ul>
                 <li><strong>光量:</strong> ${mnt.light}</li>
                 <li><strong>水やり方法:</strong> ${species.water_method}</li>
                 <li><strong>季節の頻度:</strong> ${mnt.water}</li>
+                <li><strong>葉水:</strong> ${mnt.mist || '特に必要なし'}</li>
                 <li><strong>最低温度:</strong> ${species.minTemp}℃</li>
             </ul>
+        `;
+
+        // 基本情報の表示（特徴、肥料、植え替えを復元）
+        document.getElementById('plant-details').innerHTML = `
+            <div class="card basic-info">
+                <p><strong>特徴:</strong> ${species.feature}</p>
+                <p><strong>肥料:</strong> ${species.maintenance.fertilizer}</p>
+                <p><strong>植え替え:</strong> ${species.maintenance.repotting}</p>
+            </div>
         `;
 
         const historyArea = document.getElementById('water-done-in-detail');
@@ -169,7 +179,6 @@ document.addEventListener('DOMContentLoaded', () => {
             <ul class="history-list">${plant.waterLog.slice(0, 5).map(l => `<li>${formatDateJp(l.date)} - ${WATER_TYPES[l.type]?.name}</li>`).join('')}</ul>`;
         
         document.getElementById('record-water-detail').onclick = () => showWaterTypeModal(id);
-
         modal.style.display = 'block';
     };
 
@@ -197,7 +206,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- 全イベント登録 ---
     const setupEvents = () => {
-        // プレビュー
         const updatePreview = () => {
             const sid = document.getElementById('species-select').value;
             const date = document.getElementById('last-watered').value;
@@ -211,7 +219,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('species-select').onchange = updatePreview;
         document.getElementById('last-watered').onchange = updatePreview;
 
-        // 登録
         document.getElementById('add-plant-form').onsubmit = (e) => {
             e.preventDefault();
             const sid = document.getElementById('species-select').value;
@@ -219,7 +226,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 id: crypto.randomUUID(), speciesId: sid,
                 name: document.getElementById('plant-name').value || '新しい植物',
                 entryDate: getLocalTodayDate(),
-                waterLog: [{ date: document.getElementById('last-watered').value, type: document.getElementById('water-type-select').value }]
+                waterLog: [{ date: document.getElementById('last-watered').value, type: document.getElementById('water-type-select').value }],
+                repottingLog: []
             };
             userPlants.push(newPlant);
             saveToLocal();
@@ -249,6 +257,31 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
+        // 購入日・登録日の編集
+        document.getElementById('edit-entry-date-button').onclick = () => {
+            const current = userPlants.find(p => p.id === currentPlantId).entryDate;
+            const newDate = prompt('登録日を変更 (YYYY-MM-DD):', current);
+            if (newDate && /^\d{4}-\d{2}-\d{2}$/.test(newDate)) {
+                const idx = userPlants.findIndex(p => p.id === currentPlantId);
+                userPlants[idx].entryDate = newDate;
+                saveToLocal();
+                showModal(currentPlantId);
+                render();
+            }
+        };
+
+        // 植え替え記録
+        document.getElementById('add-repotting-log-button').onclick = () => {
+            const date = prompt('植え替え日を入力 (YYYY-MM-DD):', getLocalTodayDate());
+            if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+                const idx = userPlants.findIndex(p => p.id === currentPlantId);
+                if (!userPlants[idx].repottingLog) userPlants[idx].repottingLog = [];
+                userPlants[idx].repottingLog.unshift(date);
+                saveToLocal();
+                alert('植え替えを記録しました');
+            }
+        };
+
         // ナビゲーション
         document.getElementById('prev-plant-btn').onclick = () => { const idx = userPlants.findIndex(p => p.id === currentPlantId); if (idx > 0) showModal(userPlants[idx - 1].id); };
         document.getElementById('next-plant-btn').onclick = () => { const idx = userPlants.findIndex(p => p.id === currentPlantId); if (idx < userPlants.length - 1) showModal(userPlants[idx + 1].id); };
@@ -271,7 +304,6 @@ document.addEventListener('DOMContentLoaded', () => {
             reader.readAsText(e.target.files[0]);
         };
 
-        // スクロール・閉じる・削除
         const scrollTopBtn = document.getElementById('scroll-to-top');
         window.onscroll = () => scrollTopBtn.classList.toggle('visible', window.scrollY > 300);
         scrollTopBtn.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
