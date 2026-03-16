@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentGlobalSeason = localStorage.getItem('global-season-select') || 'AUTO';
     const objectUrls = new Set();
 
-    // --- ユーティリティ (JST対応) ---
+    // --- ユーティリティ (JST対応・日付ズレ防止) ---
     const getLocalTodayDate = () => {
         const now = new Date();
         const y = now.getFullYear();
@@ -97,12 +97,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const sorted = [...userPlants].sort((a, b) => {
             if (currentSort === 'name') return a.name.localeCompare(b.name, 'ja');
-            const getNextTime = (p) => {
-                const data = PLANT_DATA.find(d => String(d.id) === String(p.speciesId));
+            
+            const dataA = PLANT_DATA.find(d => String(d.id) === String(a.speciesId));
+            const dataB = PLANT_DATA.find(d => String(d.id) === String(b.speciesId));
+
+            if (currentSort === 'minTemp') {
+                return (dataA?.minTemp || 0) - (dataB?.minTemp || 0);
+            }
+            if (currentSort === 'entryDate') {
+                return parseDate(b.entryDate) - parseDate(a.entryDate);
+            }
+            
+            // デフォルト：次回水やり順
+            const getNextTime = (p, data) => {
                 const next = calculateNextDate(p.waterLog[0]?.date || p.entryDate, data.management[season].waterIntervalDays);
                 return next ? new Date(next).getTime() : Infinity;
             };
-            return getNextTime(a) - getNextTime(b);
+            return getNextTime(a, dataA) - getNextTime(b, dataB);
         });
 
         const urgents = sorted.filter(p => {
@@ -154,23 +165,24 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('entry-date-display').textContent = formatDateJp(plant.entryDate);
         
         const mnt = species.management[getCurrentSeasonKey()];
-        // 季節別ケアの更新（葉水を追加）
+        // 季節別ケアの更新（葉水・湿度を復活）
         document.getElementById('season-care-content').innerHTML = `
             <ul>
                 <li><strong>光量:</strong> ${mnt.light}</li>
                 <li><strong>水やり方法:</strong> ${species.water_method}</li>
                 <li><strong>季節の頻度:</strong> ${mnt.water}</li>
-                <li><strong>葉水:</strong> ${mnt.mist || '特に必要なし'}</li>
+                <li><strong>葉水目安:</strong> ${mnt.mist || '特に必要なし'}</li>
+                <li><strong>理想湿度:</strong> ${mnt.humidity || '50%以上'}</li>
                 <li><strong>最低温度:</strong> ${species.minTemp}℃</li>
             </ul>
         `;
 
-        // 基本情報の表示（特徴、肥料、植え替えを復元）
+        // 基本情報の表示（特徴、肥料、植え替えを完全に表示）
         document.getElementById('plant-details').innerHTML = `
             <div class="card basic-info">
                 <p><strong>特徴:</strong> ${species.feature}</p>
-                <p><strong>肥料:</strong> ${species.maintenance.fertilizer}</p>
-                <p><strong>植え替え:</strong> ${species.maintenance.repotting}</p>
+                <p><strong>肥料目安:</strong> ${species.maintenance.fertilizer}</p>
+                <p><strong>植え替え目安:</strong> ${species.maintenance.repotting}</p>
             </div>
         `;
 
@@ -235,7 +247,7 @@ document.addEventListener('DOMContentLoaded', () => {
             e.target.reset();
         };
 
-        // 並び替え・設定
+        // 設定
         document.getElementById('sort-select').onchange = (e) => { currentSort = e.target.value; localStorage.setItem('sort-select', currentSort); render(); };
         document.getElementById('global-season-select').onchange = (e) => { currentGlobalSeason = e.target.value; localStorage.setItem('global-season-select', currentGlobalSeason); render(); };
         document.getElementById('set-today-button').onclick = () => { document.getElementById('last-watered').value = getLocalTodayDate(); updatePreview(); };
@@ -244,7 +256,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const fileInput = document.createElement('input');
         fileInput.type = 'file'; fileInput.accept = 'image/*';
         document.getElementById('change-photo-button').onclick = () => fileInput.click();
-        fileInput.onchange = async (e) => { if (e.target.files[0] && currentPlantId) { await saveImage(currentPlantId, e.target.files[0]); render(); showModal(currentPlantId); } };
+        fileInput.onchange = async (e) => { 
+            if (e.target.files[0] && currentPlantId) { 
+                await saveImage(currentPlantId, e.target.files[0]); 
+                await render(); 
+                showModal(currentPlantId); 
+            } 
+        };
         
         document.getElementById('edit-plant-name-button').onclick = () => {
             const newName = prompt('名前を変更:', document.getElementById('detail-plant-name').textContent);
@@ -257,8 +275,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
-        // 購入日・登録日の編集
-        document.getElementById('edit-entry-date-button').onclick = () => {
+        // 購入日設定（HTMLのIDに合わせ修正）
+        document.getElementById('edit-purchase-date-button').onclick = () => {
             const current = userPlants.find(p => p.id === currentPlantId).entryDate;
             const newDate = prompt('登録日を変更 (YYYY-MM-DD):', current);
             if (newDate && /^\d{4}-\d{2}-\d{2}$/.test(newDate)) {
@@ -270,15 +288,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
-        // 植え替え記録
-        document.getElementById('add-repotting-log-button').onclick = () => {
-            const date = prompt('植え替え日を入力 (YYYY-MM-DD):', getLocalTodayDate());
+        // 植え替え記録（HTMLのIDに合わせ修正）
+        document.getElementById('edit-repotting-date-button').onclick = () => {
+            const date = prompt('植え替え日を記録 (YYYY-MM-DD):', getLocalTodayDate());
             if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
                 const idx = userPlants.findIndex(p => p.id === currentPlantId);
                 if (!userPlants[idx].repottingLog) userPlants[idx].repottingLog = [];
                 userPlants[idx].repottingLog.unshift(date);
                 saveToLocal();
-                alert('植え替えを記録しました');
+                alert('植え替えを記録しました。');
             }
         };
 
@@ -295,12 +313,19 @@ document.addEventListener('DOMContentLoaded', () => {
         // データ管理
         document.getElementById('export-data-button').onclick = () => {
             const blob = new Blob([JSON.stringify(userPlants)], { type: 'application/json' });
-            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'plants_data.json'; a.click();
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'my_plants_data.json'; a.click();
         };
         document.getElementById('import-data-button').onclick = () => document.getElementById('import-file-input').click();
         document.getElementById('import-file-input').onchange = (e) => {
             const reader = new FileReader();
-            reader.onload = (re) => { userPlants = JSON.parse(re.target.result); saveToLocal(); render(); alert('データを読み込みました'); };
+            reader.onload = (re) => { 
+                try {
+                    userPlants = JSON.parse(re.target.result); 
+                    saveToLocal(); 
+                    render(); 
+                    alert('データを読み込みました。'); 
+                } catch(err) { alert('不正なファイル形式です。'); }
+            };
             reader.readAsText(e.target.files[0]);
         };
 
@@ -311,7 +336,11 @@ document.addEventListener('DOMContentLoaded', () => {
         document.addEventListener('click', (e) => {
             const card = e.target.closest('.plant-card');
             if (e.target.closest('.delete-btn')) {
-                if (confirm('削除しますか？')) { userPlants = userPlants.filter(p => p.id !== card.dataset.id); saveToLocal(); render(); }
+                if (confirm('この植物のカルテを削除しますか？')) { 
+                    userPlants = userPlants.filter(p => p.id !== card.dataset.id); 
+                    saveToLocal(); 
+                    render(); 
+                }
             } else if (e.target.closest('.water-done-btn')) {
                 showWaterTypeModal(card.dataset.id);
             } else if (e.target.closest('.card-content-wrapper')) {
