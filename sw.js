@@ -1,6 +1,6 @@
 // sw.js
-// 更新を反映させるため、バージョン番号を以前のものより上げてください（例: v24 -> v25）
-const CACHE_NAME = 'houseplant-care-v25'; 
+// 更新を反映させるため、バージョン番号を以前のものより上げてください（例: v25 -> v26）
+const CACHE_NAME = 'houseplant-care-v26'; 
 
 // インストール時に確実にキャッシュすべき「コアアセット」
 const ASSETS_TO_CACHE = [
