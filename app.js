@@ -1,5 +1,4 @@
 // app.js
-
 import { PLANT_DATA, INTERVAL_WATER_STOP } from './data.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -28,20 +27,33 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentGlobalSeason = localStorage.getItem('global-season-select') || 'AUTO';
     const objectUrls = new Set();
 
-    // --- ユーティリティ ---
-    const generateUUID = () => crypto.randomUUID();
-    const getLocalTodayDate = () => new Date().toISOString().split('T')[0];
+    // --- ユーティリティ（日本時間対応版） ---
+    // 常にローカル（日本時間）の「今日」を YYYY-MM-DD 形式で取得
+    const getLocalTodayDate = () => {
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = String(now.getMonth() + 1).padStart(2, '0');
+        const d = String(now.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    };
+
+    // 文字列から日付オブジェクトを作成（安全な日本時間解釈）
     const parseDate = (str) => {
         if (!str) return null;
         const [y, m, d] = str.split('-').map(Number);
-        return new Date(y, m - 1, d);
+        return new Date(y, m - 1, d, 0, 0, 0); 
     };
 
+    // 次回の水やり日を計算し、ローカル形式で返す
     const calculateNextDate = (lastDateStr, interval) => {
         if (interval === INTERVAL_WATER_STOP || !lastDateStr) return null;
         const next = parseDate(lastDateStr);
         next.setDate(next.getDate() + parseInt(interval));
-        return next.toISOString().split('T')[0];
+        
+        const y = next.getFullYear();
+        const m = String(next.getMonth() + 1).padStart(2, '0');
+        const d = String(next.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
     };
 
     const getCurrentSeasonKey = () => {
@@ -91,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const next = calculateNextDate(p.waterLog[0]?.date || p.entryDate, data.management[season].waterIntervalDays);
                 return next ? new Date(next).getTime() : Infinity;
             };
-            return getNextTime(a) - getNextTime(getNextTime(b));
+            return getNextTime(a) - getNextTime(b);
         });
 
         list.innerHTML = '';
@@ -149,7 +161,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('detail-species-name').textContent = species.species;
         document.getElementById('entry-date-display').textContent = formatDateJp(plant.entryDate);
         
-        // 履歴
         const historyList = document.getElementById('water-done-in-detail');
         historyList.innerHTML = '<h3>📝 履歴</h3><ul>' + 
             plant.waterLog.slice(0, 5).map(l => `<li>${formatDateJp(l.date)} - ${WATER_TYPES[l.type]?.name}</li>`).join('') + 
@@ -160,7 +171,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- イベント登録 ---
     const setupEvents = () => {
-        // 登録フォームのプレビュー
         const updatePreview = () => {
             const sid = document.getElementById('species-select').value;
             const date = document.getElementById('last-watered').value;
@@ -174,7 +184,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('species-select').onchange = updatePreview;
         document.getElementById('last-watered').onchange = updatePreview;
 
-        // モーダルナビゲーション
         document.getElementById('prev-plant-btn').onclick = () => {
             const idx = userPlants.findIndex(p => p.id === currentPlantId);
             if (idx > 0) showModal(userPlants[idx - 1].id);
@@ -184,12 +193,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (idx < userPlants.length - 1) showModal(userPlants[idx + 1].id);
         };
 
-        // スクロールトップ
         const scrollTopBtn = document.getElementById('scroll-to-top');
         window.onscroll = () => scrollTopBtn.classList.toggle('visible', window.scrollY > 300);
         scrollTopBtn.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
-        // 写真変更
         const fileInput = document.createElement('input');
         fileInput.type = 'file'; fileInput.accept = 'image/*';
         document.getElementById('change-photo-button').onclick = () => fileInput.click();
@@ -200,7 +207,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
-        // 並び替え・季節
         document.getElementById('sort-select').onchange = (e) => {
             currentSort = e.target.value;
             localStorage.setItem('sort-select', currentSort);
@@ -212,13 +218,12 @@ document.addEventListener('DOMContentLoaded', () => {
             render();
         };
 
-        // フォーム送信
         document.getElementById('add-plant-form').onsubmit = (e) => {
             e.preventDefault();
             const sid = document.getElementById('species-select').value;
             const newPlant = {
-                id: generateUUID(), speciesId: sid,
-                name: document.getElementById('plant-name').value,
+                id: crypto.randomUUID(), speciesId: sid,
+                name: document.getElementById('plant-name').value || '新しい植物',
                 entryDate: getLocalTodayDate(),
                 waterLog: [{ date: document.getElementById('last-watered').value, type: document.getElementById('water-type-select').value }]
             };
@@ -228,7 +233,6 @@ document.addEventListener('DOMContentLoaded', () => {
             e.target.reset();
         };
 
-        // 削除・記録
         document.addEventListener('click', (e) => {
             const card = e.target.closest('.plant-card');
             if (e.target.closest('.delete-btn') && confirm('削除しますか？')) {
@@ -247,10 +251,8 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     };
 
-    // --- 起動 ---
     const start = async () => {
         await initDB();
-        // セレクトボックス初期化
         const sel = document.getElementById('species-select');
         PLANT_DATA.forEach(p => sel.add(new Option(p.species, p.id)));
         setupEvents();
