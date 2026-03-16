@@ -1,5 +1,5 @@
 // sw.js
-const CACHE_NAME = 'houseplant-care-v23'; // バージョンを更新
+const CACHE_NAME = 'houseplant-care-v24'; // バージョンを v24 に更新
 
 // インストール時に確実にキャッシュすべき「コアアセット」
 const ASSETS_TO_CACHE = [
@@ -64,7 +64,7 @@ self.addEventListener('fetch', (event) => {
 
                 return response;
             }).catch(() => {
-                // オフライン時のエラーハンドリングが必要な場合はここに記述
+                // オフライン時のエラーハンドリング
             });
         })
     );
