@@ -1,4 +1,3 @@
-// app.js
 import { PLANT_DATA, INTERVAL_WATER_STOP } from './data.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -18,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentPlantId = null;
     let currentSort = localStorage.getItem('sort-select') || 'nextWateringDate';
     let currentGlobalSeason = localStorage.getItem('global-season-select') || 'AUTO';
-    let sortedIds = []; // モーダル内の前後移動用に現在の並び順を保持
+    let sortedIds = []; 
     const objectUrls = new Set();
 
     // --- ユーティリティ ---
@@ -96,7 +95,6 @@ document.addEventListener('DOMContentLoaded', () => {
         objectUrls.forEach(URL.revokeObjectURL);
         objectUrls.clear();
 
-        // 並び替えロジック
         const sorted = [...userPlants].sort((a, b) => {
             const dataA = PLANT_DATA.find(d => String(d.id) === String(a.speciesId));
             const dataB = PLANT_DATA.find(d => String(d.id) === String(b.speciesId));
@@ -111,10 +109,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return getNextTime(a, dataA) - getNextTime(b, dataB);
         });
 
-        // モーダルナビ用IDリスト更新
         sortedIds = sorted.map(p => p.id);
 
-        // 緊急リスト表示
         const urgents = sorted.filter(p => {
             const data = PLANT_DATA.find(d => String(d.id) === String(p.speciesId));
             const next = calculateNextDate(p.waterLog[0]?.date || p.entryDate, data?.management[season].waterIntervalDays);
@@ -123,7 +119,6 @@ document.addEventListener('DOMContentLoaded', () => {
         dashboard.style.display = urgents.length ? 'block' : 'none';
         urgentList.innerHTML = urgents.map(p => `<div class="urgent-item">🚨 ${p.name}</div>`).join('');
 
-        // カード描画
         list.innerHTML = '';
         for (const plant of sorted) {
             const species = PLANT_DATA.find(d => String(d.id) === String(plant.speciesId));
@@ -167,11 +162,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const species = PLANT_DATA.find(d => String(d.id) === String(plant.speciesId));
         const modal = document.getElementById('details-modal');
 
-        // 基本情報の更新
         document.getElementById('detail-plant-name').textContent = plant.name;
         document.getElementById('detail-species-name').innerHTML = `${species.species} <small>(${species.scientific})</small>`;
         
-        // --- 水やり目安日とステータスの更新 ---
+        // 【改善】画像の更新
+        const detailImg = document.getElementById('detail-plant-image');
+        getImage(id).then(blob => {
+            const imgSrc = blob ? URL.createObjectURL(blob) : `./${species.img}`;
+            detailImg.src = imgSrc;
+            if (blob) objectUrls.add(imgSrc); 
+        });
+
         const season = getCurrentSeasonKey();
         const mnt = species.management[season];
         const nextDateStr = calculateNextDate(plant.waterLog[0]?.date || plant.entryDate, mnt.waterIntervalDays);
@@ -187,7 +188,6 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
 
-        // 季節別ケアの更新
         document.getElementById('season-care-content').innerHTML = `
             <ul>
                 <li><strong>光量:</strong> ${mnt.light}</li>
@@ -198,7 +198,6 @@ document.addEventListener('DOMContentLoaded', () => {
             </ul>
         `;
 
-        // その他の詳細
         document.getElementById('plant-details').innerHTML = `
             <div class="card basic-info" style="margin-top: 1rem;">
                 <p><strong>特徴:</strong> ${species.feature}</p>
@@ -386,6 +385,16 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const start = async () => {
+        // 【改善】サービスワーカーの登録
+        if ('serviceWorker' in navigator) {
+            try {
+                await navigator.serviceWorker.register('./sw.js');
+                console.log('Service Worker registered');
+            } catch (e) {
+                console.error('Service Worker registration failed', e);
+            }
+        }
+
         await initDB();
         const sel = document.getElementById('species-select');
         PLANT_DATA.forEach(p => sel.add(new Option(p.species, p.id)));
