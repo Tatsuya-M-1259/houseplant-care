@@ -151,7 +151,6 @@ document.addEventListener('DOMContentLoaded', () => {
             list.appendChild(card);
         }
 
-        // --- 修正案C: Sortable.jsの初期化 ---
         if (!Sortable.get(list)) {
             new Sortable(list, {
                 handle: '.drag-handle',
@@ -168,11 +167,27 @@ document.addEventListener('DOMContentLoaded', () => {
         const species = PLANT_DATA.find(d => String(d.id) === String(plant.speciesId));
         const modal = document.getElementById('details-modal');
 
+        // 基本情報の更新
         document.getElementById('detail-plant-name').textContent = plant.name;
         document.getElementById('detail-species-name').innerHTML = `${species.species} <small>(${species.scientific})</small>`;
-        document.getElementById('entry-date-display').textContent = formatDateJp(plant.entryDate);
         
-        const mnt = species.management[getCurrentSeasonKey()];
+        // --- 水やり目安日とステータスの更新 ---
+        const season = getCurrentSeasonKey();
+        const mnt = species.management[season];
+        const nextDateStr = calculateNextDate(plant.waterLog[0]?.date || plant.entryDate, mnt.waterIntervalDays);
+        const isUrgent = nextDateStr && new Date(nextDateStr) <= new Date(getLocalTodayDate());
+        
+        const wateringDisplay = document.getElementById('detail-next-watering');
+        wateringDisplay.innerHTML = `
+            <div class="status-box ${isUrgent ? 'alert-bg' : ''}" style="margin: 0 0 1rem 0;">
+                ${isUrgent ? '⚠️ 水やり時期です' : '🌿 植物の状態は順調です'}
+            </div>
+            <div class="care-info" style="margin: 0 0 1.5rem 1rem;">
+                <p style="font-size: 1.1rem; margin:0;"><strong>次回水やり目安:</strong> ${formatDateJp(nextDateStr)}</p>
+            </div>
+        `;
+
+        // 季節別ケアの更新
         document.getElementById('season-care-content').innerHTML = `
             <ul>
                 <li><strong>光量:</strong> ${mnt.light}</li>
@@ -183,14 +198,17 @@ document.addEventListener('DOMContentLoaded', () => {
             </ul>
         `;
 
+        // その他の詳細
         document.getElementById('plant-details').innerHTML = `
-            <div class="card basic-info">
+            <div class="card basic-info" style="margin-top: 1rem;">
                 <p><strong>特徴:</strong> ${species.feature}</p>
                 <p><strong>肥料目安:</strong> ${species.maintenance.fertilizer}</p>
                 <p><strong>植え替え目安:</strong> ${species.maintenance.repotting}</p>
                 <p><strong>剪定目安:</strong> ${species.maintenance.pruning || '適宜'}</p>
             </div>
         `;
+
+        document.getElementById('entry-date-display').textContent = formatDateJp(plant.entryDate);
 
         const historyArea = document.getElementById('water-done-in-detail');
         historyArea.innerHTML = `<h3>📝 履歴</h3><button class="action-button tertiary" id="record-water-detail">💧 記録する</button>
@@ -202,10 +220,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const showWaterTypeModal = (id) => {
         currentPlantId = id;
-        const plant = userPlants.find(p => p.id === id); // 植物特定
+        const plant = userPlants.find(p => p.id === id); 
         const modal = document.getElementById('water-type-modal');
-        
-        // --- 修正案B: タイトルに植物名を表示 ---
         document.getElementById('water-type-modal-title').textContent = `${plant.name} の水やり記録`;
 
         const container = document.getElementById('water-type-options');
@@ -229,7 +245,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- イベント登録 ---
     const setupEvents = () => {
-        // --- 修正案A: クイックソートボタンの動的生成 ---
         const quickSortContainer = document.getElementById('quick-sort-buttons');
         const sortOptions = [
             { key: 'nextWateringDate', label: '💧 水やり順' },
@@ -327,7 +342,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
-        // --- 修正案D: モーダル前後移動の論理修正（表示順に従う） ---
         document.getElementById('prev-plant-btn').onclick = () => { 
             const idx = sortedIds.indexOf(currentPlantId); 
             if (idx > 0) showModal(sortedIds[idx - 1]); 
