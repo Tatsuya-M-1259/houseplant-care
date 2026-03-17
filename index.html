@@ -63,8 +63,7 @@
                 <h2>📝 登録済みの植物</h2>
                 <div id="quick-sort-buttons" class="quick-sort-buttons"></div>
             </div>
-            <div id="plant-card-list">
-                </div>
+            <div id="plant-card-list"></div>
         </section>
 
         <section id="settings-section" class="card secondary-section">
@@ -109,12 +108,17 @@
             <span class="close-button">&times;</span>
             <button id="prev-plant-btn" class="modal-nav-btn prev-btn">◀</button>
             <button id="next-plant-btn" class="modal-nav-btn next-btn">▶</button>
+            
             <div id="detail-header-section">
                 <div class="detail-title-row">
                     <h2 id="detail-plant-name"></h2>
                     <button id="edit-plant-name-button">✏️</button>
                 </div>
                 <p id="detail-species-name"></p>
+            </div>
+
+            <div id="detail-image-container" style="text-align: center; margin-bottom: 1rem;">
+                <img id="detail-plant-image" src="" alt="植物の写真" style="width: 100%; max-height: 250px; object-fit: cover; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
             </div>
 
             <div id="detail-next-watering"></div>
