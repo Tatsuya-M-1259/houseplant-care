@@ -18,9 +18,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentPlantId = null;
     let currentSort = localStorage.getItem('sort-select') || 'nextWateringDate';
     let currentGlobalSeason = localStorage.getItem('global-season-select') || 'AUTO';
+    let sortedIds = []; // モーダル内の前後移動用に現在の並び順を保持
     const objectUrls = new Set();
 
-    // --- ユーティリティ (日本時間対応・日付ズレ防止) ---
+    // --- ユーティリティ ---
     const getLocalTodayDate = () => {
         const now = new Date();
         const y = now.getFullYear();
@@ -95,12 +96,14 @@ document.addEventListener('DOMContentLoaded', () => {
         objectUrls.forEach(URL.revokeObjectURL);
         objectUrls.clear();
 
+        // 並び替えロジック
         const sorted = [...userPlants].sort((a, b) => {
             const dataA = PLANT_DATA.find(d => String(d.id) === String(a.speciesId));
             const dataB = PLANT_DATA.find(d => String(d.id) === String(b.speciesId));
             if (currentSort === 'name') return a.name.localeCompare(b.name, 'ja');
             if (currentSort === 'minTemp') return (dataA?.minTemp || 0) - (dataB?.minTemp || 0);
             if (currentSort === 'entryDate') return parseDate(b.entryDate) - parseDate(a.entryDate);
+            
             const getNextTime = (p, data) => {
                 const next = calculateNextDate(p.waterLog[0]?.date || p.entryDate, data?.management[season].waterIntervalDays);
                 return next ? new Date(next).getTime() : Infinity;
@@ -108,6 +111,10 @@ document.addEventListener('DOMContentLoaded', () => {
             return getNextTime(a, dataA) - getNextTime(b, dataB);
         });
 
+        // モーダルナビ用IDリスト更新
+        sortedIds = sorted.map(p => p.id);
+
+        // 緊急リスト表示
         const urgents = sorted.filter(p => {
             const data = PLANT_DATA.find(d => String(d.id) === String(p.speciesId));
             const next = calculateNextDate(p.waterLog[0]?.date || p.entryDate, data?.management[season].waterIntervalDays);
@@ -116,6 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
         dashboard.style.display = urgents.length ? 'block' : 'none';
         urgentList.innerHTML = urgents.map(p => `<div class="urgent-item">🚨 ${p.name}</div>`).join('');
 
+        // カード描画
         list.innerHTML = '';
         for (const plant of sorted) {
             const species = PLANT_DATA.find(d => String(d.id) === String(plant.speciesId));
@@ -129,6 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const mnt = species.management[season];
             const nextDateStr = calculateNextDate(plant.waterLog[0]?.date || plant.entryDate, mnt.waterIntervalDays);
             const isUrgent = nextDateStr && new Date(nextDateStr) <= new Date(getLocalTodayDate());
+            
             card.innerHTML = `
                 <div class="controls"><span class="drag-handle">☰</span><button class="delete-btn">×</button></div>
                 <div class="card-content-wrapper">
@@ -140,6 +149,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="card-footer"><button class="action-button tertiary water-done-btn">💧 記録</button></div>
             `;
             list.appendChild(card);
+        }
+
+        // --- 修正案C: Sortable.jsの初期化 ---
+        if (!Sortable.get(list)) {
+            new Sortable(list, {
+                handle: '.drag-handle',
+                animation: 150,
+                onEnd: () => { console.log('並び替え完了'); }
+            });
         }
     };
 
@@ -155,7 +173,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('entry-date-display').textContent = formatDateJp(plant.entryDate);
         
         const mnt = species.management[getCurrentSeasonKey()];
-        // 葉水・湿度・光量を表示
         document.getElementById('season-care-content').innerHTML = `
             <ul>
                 <li><strong>光量:</strong> ${mnt.light}</li>
@@ -166,7 +183,6 @@ document.addEventListener('DOMContentLoaded', () => {
             </ul>
         `;
 
-        // 特徴・肥料・植え替え・剪定を表示
         document.getElementById('plant-details').innerHTML = `
             <div class="card basic-info">
                 <p><strong>特徴:</strong> ${species.feature}</p>
@@ -186,7 +202,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const showWaterTypeModal = (id) => {
         currentPlantId = id;
+        const plant = userPlants.find(p => p.id === id); // 植物特定
         const modal = document.getElementById('water-type-modal');
+        
+        // --- 修正案B: タイトルに植物名を表示 ---
+        document.getElementById('water-type-modal-title').textContent = `${plant.name} の水やり記録`;
+
         const container = document.getElementById('water-type-options');
         container.innerHTML = '';
         Object.keys(WATER_TYPES).forEach(type => {
@@ -208,6 +229,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- イベント登録 ---
     const setupEvents = () => {
+        // --- 修正案A: クイックソートボタンの動的生成 ---
+        const quickSortContainer = document.getElementById('quick-sort-buttons');
+        const sortOptions = [
+            { key: 'nextWateringDate', label: '💧 水やり順' },
+            { key: 'name', label: '🌱 名前順' },
+            { key: 'minTemp', label: '🌡️ 耐寒順' }
+        ];
+        
+        const renderQuickSortButtons = () => {
+            quickSortContainer.innerHTML = sortOptions.map(opt => 
+                `<button class="${currentSort === opt.key ? 'active' : ''}" data-sort="${opt.key}">${opt.label}</button>`
+            ).join('');
+        };
+        renderQuickSortButtons();
+
+        quickSortContainer.onclick = (e) => {
+            const btn = e.target.closest('button');
+            if (!btn) return;
+            currentSort = btn.dataset.sort;
+            localStorage.setItem('sort-select', currentSort);
+            document.getElementById('sort-select').value = currentSort;
+            renderQuickSortButtons();
+            render();
+        };
+
         const updatePreview = () => {
             const sid = document.getElementById('species-select').value;
             const date = document.getElementById('last-watered').value;
@@ -236,11 +282,15 @@ document.addEventListener('DOMContentLoaded', () => {
             e.target.reset();
         };
 
-        document.getElementById('sort-select').onchange = (e) => { currentSort = e.target.value; localStorage.setItem('sort-select', currentSort); render(); };
+        document.getElementById('sort-select').onchange = (e) => { 
+            currentSort = e.target.value; 
+            localStorage.setItem('sort-select', currentSort); 
+            renderQuickSortButtons();
+            render(); 
+        };
         document.getElementById('global-season-select').onchange = (e) => { currentGlobalSeason = e.target.value; localStorage.setItem('global-season-select', currentGlobalSeason); render(); };
         document.getElementById('set-today-button').onclick = () => { document.getElementById('last-watered').value = getLocalTodayDate(); updatePreview(); };
 
-        // 写真変更
         const fileInput = document.createElement('input');
         fileInput.type = 'file'; fileInput.accept = 'image/*';
         document.getElementById('change-photo-button').onclick = () => fileInput.click();
@@ -257,7 +307,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (newName) { const idx = userPlants.findIndex(p => p.id === currentPlantId); userPlants[idx].name = newName; saveToLocal(); showModal(currentPlantId); render(); }
         };
 
-        // 【重要】IDをHTMLに合わせて修正：edit-purchase-date-button
         document.getElementById('edit-purchase-date-button').onclick = () => {
             const current = userPlants.find(p => p.id === currentPlantId).entryDate;
             const newDate = prompt('登録日を変更 (YYYY-MM-DD):', current);
@@ -268,7 +317,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
-        // 【重要】IDをHTMLに合わせて修正：edit-repotting-date-button
         document.getElementById('edit-repotting-date-button').onclick = () => {
             const date = prompt('植え替えを記録 (YYYY-MM-DD):', getLocalTodayDate());
             if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
@@ -279,8 +327,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
-        document.getElementById('prev-plant-btn').onclick = () => { const idx = userPlants.findIndex(p => p.id === currentPlantId); if (idx > 0) showModal(userPlants[idx - 1].id); };
-        document.getElementById('next-plant-btn').onclick = () => { const idx = userPlants.findIndex(p => p.id === currentPlantId); if (idx < userPlants.length - 1) showModal(userPlants[idx + 1].id); };
+        // --- 修正案D: モーダル前後移動の論理修正（表示順に従う） ---
+        document.getElementById('prev-plant-btn').onclick = () => { 
+            const idx = sortedIds.indexOf(currentPlantId); 
+            if (idx > 0) showModal(sortedIds[idx - 1]); 
+        };
+        document.getElementById('next-plant-btn').onclick = () => { 
+            const idx = sortedIds.indexOf(currentPlantId); 
+            if (idx < sortedIds.length - 1) showModal(sortedIds[idx + 1]); 
+        };
 
         document.querySelector('.accordion-header').onclick = (e) => {
             e.currentTarget.classList.toggle('collapsed');
