@@ -668,3 +668,20 @@ input:focus, select:focus {
     transform: translateY(-3px);
     background-color: var(--primary-dark);
 }
+
+/* 追加された季節別ケア情報のスタイル */
+.quick-care-tags {
+    margin-top: 0.5rem;
+    padding: 0.5rem 0 0 0;
+    border-top: 1px dashed #e5e7eb;
+    font-size: 0.8rem;
+    color: #4b5563;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.quick-care-tags span {
+    display: block;
+    line-height: 1.4;
+}
