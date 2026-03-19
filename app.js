@@ -139,7 +139,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="card-image"><img src="${imgSrc}" loading="lazy"></div>
                     <div class="card-header"><h3>${plant.name}</h3><p>${species.species}</p></div>
                     <div class="status-box ${isUrgent ? 'alert-bg' : ''}">${isUrgent ? '⚠️ 水やり時期' : '🌿 順調'}</div>
-                    <div class="care-info"><p><strong>目安:</strong> ${formatDateJp(nextDateStr)}</p></div>
+                    <div class="care-info">
+                        <p><strong>目安:</strong> ${formatDateJp(nextDateStr)}</p>
+                        <div class="quick-care-tags">
+                            <span>☀️ ${mnt.light}</span>
+                            <span>💧 ${mnt.water}</span>
+                            ${mnt.mist ? `<span>💨 葉水: ${mnt.mist}</span>` : ''}
+                        </div>
+                    </div>
                 </div>
                 <div class="card-footer"><button class="action-button tertiary water-done-btn">💧 記録</button></div>
             `;
@@ -165,7 +172,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('detail-plant-name').textContent = plant.name;
         document.getElementById('detail-species-name').innerHTML = `${species.species} <small>(${species.scientific})</small>`;
         
-        // 【改善】画像の更新
         const detailImg = document.getElementById('detail-plant-image');
         getImage(id).then(blob => {
             const imgSrc = blob ? URL.createObjectURL(blob) : `./${species.img}`;
@@ -385,7 +391,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const start = async () => {
-        // 【改善】サービスワーカーの登録
         if ('serviceWorker' in navigator) {
             try {
                 await navigator.serviceWorker.register('./sw.js');
