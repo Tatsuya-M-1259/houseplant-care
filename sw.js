@@ -1,5 +1,5 @@
 // sw.js
-const CACHE_NAME = 'houseplant-care-v27'; // バージョンを v27 に更新
+const CACHE_NAME = 'houseplant-care-v28'; // バージョンを更新
 
 const ASSETS_TO_CACHE = [
     './',
