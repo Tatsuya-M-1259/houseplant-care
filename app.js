@@ -154,7 +154,6 @@ document.addEventListener('DOMContentLoaded', () => {
             list.appendChild(card);
         }
         
-        // Sortableの初期化チェック
         if (typeof Sortable !== 'undefined' && !Sortable.get(list)) {
             new Sortable(list, {
                 handle: '.drag-handle',
@@ -393,11 +392,24 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
+    // --- アプリ起動・アップデート検知 ---
     const start = async () => {
         if ('serviceWorker' in navigator) {
             try {
-                await navigator.serviceWorker.register('./sw.js');
+                const reg = await navigator.serviceWorker.register('./sw.js');
                 console.log('Service Worker registered');
+
+                // 新しいService Worker（v30）が見つかった時の処理
+                reg.onupdatefound = () => {
+                    const installingWorker = reg.installing;
+                    installingWorker.onstatechange = () => {
+                        if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            if (confirm('最新の管理データが利用可能です。アプリを再起動して反映しますか？')) {
+                                window.location.reload();
+                            }
+                        }
+                    };
+                };
             } catch (e) {
                 console.error('Service Worker registration failed', e);
             }
@@ -405,7 +417,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         await initDB();
         const sel = document.getElementById('species-select');
-        sel.innerHTML = ''; // クリアしてから追加
+        sel.innerHTML = ''; 
         PLANT_DATA.forEach(p => sel.add(new Option(p.species, p.id)));
         setupEvents();
         render();
