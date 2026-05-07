@@ -6,9 +6,11 @@
 export const INTERVAL_WATER_STOP = 999;
 
 /**
- * 天草・室内・ライト10h・サーキュレーター・加湿器完備 環境特化型データセット
+ * 天草・室内・LUNA UV 5灯(12h)・3.5号ロング鉢/2号鉢 
+ * 締めつつ健康的に育てる環境特化型データセット
  */
 export const PLANT_DATA = [
+    // --- 既存の植物 (1-27) はそのまま維持 ---
     {
         id: 1, species: 'コルジリネ', scientific: 'Cordyline terminalis', minTemp: 5, difficulty: '容易', feature: 'ライトと風で徒長を防ぎ、鮮やかな葉色を維持可能。', img: 'cordyline.jpg',
         water_method: '鉢底からたっぷり。受け皿の水は捨てる。', 
@@ -306,16 +308,17 @@ export const PLANT_DATA = [
         },
         maintenance: { fertilizer: '5月〜9月', repotting: '5月〜8月', pruning: '随時' }
     },
+    // --- 再調整後のアガベ・セクション (28, 30, 31) ---
     {
-        id: 28, species: 'アガベ', scientific: 'Agave', minTemp: 5, difficulty: '容易', feature: '強光を非常に好むため、ライト直下での管理が必須。乾燥に強く、この環境下では徒長せず引き締まって育つ。', img: 'agave.jpg',
-        water_method: '土が完全に乾いてから鉢底からたっぷりと。風通しを重視し、蒸れを防ぐ。', 
+        id: 28, species: 'アガベ（中株・3.5号ロング）', scientific: 'Agave titanota', minTemp: 5, difficulty: '容易', feature: '完成株。LUNA UV 25-35cm/12h照射。下葉のハリを維持しつつ締めて育てるステージ。', img: 'agave.jpg',
+        water_method: '土が乾いてから鉢底よりたっぷりと。', 
         management: {
-            SPRING: { water: '土が乾いて3日後', waterIntervalDays: 10, light: 'ライト直下（強）', mist: '不要', humidity: '45%前後' },
-            SUMMER: { water: '土が乾いたらすぐ', waterIntervalDays: 7, light: 'ライト直下（強）', mist: '不要', humidity: '50%以下' },
-            AUTUMN: { water: '土が乾いて3日後', waterIntervalDays: 10, light: 'ライト直下（強）', mist: '不要', humidity: '45%前後' },
-            WINTER: { water: '月1回程度（ほぼ断水）', waterIntervalDays: 30, light: 'ライト直下維持', mist: '不要', humidity: '乾燥気味' }
+            SPRING: { water: '土が乾いたら即給水', waterIntervalDays: 5, light: 'LUNA UV 25-30cm', mist: '不要', humidity: '45%前後' },
+            SUMMER: { water: '土表面が乾いたらすぐ', waterIntervalDays: 4, light: 'LUNA UV 30-35cm', mist: '不要', humidity: '50%以下' },
+            AUTUMN: { water: '土が乾いたら即給水', waterIntervalDays: 5, light: 'LUNA UV 25-30cm', mist: '不要', humidity: '45%前後' },
+            WINTER: { water: '土が乾いて3日後', waterIntervalDays: 15, light: 'LUNA UV維持', mist: '不要', humidity: '乾燥気味' }
         },
-        maintenance: { fertilizer: '5月〜8月（緩効性肥料）', repotting: '5月〜8月', pruning: '不要（下葉の処理のみ）' }
+        maintenance: { fertilizer: '5-8月(微量)', repotting: '2年に1回(同サイズ鉢)', pruning: '不要' }
     },
     {
         id: 29, species: 'サボテン（ミニ品種）', scientific: 'Cactaceae', minTemp: 5, difficulty: '容易', feature: '卓上でも管理しやすいミニサボテン。強光と風通しを確保することで、形を崩さずコンパクトに維持できる。', img: 'cactus.jpg',
@@ -327,5 +330,27 @@ export const PLANT_DATA = [
             WINTER: { water: '月1回程度（ほぼ断水）', waterIntervalDays: 30, light: 'ライト直下維持', mist: '不要', humidity: '乾燥気味' }
         },
         maintenance: { fertilizer: '5月〜8月（少量）', repotting: '4月〜6月', pruning: '不要' }
+    },
+    {
+        id: 30, species: 'アガベ（子株・2号鉢）', scientific: 'Agave titanota (Pup)', minTemp: 10, difficulty: '容易', feature: '葉3〜4枚。代謝が激しく乾燥も早いため、成長を止めない水分供給が重要。LUNA UV 35cm以上推奨。', img: 'agave.jpg',
+        water_method: '2号鉢は即乾燥するため、水切れによる成長停止を避ける。', 
+        management: {
+            SPRING: { water: '鉢が軽くなったらすぐ', waterIntervalDays: 3, light: 'ライト周辺部(35cm)', mist: '不要', humidity: '50%前後' },
+            SUMMER: { water: '毎日〜隔日', waterIntervalDays: 2, light: 'ライト周辺部(35cm)', mist: '不要', humidity: '60%以下' },
+            AUTUMN: { water: '鉢が軽くなったらすぐ', waterIntervalDays: 3, light: 'ライト周辺部(35cm)', mist: '不要', humidity: '50%前後' },
+            WINTER: { water: '土が乾いたら', waterIntervalDays: 7, light: 'ライト維持', mist: '不要', humidity: '加湿気味' }
+        },
+        maintenance: { fertilizer: '成長期に薄い液肥', repotting: '根が回れば随時', pruning: '不要' }
+    },
+    {
+        id: 31, species: 'アガベ（刺重点・シーザー等）', scientific: 'Agave titanota (Spine focus)', minTemp: 5, difficulty: '容易', feature: 'うねる刺や強い副棘を狙う特化型。LUNA UV 25cm直下＋強風による高速代謝管理。', img: 'agave.jpg',
+        water_method: '給水後、24h以内に表土を乾かす強風を併用。', 
+        management: {
+            SPRING: { water: '土が乾いたら', waterIntervalDays: 5, light: 'LUNA UV 25cm', mist: '不要', humidity: '45%以下' },
+            SUMMER: { water: '土が乾いたら即', waterIntervalDays: 4, light: 'LUNA UV 25cm', mist: '不要', humidity: '45%以下' },
+            AUTUMN: { water: '土が乾いたら', waterIntervalDays: 5, light: 'LUNA UV 25cm', mist: '不要', humidity: '45%以下' },
+            WINTER: { water: '土が乾いて2日後', waterIntervalDays: 10, light: 'LUNA UV 25cm', mist: '不要', humidity: '乾燥' }
+        },
+        maintenance: { fertilizer: 'リン・カリ主体の肥料', repotting: '2年に1回', pruning: '不要' }
     }
 ];
