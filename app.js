@@ -1,3 +1,4 @@
+// app.js
 import { PLANT_DATA, INTERVAL_WATER_STOP } from './data.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -152,8 +153,9 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             list.appendChild(card);
         }
-
-        if (!Sortable.get(list)) {
+        
+        // Sortableの初期化チェック
+        if (typeof Sortable !== 'undefined' && !Sortable.get(list)) {
             new Sortable(list, {
                 handle: '.drag-handle',
                 animation: 150,
@@ -385,7 +387,8 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (e.target.closest('.card-content-wrapper')) {
                 showModal(card.dataset.id);
             } else if (e.target.closest('.close-button') || e.target.closest('.close-button-water-type')) {
-                e.target.closest('.modal').style.display = 'none';
+                const modal = e.target.closest('.modal');
+                if (modal) modal.style.display = 'none';
             }
         });
     };
@@ -402,6 +405,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         await initDB();
         const sel = document.getElementById('species-select');
+        sel.innerHTML = ''; // クリアしてから追加
         PLANT_DATA.forEach(p => sel.add(new Option(p.species, p.id)));
         setupEvents();
         render();
