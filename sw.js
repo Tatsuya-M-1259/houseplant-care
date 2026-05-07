@@ -1,5 +1,5 @@
 // sw.js
-const CACHE_NAME = 'houseplant-care-v29'; // バージョンを更新して自動アップデートをトリガー
+const CACHE_NAME = 'houseplant-care-v30'; // バージョンを更新
 
 const ASSETS_TO_CACHE = [
     './',
@@ -37,6 +37,25 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
     if (!event.request.url.startsWith(self.location.origin)) return;
+
+    // index.html, app.js, data.js は常に最新をネットワークへ確認に行く（Network First）
+    const isCoreFile = event.request.url.endsWith('index.html') || 
+                       event.request.url.endsWith('app.js') || 
+                       event.request.url.endsWith('data.js') ||
+                       event.request.mode === 'navigate';
+
+    if (isCoreFile) {
+        event.respondWith(
+            fetch(event.request).then((response) => {
+                const copy = response.clone();
+                caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+                return response;
+            }).catch(() => caches.match(event.request))
+        );
+        return;
+    }
+
+    // 画像などはキャッシュから高速に読み込む（Cache First）
     event.respondWith(
         caches.match(event.request).then((cachedResponse) => {
             if (cachedResponse) return cachedResponse;
