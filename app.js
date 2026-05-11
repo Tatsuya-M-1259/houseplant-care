@@ -139,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="card-content-wrapper">
                     <div class="card-image"><img src="${imgSrc}" loading="lazy"></div>
                     <div class="card-header"><h3>${plant.name}</h3><p>${species.species}</p></div>
-                    <div class="status-box ${isUrgent ? 'alert-bg' : ''}">${isUrgent ? '⚠️ 水やり時期' : '🌿 順調'}</div>
+                    <div class="status-box ${isUrgent ? 'alert-bg' : ''}">${isUrgent ? '⚠️ 水やり時期' : '🌿 順順調'}</div>
                     <div class="care-info">
                         <p><strong>目安:</strong> ${formatDateJp(nextDateStr)}</p>
                         <div class="quick-care-tags">
@@ -169,6 +169,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const plant = userPlants.find(p => p.id === id);
         const species = PLANT_DATA.find(d => String(d.id) === String(plant.speciesId));
         const modal = document.getElementById('details-modal');
+
+        // モーダルを開いた際、変更用セレクトボックスの選択状態を現在の種別に合わせる
+        const detailSel = document.getElementById('detail-species-change-select');
+        if (detailSel) {
+            detailSel.value = plant.speciesId;
+        }
 
         document.getElementById('detail-plant-name').textContent = plant.name;
         document.getElementById('detail-species-name').innerHTML = `${species.species} <small>(${species.scientific})</small>`;
@@ -348,6 +354,22 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
+        // 植物種（成長ステージ）の変更イベントハンドラ
+        const detailSel = document.getElementById('detail-species-change-select');
+        if (detailSel) {
+            detailSel.onchange = (e) => {
+                if (currentPlantId) {
+                    const idx = userPlants.findIndex(p => p.id === currentPlantId);
+                    if (idx !== -1) {
+                        userPlants[idx].speciesId = e.target.value;
+                        saveToLocal(); // ローカルストレージに即時保存
+                        render();      // メイン一覧を再描画（背景アラート、管理目安日数などを更新）
+                        showModal(currentPlantId); // モーダル内の季節ケア情報などを即時更新
+                    }
+                }
+            };
+        }
+
         document.getElementById('prev-plant-btn').onclick = () => { 
             const idx = sortedIds.indexOf(currentPlantId); 
             if (idx > 0) showModal(sortedIds[idx - 1]); 
@@ -399,7 +421,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const reg = await navigator.serviceWorker.register('./sw.js');
                 console.log('Service Worker registered');
 
-                // 新しいService Worker（v30）が見つかった時の処理
+                // 新しいService Worker（v31）が見つかった時の処理
                 reg.onupdatefound = () => {
                     const installingWorker = reg.installing;
                     installingWorker.onstatechange = () => {
@@ -416,9 +438,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         await initDB();
+        
+        // 新規登録用セレクトボックスへのマスターデータ投入
         const sel = document.getElementById('species-select');
         sel.innerHTML = ''; 
         PLANT_DATA.forEach(p => sel.add(new Option(p.species, p.id)));
+
+        // モーダル内の変更用セレクトボックスへのマスターデータ投入
+        const detailSel = document.getElementById('detail-species-change-select');
+        if (detailSel) {
+            detailSel.innerHTML = '';
+            PLANT_DATA.forEach(p => detailSel.add(new Option(p.species, p.id)));
+        }
+
         setupEvents();
         render();
         const lastTime = localStorage.getItem('last_update_time');
