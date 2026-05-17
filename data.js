@@ -355,7 +355,7 @@ export const PLANT_DATA = [
     },
     // --- 新規追加セクション (32) ---
     {
-        id: 32, species: 'アろエ', scientific: 'Aloe vera', minTemp: 5, difficulty: '容易', feature: '肉厚な葉に水分を蓄える多肉植物。徒長を防ぐためLUNA UV直下での強光管理が最適。乾燥気味に締めて育てる。', img: 'aloe.jpg',
+        id: 32, species: 'アロエ', scientific: 'Aloe vera', minTemp: 5, difficulty: '容易', feature: '肉厚な葉に水分を蓄える多肉植物。徒長を防ぐためLUNA UV直下での強光管理が最適。乾燥気味に締めて育てる。', img: 'aloe.jpg',
         water_method: '土が完全に乾いてから、鉢底よりたっぷりと給水。', 
         management: {
             SPRING: { water: '土が乾いたらすぐ', waterIntervalDays: 7, light: 'ライト直下（強）', mist: '不要', humidity: '45%前後' },
