@@ -27,7 +27,7 @@ export const PLANT_DATA = [
         water_method: '鉢底からたっぷり。', 
         management: {
             SPRING: { water: '土表面が乾いたら', waterIntervalDays: 5, light: 'ライト10h＋レース越し', mist: '2日に1回', humidity: '50%以上' },
-            SUMMER: { water: '土表面g乾いたらすぐ', waterIntervalDays: 4, light: 'ライト10h＋レース越し', mist: '毎日1回', humidity: '60%以上' },
+            SUMMER: { water: '土表面が乾いたらすぐ', waterIntervalDays: 4, light: 'ライト10h＋レース越し', mist: '毎日1回', humidity: '60%以上' },
             AUTUMN: { water: '土表面が乾いたら', waterIntervalDays: 6, light: 'ライト10h＋レース越し', mist: '2日に1回', humidity: '50%以上' },
             WINTER: { water: '土表面が乾いて2日後', waterIntervalDays: 12, light: 'ライト10h維持', mist: '週2回', humidity: '50%以上' }
         },
@@ -347,7 +347,7 @@ export const PLANT_DATA = [
         water_method: '給水後、24h以内に表土を乾かす強風を併用。', 
         management: {
             SPRING: { water: '土が乾いたら', waterIntervalDays: 5, light: 'LUNA UV 25cm', mist: '不要', humidity: '45%以下' },
-            SUMMER: { water: '土が乾いたら即', waterIntervalDays: 4, light: 'LUNA UV 25cm', mist: '不要', humidity: '45% Moff' },
+            SUMMER: { water: '土が乾いたら即', waterIntervalDays: 4, light: 'LUNA UV 25cm', mist: '不要', humidity: '45%以下' },
             AUTUMN: { water: '土が乾いたら', waterIntervalDays: 5, light: 'LUNA UV 25cm', mist: '不要', humidity: '45%以下' },
             WINTER: { water: '土が乾いて2日後', waterIntervalDays: 10, light: 'LUNA UV 25cm', mist: '不要', humidity: '乾燥' }
         },
