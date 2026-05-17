@@ -1,5 +1,5 @@
 // sw.js
-const CACHE_NAME = 'houseplant-care-v31'; // バージョンをv31に更新して自動アップデートをトリガー
+const CACHE_NAME = 'houseplant-care-v32'; // バージョンをv32に更新して自動アップデートをトリガー
 
 const ASSETS_TO_CACHE = [
     './',
