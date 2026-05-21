@@ -49,7 +49,7 @@ export const PLANT_DATA = [
         water_method: '鉢底からたっぷり。', 
         management: {
             SPRING: { water: '土表面が乾いたら', waterIntervalDays: 5, light: 'ライト10h＋レース越し', mist: '毎日1回', humidity: '60%前後' },
-            SUMMER: { water: '土表面が乾いたらすぐ', waterIntervalDays: 4, light: 'ライト10h＋レース越し', mist: '毎日2回', humidity: '65%以上' },
+            SUMMER: { water: '土表面get乾いたらすぐ', waterIntervalDays: 4, light: 'ライト10h＋レース越し', mist: '毎日2回', humidity: '65%以上' },
             AUTUMN: { water: '土表面が乾いて1日後', waterIntervalDays: 7, light: 'ライト10h＋レース越し', mist: '2日に1回', humidity: '60%前後' },
             WINTER: { water: '土表面が乾いて2日後', waterIntervalDays: 12, light: 'ライト10h維持', mist: '週2回', humidity: '50%以上' }
         },
@@ -166,7 +166,7 @@ export const PLANT_DATA = [
         maintenance: { fertilizer: '5月〜8月', repotting: '5月〜8月', pruning: '5月〜9月' }
     },
     {
-        id: 15, species: 'コーヒーノキ', scientific: 'Coffea arbica', minTemp: 10, difficulty: '難しい', feature: '安定した光と風があれば室内でも結実可能。', img: 'coffee_tree.jpg',
+        id: 15, species: 'コーヒーノキ', scientific: 'Coffea arabica', minTemp: 10, difficulty: '難しい', feature: '安定した光と風があれば室内でも結実可能。', img: 'coffee_tree.jpg',
         water_method: '鉢底からたっぷりと。水切れ厳禁。', 
         management: {
             SPRING: { water: '土表面が乾いたら', waterIntervalDays: 5, light: 'ライト10h＋窓際', mist: '毎日1回', humidity: '60%前後' },
@@ -348,7 +348,7 @@ export const PLANT_DATA = [
         management: {
             SPRING: { water: '土が乾いたら', waterIntervalDays: 5, light: 'LUNA UV 25cm', mist: '不要', humidity: '45%以下' },
             SUMMER: { water: '土が乾いたら即', waterIntervalDays: 4, light: 'LUNA UV 25cm', mist: '不要', humidity: '45%以下' },
-            AUTUMN: { water: '土が乾いたら', waterIntervalDays: 5, light: 'LUNA UV 25cm', mist: '不要', humidity: '45%以下' },
+            AUTUMN: { water: '土が乾いたら', waterIntervalDays: 5, light: 'LUNA UV 25cm', mist: '不要', humidity: '45% Agra以下' },
             WINTER: { water: '土が乾いて2日後', waterIntervalDays: 10, light: 'LUNA UV 25cm', mist: '不要', humidity: '乾燥' }
         },
         maintenance: { fertilizer: 'リン・カリ主体の肥料', repotting: '2年に1回', pruning: '不要' }
@@ -364,5 +364,17 @@ export const PLANT_DATA = [
             WINTER: { water: '土表面が乾いて3日後', waterIntervalDays: 15, light: 'ライト維持', mist: '不要', humidity: '乾燥気味' }
         },
         maintenance: { fertilizer: '5-8月(少量・薄め)', repotting: '2年に1回（4月〜6月）', pruning: '下葉が枯れたら適宜処理' }
+    },
+    // --- 新規追加セクション (33) ---
+    {
+        id: 33, species: 'ディッキア', scientific: 'Dyckia', minTemp: 5, difficulty: '容易', feature: '強烈な鋸歯（トゲ）が魅力の多肉質ブロメリア。徒長を防ぎ鋭い刺と引き締まった株姿を維持するため、LUNA UV直下の強光とサーキュレーターによる十分な風通しが不可欠。', img: 'dyckia.jpg',
+        water_method: '土が完全に乾いてから、鉢底よりたっぷりと給水。成長期は乾燥させすぎないよう注意。', 
+        management: {
+            SPRING: { water: '土が乾いたらすぐ', waterIntervalDays: 5, light: 'ライト直下（強）', mist: '不要', humidity: '45%前後' },
+            SUMMER: { water: '土表面が乾いたらすぐ', waterIntervalDays: 4, light: 'ライト直下（強）', mist: '不要（高温多湿の蒸れに注意）', humidity: '50%以下' },
+            AUTUMN: { water: '土が乾いたらすぐ', waterIntervalDays: 5, light: 'ライト直下（強）', mist: '不要', humidity: '45%前後' },
+            WINTER: { water: '土表面が乾いて3日後', waterIntervalDays: 15, light: 'ライト維持', mist: '不要', humidity: '乾燥気味' }
+        },
+        maintenance: { fertilizer: '5月〜8月（薄めの液肥を少量）', repotting: '2年に1回（5月〜7月の温暖な時期）', pruning: '枯れた下葉やトゲを適宜整理' }
     }
 ];
