@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (display) display.textContent = `最終更新: ${new Date().toLocaleString('ja-JP')}`;
     };
 
-    // --- 画像とBase64の相互変換ユーティリティ (追加) ---
+    // --- 画像とBase64の相互変換ユーティリティ ---
     const blobToBase64 = (blob) => {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -81,6 +81,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const base64ToBlob = async (base64) => {
         const res = await fetch(base64);
         return await res.blob();
+    };
+
+    // --- ローディング制御ユーティリティ (追加) ---
+    const showLoading = (text) => {
+        const overlay = document.getElementById('loading-overlay');
+        if(overlay) {
+            document.getElementById('loading-text').textContent = text;
+            overlay.style.display = 'flex';
+        }
+    };
+
+    const hideLoading = () => {
+        const overlay = document.getElementById('loading-overlay');
+        if(overlay) overlay.style.display = 'none';
     };
 
     // --- Database (IndexedDB) ---
@@ -397,8 +411,12 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('season-care-content').classList.toggle('expanded');
         };
 
-        // --- データエクスポート (画像データを含むように改修) ---
+        // --- データエクスポート (UIフリーズ対策追加) ---
         document.getElementById('export-data-button').onclick = async () => {
+            showLoading('エクスポートの準備中...');
+            // ブラウザにUIを描画させるための一時停止
+            await new Promise(resolve => setTimeout(resolve, 50)); 
+
             try {
                 // localStorage用データに影響を与えないようディープコピーを作成
                 const exportData = JSON.parse(JSON.stringify(userPlants));
@@ -421,17 +439,29 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (error) {
                 console.error("エクスポートエラー:", error);
                 alert("データのエクスポート中にエラーが発生しました。");
+            } finally {
+                hideLoading();
             }
         };
 
-        // --- データインポート (画像データをIndexedDBに保存し直すように改修) ---
+        // --- データインポート (確認ダイアログとUIフリーズ対策追加) ---
         document.getElementById('import-data-button').onclick = () => document.getElementById('import-file-input').click();
         
         document.getElementById('import-file-input').onchange = (e) => {
             const file = e.target.files[0];
             if (!file) return;
+
+            // データ上書き前の確認ダイアログ
+            if (!confirm('現在のデータは上書きされ、元に戻せません。\nインポートを実行しますか？')) {
+                e.target.value = ''; 
+                return;
+            }
+
             const reader = new FileReader();
             reader.onload = async (re) => { 
+                showLoading('データを復元中...');
+                await new Promise(resolve => setTimeout(resolve, 50)); 
+
                 try {
                     const importedData = JSON.parse(re.target.result);
                     
@@ -448,9 +478,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     userPlants = importedData;
                     saveToLocal(); 
                     await render(); 
-                    alert('データと登録画像を完全に復元しました。'); 
+                    
+                    // 処理完了後にアラートを表示
+                    setTimeout(() => {
+                        hideLoading();
+                        alert('データと登録画像を完全に復元しました。'); 
+                    }, 100);
+
                 } catch (error) {
                     console.error("インポートエラー:", error);
+                    hideLoading();
                     alert("インポート中にエラーが発生しました。ファイルの形式が正しいか確認してください。");
                 }
             };
