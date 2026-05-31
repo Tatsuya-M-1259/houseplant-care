@@ -1,5 +1,4 @@
-/* style.css */
-
+/* style.css (既存の内容を維持) */
 :root {
     --primary-color: #10b981;
     --primary-dark: #059669;
@@ -493,73 +492,6 @@ input:focus, select:focus {
     .next-btn { right: 20px; }
 }
 
-/* Notification Toast */
-.toast {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%) translateY(100px);
-    background-color: #333;
-    color: white;
-    padding: 12px 24px;
-    border-radius: 24px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    z-index: 2000;
-    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    max-width: 90%;
-    width: max-content;
-}
-.toast.show {
-    transform: translateX(-50%) translateY(0);
-}
-.toast-success { background-color: var(--primary-dark); }
-.toast-error { background-color: var(--danger-color); }
-.toast-warning { background-color: var(--warning-color); color: #fff; }
-.toast-info { background-color: #3b82f6; }
-
-.toast-action-btn {
-    background: rgba(255,255,255,0.2);
-    border: none;
-    padding: 4px 8px;
-    border-radius: 4px;
-    color: white;
-    cursor: pointer;
-    font-size: 0.85rem;
-}
-
-/* Lightbox */
-#lightbox-modal {
-    display: none;
-    position: fixed;
-    z-index: 3000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.9);
-    align-items: center;
-    justify-content: center;
-}
-#lightbox-modal.active {
-    display: flex;
-}
-#lightbox-image {
-    max-width: 95%;
-    max-height: 95%;
-    object-fit: contain;
-}
-#lightbox-close {
-    position: absolute;
-    top: 20px;
-    right: 30px;
-    color: white;
-    font-size: 40px;
-    cursor: pointer;
-}
-
 /* Input with Button */
 .input-with-button {
     display: flex;
@@ -669,7 +601,6 @@ input:focus, select:focus {
     background-color: var(--primary-dark);
 }
 
-/* 追加された季節別ケア情報のスタイル */
 .quick-care-tags {
     margin-top: 0.5rem;
     padding: 0.5rem 0 0 0;
@@ -684,4 +615,19 @@ input:focus, select:focus {
 .quick-care-tags span {
     display: block;
     line-height: 1.4;
+}
+
+/* --- 追加: ローディングスピナーのアニメーション --- */
+.spinner {
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top: 4px solid white;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 10px;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
