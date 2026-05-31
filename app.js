@@ -68,6 +68,21 @@ document.addEventListener('DOMContentLoaded', () => {
         if (display) display.textContent = `最終更新: ${new Date().toLocaleString('ja-JP')}`;
     };
 
+    // --- 画像とBase64の相互変換ユーティリティ (追加) ---
+    const blobToBase64 = (blob) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
+    };
+
+    const base64ToBlob = async (base64) => {
+        const res = await fetch(base64);
+        return await res.blob();
+    };
+
     // --- Database (IndexedDB) ---
     const initDB = () => new Promise(resolve => {
         const req = indexedDB.open(DB_NAME, 1);
@@ -139,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="card-content-wrapper">
                     <div class="card-image"><img src="${imgSrc}" loading="lazy"></div>
                     <div class="card-header"><h3>${plant.name}</h3><p>${species.species}</p></div>
-                    <div class="status-box ${isUrgent ? 'alert-bg' : ''}">${isUrgent ? '⚠️ 水やり時期' : '🌿 順順調'}</div>
+                    <div class="status-box ${isUrgent ? 'alert-bg' : ''}">${isUrgent ? '⚠️ 水やり時期' : '🌿 順調'}</div>
                     <div class="care-info">
                         <p><strong>目安:</strong> ${formatDateJp(nextDateStr)}</p>
                         <div class="quick-care-tags">
@@ -170,7 +185,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const species = PLANT_DATA.find(d => String(d.id) === String(plant.speciesId));
         const modal = document.getElementById('details-modal');
 
-        // モーダルを開いた際、変更用セレクトボックスの選択状態を現在の種別に合わせる
         const detailSel = document.getElementById('detail-species-change-select');
         if (detailSel) {
             detailSel.value = plant.speciesId;
@@ -354,7 +368,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
-        // 植物種（成長ステージ）の変更イベントハンドラ
         const detailSel = document.getElementById('detail-species-change-select');
         if (detailSel) {
             detailSel.onchange = (e) => {
@@ -362,9 +375,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     const idx = userPlants.findIndex(p => p.id === currentPlantId);
                     if (idx !== -1) {
                         userPlants[idx].speciesId = e.target.value;
-                        saveToLocal(); // ローカルストレージに即時保存
-                        render();      // メイン一覧を再描画（背景アラート、管理目安日数などを更新）
-                        showModal(currentPlantId); // モーダル内の季節ケア情報などを即時更新
+                        saveToLocal(); 
+                        render();      
+                        showModal(currentPlantId); 
                     }
                 }
             };
@@ -384,15 +397,65 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('season-care-content').classList.toggle('expanded');
         };
 
-        document.getElementById('export-data-button').onclick = () => {
-            const blob = new Blob([JSON.stringify(userPlants)], { type: 'application/json' });
-            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'plants_backup.json'; a.click();
+        // --- データエクスポート (画像データを含むように改修) ---
+        document.getElementById('export-data-button').onclick = async () => {
+            try {
+                // localStorage用データに影響を与えないようディープコピーを作成
+                const exportData = JSON.parse(JSON.stringify(userPlants));
+                
+                // IndexedDBから各植物の画像を抽出し、Base64エンコードしてJSONに同梱
+                for (let plant of exportData) {
+                    const blob = await getImage(plant.id);
+                    if (blob) {
+                        plant.imageData = await blobToBase64(blob);
+                    }
+                }
+                
+                const exportJson = JSON.stringify(exportData);
+                const blob = new Blob([exportJson], { type: 'application/json' });
+                const a = document.createElement('a'); 
+                a.href = URL.createObjectURL(blob); 
+                a.download = `plants_backup_${getLocalTodayDate()}.json`; 
+                a.click();
+                URL.revokeObjectURL(a.href);
+            } catch (error) {
+                console.error("エクスポートエラー:", error);
+                alert("データのエクスポート中にエラーが発生しました。");
+            }
         };
+
+        // --- データインポート (画像データをIndexedDBに保存し直すように改修) ---
         document.getElementById('import-data-button').onclick = () => document.getElementById('import-file-input').click();
+        
         document.getElementById('import-file-input').onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
             const reader = new FileReader();
-            reader.onload = (re) => { userPlants = JSON.parse(re.target.result); saveToLocal(); render(); alert('データを復元しました。'); };
-            reader.readAsText(e.target.files[0]);
+            reader.onload = async (re) => { 
+                try {
+                    const importedData = JSON.parse(re.target.result);
+                    
+                    // JSON内に画像データ(Base64)があればBlobに変換してIndexedDBへ保存
+                    // その後、localStorageの肥大化を防ぐためオブジェクトから削除
+                    for (let plant of importedData) {
+                        if (plant.imageData) {
+                            const blob = await base64ToBlob(plant.imageData);
+                            await saveImage(plant.id, blob);
+                            delete plant.imageData; 
+                        }
+                    }
+                    
+                    userPlants = importedData;
+                    saveToLocal(); 
+                    await render(); 
+                    alert('データと登録画像を完全に復元しました。'); 
+                } catch (error) {
+                    console.error("インポートエラー:", error);
+                    alert("インポート中にエラーが発生しました。ファイルの形式が正しいか確認してください。");
+                }
+            };
+            reader.readAsText(file);
+            e.target.value = ''; // 連続して同じファイルをインポートできるようにクリア
         };
 
         const scrollTopBtn = document.getElementById('scroll-to-top');
@@ -419,9 +482,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if ('serviceWorker' in navigator) {
             try {
                 const reg = await navigator.serviceWorker.register('./sw.js');
-                console.log('Service Worker registered');
-
-                // 新しいService Worker（v31）が見つかった時の処理
+                
                 reg.onupdatefound = () => {
                     const installingWorker = reg.installing;
                     installingWorker.onstatechange = () => {
@@ -439,12 +500,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         await initDB();
         
-        // 新規登録用セレクトボックスへのマスターデータ投入
         const sel = document.getElementById('species-select');
         sel.innerHTML = ''; 
         PLANT_DATA.forEach(p => sel.add(new Option(p.species, p.id)));
 
-        // モーダル内の変更用セレクトボックスへのマスターデータ投入
         const detailSel = document.getElementById('detail-species-change-select');
         if (detailSel) {
             detailSel.innerHTML = '';
