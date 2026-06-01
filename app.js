@@ -78,12 +78,20 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    const base64ToBlob = async (base64) => {
-        const res = await fetch(base64);
-        return await res.blob();
+    // 修正: 確実なバイナリパース方式に変更
+    const base64ToBlob = (base64) => {
+        const parts = base64.split(';base64,');
+        const contentType = parts[0].split(':')[1];
+        const raw = window.atob(parts[1]);
+        const rawLength = raw.length;
+        const uInt8Array = new Uint8Array(rawLength);
+        for (let i = 0; i < rawLength; ++i) {
+            uInt8Array[i] = raw.charCodeAt(i);
+        }
+        return new Blob([uInt8Array], { type: contentType });
     };
 
-    // --- ローディング制御ユーティリティ (追加) ---
+    // --- ローディング制御ユーティリティ ---
     const showLoading = (text) => {
         const overlay = document.getElementById('loading-overlay');
         if(overlay) {
@@ -349,12 +357,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const fileInput = document.createElement('input');
         fileInput.type = 'file'; fileInput.accept = 'image/*';
         document.getElementById('change-photo-button').onclick = () => fileInput.click();
+        
+        // 修正: 入力のリセットを追加
         fileInput.onchange = async (e) => { 
             if (e.target.files[0] && currentPlantId) { 
                 await saveImage(currentPlantId, e.target.files[0]); 
                 await render(); 
                 showModal(currentPlantId); 
             } 
+            e.target.value = ''; 
         };
         
         document.getElementById('edit-plant-name-button').onclick = () => {
@@ -411,22 +422,21 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('season-care-content').classList.toggle('expanded');
         };
 
-        // --- データエクスポート (UIフリーズ対策追加) ---
+        // --- データエクスポート ---
         document.getElementById('export-data-button').onclick = async () => {
             showLoading('エクスポートの準備中...');
-            // ブラウザにUIを描画させるための一時停止
             await new Promise(resolve => setTimeout(resolve, 50)); 
 
             try {
-                // localStorage用データに影響を与えないようディープコピーを作成
                 const exportData = JSON.parse(JSON.stringify(userPlants));
                 
-                // IndexedDBから各植物の画像を抽出し、Base64エンコードしてJSONに同梱
                 for (let plant of exportData) {
                     const blob = await getImage(plant.id);
                     if (blob) {
                         plant.imageData = await blobToBase64(blob);
                     }
+                    // 修正: UIフリーズを防ぐためマイクロタスクを解放
+                    await new Promise(resolve => setTimeout(resolve, 0)); 
                 }
                 
                 const exportJson = JSON.stringify(exportData);
@@ -444,14 +454,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
-        // --- データインポート (確認ダイアログとUIフリーズ対策追加) ---
+        // --- データインポート ---
         document.getElementById('import-data-button').onclick = () => document.getElementById('import-file-input').click();
         
         document.getElementById('import-file-input').onchange = (e) => {
             const file = e.target.files[0];
             if (!file) return;
 
-            // データ上書き前の確認ダイアログ
             if (!confirm('現在のデータは上書きされ、元に戻せません。\nインポートを実行しますか？')) {
                 e.target.value = ''; 
                 return;
@@ -465,11 +474,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     const importedData = JSON.parse(re.target.result);
                     
-                    // JSON内に画像データ(Base64)があればBlobに変換してIndexedDBへ保存
-                    // その後、localStorageの肥大化を防ぐためオブジェクトから削除
                     for (let plant of importedData) {
                         if (plant.imageData) {
-                            const blob = await base64ToBlob(plant.imageData);
+                            // 修正された base64ToBlob を使用
+                            const blob = base64ToBlob(plant.imageData);
                             await saveImage(plant.id, blob);
                             delete plant.imageData; 
                         }
@@ -479,7 +487,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     saveToLocal(); 
                     await render(); 
                     
-                    // 処理完了後にアラートを表示
                     setTimeout(() => {
                         hideLoading();
                         alert('データと登録画像を完全に復元しました。'); 
@@ -492,7 +499,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             };
             reader.readAsText(file);
-            e.target.value = ''; // 連続して同じファイルをインポートできるようにクリア
+            e.target.value = ''; 
         };
 
         const scrollTopBtn = document.getElementById('scroll-to-top');
@@ -510,26 +517,42 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (e.target.closest('.close-button') || e.target.closest('.close-button-water-type')) {
                 const modal = e.target.closest('.modal');
                 if (modal) modal.style.display = 'none';
+
+                // 修正: モーダルの画像メモリを解放
+                const detailImg = document.getElementById('detail-plant-image');
+                if (detailImg && detailImg.src && detailImg.src.startsWith('blob:')) {
+                    URL.revokeObjectURL(detailImg.src);
+                    detailImg.src = '';
+                }
             }
         });
     };
 
     // --- アプリ起動・アップデート検知 ---
+    // 修正: ライフサイクル競合の解消
     const start = async () => {
         if ('serviceWorker' in navigator) {
             try {
+                let refreshing = false;
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    if (!refreshing) {
+                        window.location.reload();
+                        refreshing = true;
+                    }
+                });
+
                 const reg = await navigator.serviceWorker.register('./sw.js');
                 
-                reg.onupdatefound = () => {
+                reg.addEventListener('updatefound', () => {
                     const installingWorker = reg.installing;
-                    installingWorker.onstatechange = () => {
+                    installingWorker.addEventListener('statechange', () => {
                         if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
                             if (confirm('最新の管理データが利用可能です。アプリを再起動して反映しますか？')) {
-                                window.location.reload();
+                                installingWorker.postMessage('SKIP_WAITING');
                             }
                         }
-                    };
-                };
+                    });
+                });
             } catch (e) {
                 console.error('Service Worker registration failed', e);
             }
