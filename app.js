@@ -78,17 +78,23 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    // 修正: 確実なバイナリパース方式に変更
+    // 確実なバイナリパース方式＋不完全なデータ破損のガード処理を追加
     const base64ToBlob = (base64) => {
-        const parts = base64.split(';base64,');
-        const contentType = parts[0].split(':')[1];
-        const raw = window.atob(parts[1]);
-        const rawLength = raw.length;
-        const uInt8Array = new Uint8Array(rawLength);
-        for (let i = 0; i < rawLength; ++i) {
-            uInt8Array[i] = raw.charCodeAt(i);
+        if (!base64 || !base64.includes(';base64,')) return null; 
+        try {
+            const parts = base64.split(';base64,');
+            const contentType = parts[0].split(':')[1];
+            const raw = window.atob(parts[1]);
+            const rawLength = raw.length;
+            const uInt8Array = new Uint8Array(rawLength);
+            for (let i = 0; i < rawLength; ++i) {
+                uInt8Array[i] = raw.charCodeAt(i);
+            }
+            return new Blob([uInt8Array], { type: contentType });
+        } catch (e) {
+            console.error("Base64データのデコードに失敗しました:", e);
+            return null;
         }
-        return new Blob([uInt8Array], { type: contentType });
     };
 
     // --- ローディング制御ユーティリティ ---
@@ -354,16 +360,30 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('global-season-select').onchange = (e) => { currentGlobalSeason = e.target.value; localStorage.setItem('global-season-select', currentGlobalSeason); render(); };
         document.getElementById('set-today-button').onclick = () => { document.getElementById('last-watered').value = getLocalTodayDate(); updatePreview(); };
 
-        const fileInput = document.createElement('input');
-        fileInput.type = 'file'; fileInput.accept = 'image/*';
-        document.getElementById('change-photo-button').onclick = () => fileInput.click();
+        // 修正：空中生成ではなくHTMLに予め配置した実DOM要素をフック（タブレット対策）
+        const detailFileInput = document.getElementById('detail-file-input');
         
-        // 修正: 入力のリセットを追加
-        fileInput.onchange = async (e) => { 
+        document.getElementById('change-photo-button').onclick = () => {
+            if (currentPlantId) {
+                detailFileInput.click();
+            } else {
+                alert("対象の植物が選択されていません。");
+            }
+        };
+        
+        detailFileInput.onchange = async (e) => { 
             if (e.target.files[0] && currentPlantId) { 
-                await saveImage(currentPlantId, e.target.files[0]); 
-                await render(); 
-                showModal(currentPlantId); 
+                showLoading('画像をIndexedDBに保存中...');
+                try {
+                    await saveImage(currentPlantId, e.target.files[0]); 
+                    await render(); 
+                    showModal(currentPlantId); 
+                } catch (err) {
+                    console.error("画像の保存に失敗しました:", err);
+                    alert("写真データの取り込みに失敗しました。");
+                } finally {
+                    hideLoading();
+                }
             } 
             e.target.value = ''; 
         };
@@ -435,7 +455,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (blob) {
                         plant.imageData = await blobToBase64(blob);
                     }
-                    // 修正: UIフリーズを防ぐためマイクロタスクを解放
                     await new Promise(resolve => setTimeout(resolve, 0)); 
                 }
                 
@@ -476,9 +495,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     for (let plant of importedData) {
                         if (plant.imageData) {
-                            // 修正された base64ToBlob を使用
+                            // 安全ガードつきのパースロジックに修正（インポート時のクラッシュ対策）
                             const blob = base64ToBlob(plant.imageData);
-                            await saveImage(plant.id, blob);
+                            if (blob) {
+                                await saveImage(plant.id, blob);
+                            }
                             delete plant.imageData; 
                         }
                     }
@@ -518,7 +539,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const modal = e.target.closest('.modal');
                 if (modal) modal.style.display = 'none';
 
-                // 修正: モーダルの画像メモリを解放
                 const detailImg = document.getElementById('detail-plant-image');
                 if (detailImg && detailImg.src && detailImg.src.startsWith('blob:')) {
                     URL.revokeObjectURL(detailImg.src);
@@ -529,7 +549,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- アプリ起動・アップデート検知 ---
-    // 修正: ライフサイクル競合の解消
     const start = async () => {
         if ('serviceWorker' in navigator) {
             try {
