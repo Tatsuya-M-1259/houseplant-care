@@ -1,5 +1,5 @@
 // sw.js
-const CACHE_NAME = 'houseplant-care-v34'; // バージョンをv34に更新して自動アップデートをトリガー
+const CACHE_NAME = 'houseplant-care-v35';
 
 const ASSETS_TO_CACHE = [
     './',
@@ -16,8 +16,15 @@ self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then((cache) => cache.addAll(ASSETS_TO_CACHE))
-            .then(() => self.skipWaiting()) 
+            // self.skipWaiting() は app.js からの指示待ちとするため削除
     );
+});
+
+// app.js からの更新許可メッセージを受信して反映
+self.addEventListener('message', (event) => {
+    if (event.data === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
 });
 
 self.addEventListener('activate', (event) => {
