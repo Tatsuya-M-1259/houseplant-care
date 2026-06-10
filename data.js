@@ -10,7 +10,6 @@ export const INTERVAL_WATER_STOP = 999;
  * 締めつつ健康的に育てる環境特化型データセット
  */
 export const PLANT_DATA = [
-    // --- 既存の植物 (1-27) はそのまま維持 ---
     {
         id: 1, species: 'コルジリネ', scientific: 'Cordyline terminalis', minTemp: 5, difficulty: '容易', feature: 'ライトと風で徒長を防ぎ、鮮やかな葉色を維持可能。', img: 'cordyline.jpg',
         water_method: '鉢底からたっぷり。受け皿の水は捨てる。', 
@@ -308,7 +307,6 @@ export const PLANT_DATA = [
         },
         maintenance: { fertilizer: '5月〜9月', repotting: '5月〜8月', pruning: '随時' }
     },
-    // --- 再調整後のアガベ・セクション (28, 30, 31) ---
     {
         id: 28, species: 'アガベ（中株・3.5号ロング）', scientific: 'Agave titanota', minTemp: 5, difficulty: '容易', feature: '完成株。LUNA UV 25-35cm/12h照射。下葉のハリを維持しつつ締めて育てるステージ。', img: 'agave.jpg',
         water_method: '土が乾いてから鉢底よりたっぷりと。', 
@@ -353,7 +351,6 @@ export const PLANT_DATA = [
         },
         maintenance: { fertilizer: 'リン・カリ主体の肥料', repotting: '2年に1回', pruning: '不要' }
     },
-    // --- 新規追加セクション (32) ---
     {
         id: 32, species: 'アロエ', scientific: 'Aloe vera', minTemp: 5, difficulty: '容易', feature: '肉厚な葉に水分を蓄える多肉植物。徒長を防ぐためLUNA UV直下での強光管理が最適。乾燥気味に締めて育てる。', img: 'aloe.jpg',
         water_method: '土が完全に乾いてから、鉢底よりたっぷりと給水。', 
@@ -365,7 +362,6 @@ export const PLANT_DATA = [
         },
         maintenance: { fertilizer: '5-8月(少量・薄め)', repotting: '2年に1回（4月〜6月）', pruning: '下葉が枯れたら適宜処理' }
     },
-    // --- 新規追加セクション (33) ---
     {
         id: 33, species: 'ディッキア', scientific: 'Dyckia', minTemp: 5, difficulty: '容易', feature: '強烈な鋸歯（トゲ）が魅力の多肉質ブロメリア。徒長を防ぎ鋭い刺と引き締まった株姿を維持するため、LUNA UV直下の強光とサーキュレーターによる十分な風通しが不可欠。', img: 'dyckia.jpg',
         water_method: '土が完全に乾いてから、鉢底よりたっぷりと給水。成長期は乾燥させすぎないよう注意。', 
@@ -376,5 +372,28 @@ export const PLANT_DATA = [
             WINTER: { water: '土表面が乾いて3日後', waterIntervalDays: 15, light: 'ライト維持', mist: '不要', humidity: '乾燥気味' }
         },
         maintenance: { fertilizer: '5月〜8月（薄めの液肥を少量）', repotting: '2年に1回（5月〜7月の温暖な時期）', pruning: '枯れた下葉やトゲを適宜整理' }
+    },
+    // --- 新規追加分 (34, 35) ---
+    {
+        id: 34, species: 'フォーカリア・ティグリナ（四海波）', scientific: 'Faucaria tigrina', minTemp: 5, difficulty: '容易', feature: '動物の牙のような突起が特徴の冬型メセン。LUNA UV直下の強光とサーキュレーターで引き締まった株姿に。', img: 'faucaria.jpg',
+        water_method: '土が完全に乾いてから鉢底よりたっぷりと。夏は休眠するため断水気味に。', 
+        management: {
+            SPRING: { water: '土が乾いて2日後', waterIntervalDays: 7, light: 'ライト直下（強）', mist: '不要', humidity: '45%前後' },
+            SUMMER: { water: '月1〜2回（涼しい夜に少量）', waterIntervalDays: 20, light: 'ライト直下（強）', mist: '不要（蒸れ厳禁）', humidity: '50%以下' },
+            AUTUMN: { water: '土が乾いて1日後', waterIntervalDays: 6, light: 'ライト直下（強）', mist: '不要', humidity: '45%前後' },
+            WINTER: { water: '土が乾いて3日後', waterIntervalDays: 10, light: 'ライト維持', mist: '不要', humidity: '乾燥気味' }
+        },
+        maintenance: { fertilizer: '秋〜春（薄めの液肥）', repotting: '9月〜11月', pruning: '不要' }
+    },
+    {
+        id: 35, species: 'アエオニウム（女妖 等）', scientific: 'Aeonium', minTemp: 5, difficulty: '中程度', feature: '冬型多肉。秋冬の強光と低温ストレスで鮮やかな紅葉と斑のコントラストを見せる。夏は休眠。', img: 'aeonium.jpg',
+        water_method: '春秋の成長期は土が乾いたらたっぷり。夏は葉を落とし休眠するため断水。', 
+        management: {
+            SPRING: { water: '土が乾いたらすぐ', waterIntervalDays: 5, light: 'ライト直下（強）', mist: '不要', humidity: '45%前後' },
+            SUMMER: { water: '月1回（涼しい夜に表土を濡らす程度）', waterIntervalDays: 30, light: 'ライト周辺（弱め）', mist: '不要', humidity: '50%以下' },
+            AUTUMN: { water: '土が乾いたらすぐ', waterIntervalDays: 5, light: 'ライト直下（強）', mist: '不要', humidity: '45%前後' },
+            WINTER: { water: '土が乾いて2日後', waterIntervalDays: 10, light: 'ライト維持', mist: '不要', humidity: '乾燥気味' }
+        },
+        maintenance: { fertilizer: '10月〜4月', repotting: '9月〜11月', pruning: '徒長したら秋にカット' }
     }
 ];
