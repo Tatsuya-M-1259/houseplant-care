@@ -268,7 +268,7 @@ export const PLANT_DATA = [
         water_method: '鉢底からたっぷりと。', 
         management: {
             SPRING: { water: '土表面が乾き始めたら', waterIntervalDays: 4, light: 'ライト10h（弱め）', mist: '毎日1回', humidity: '70%前後' },
-            SUMMER: { water: '土表面が乾き始めたらすぐ', waterIntervalDays: 3, light: 'ライト10h（弱め）', mist: '毎日2回', humidity: '75%以上' },
+            SUMMER: { water: '土表面が乾き始めたらすぐ', waterIntervalDays: 3, light: 'ライト10h（弱め')', mist: '毎日2回', humidity: '75%以上' },
             AUTUMN: { water: '土表面が乾いたら', waterIntervalDays: 5, light: 'ライト10h（弱め）', mist: '毎日1回', humidity: '70%前後' },
             WINTER: { water: '土表面が乾いて1日後', waterIntervalDays: 8, light: 'ライト維持', mist: '毎日1回', humidity: '65%以上' }
         },
@@ -345,8 +345,8 @@ export const PLANT_DATA = [
         water_method: '給水後、24h以内に表土を乾かす強風を併用。', 
         management: {
             SPRING: { water: '土が乾いたら', waterIntervalDays: 5, light: 'LUNA UV 25cm', mist: '不要', humidity: '45%以下' },
-            SUMMER: { water: '土が乾いたら即', waterIntervalDays: 4, light: 'LUNA UV 25cm', mist: '不要', humidity: '45%以下' },
-            AUTUMN: { water: '土が乾いたら', waterIntervalDays: 5, light: 'LUNA UV 25cm', mist: '不要', humidity: '45% Agra以下' },
+            SUMMER: { water: '土が乾いたら即', waterIntervalDays: 4, light: 'LUNA UV 25cm', mist: '不要', humidity: '45% Agra以下' },
+            AUTUMN: { water: '土が乾いたら', waterIntervalDays: 5, light: 'LUNA UV 25cm', mist: '不要', humidity: '45%以下' },
             WINTER: { water: '土が乾いて2日後', waterIntervalDays: 10, light: 'LUNA UV 25cm', mist: '不要', humidity: '乾燥' }
         },
         maintenance: { fertilizer: 'リン・カリ主体の肥料', repotting: '2年に1回', pruning: '不要' }
@@ -373,7 +373,6 @@ export const PLANT_DATA = [
         },
         maintenance: { fertilizer: '5月〜8月（薄めの液肥を少量）', repotting: '2年に1回（5月〜7月の温暖な時期）', pruning: '枯れた下葉やトゲを適宜整理' }
     },
-    // --- 新規追加分 (34, 35) ---
     {
         id: 34, species: 'フォーカリア・ティグリナ（四海波）', scientific: 'Faucaria tigrina', minTemp: 5, difficulty: '容易', feature: '動物の牙のような突起が特徴の冬型メセン。LUNA UV直下の強光とサーキュレーターで引き締まった株姿に。', img: 'faucaria.jpg',
         water_method: '土が完全に乾いてから鉢底よりたっぷりと。夏は休眠するため断水気味に。', 
@@ -395,5 +394,16 @@ export const PLANT_DATA = [
             WINTER: { water: '土が乾いて2日後', waterIntervalDays: 10, light: 'ライト維持', mist: '不要', humidity: '乾燥気味' }
         },
         maintenance: { fertilizer: '10月〜4月', repotting: '9月〜11月', pruning: '徒長したら秋にカット' }
+    },
+    {
+        id: 36, species: 'クリスタル・グラス', scientific: 'Fimbristylis', minTemp: 5, difficulty: '中程度', feature: 'カヤツリグサ科（モウコテンツキ）。シャープなラインの葉が白く輝く美しいグラス類。多肉植物とは真逆で「水切れ厳禁」の徹底管理が極めて重要。', img: 'crystal_grass.jpg',
+        water_method: '土の表面が乾き始めたら（あるいは乾ききる直前に）鉢底からたっぷりと給水。', 
+        management: {
+            SPRING: { water: '土表面が乾き始めたら', waterIntervalDays: 3, light: 'ライト周辺部（強光回避）', mist: '毎日1回', humidity: '60%以上' },
+            SUMMER: { water: '土表面が乾く直前にすぐ', waterIntervalDays: 2, light: 'ライト周辺部（遮光環境推奨）', mist: '毎日2回', humidity: '70%以上' },
+            AUTUMN: { water: '土表面が乾き始めたら', waterIntervalDays: 3, light: 'ライト周辺部（強光回避）', mist: '毎日1回', humidity: '60%以上' },
+            WINTER: { water: '土表面が乾いたらすぐ', waterIntervalDays: 6, light: 'ライト維持（冷え込み注意）', mist: '毎日1回', humidity: '55%以上' }
+        },
+        maintenance: { fertilizer: '5月〜9月', repotting: '5月〜7月', pruning: '枯れた葉や葉先を株元から適宜カット' }
     }
 ];
