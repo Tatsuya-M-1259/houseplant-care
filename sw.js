@@ -1,5 +1,5 @@
 // sw.js
-const CACHE_NAME = 'houseplant-care-v35';
+const CACHE_NAME = 'houseplant-care-v36';
 
 const ASSETS_TO_CACHE = [
     './',
