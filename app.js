@@ -2,7 +2,6 @@
 import { PLANT_DATA, INTERVAL_WATER_STOP } from './data.js';
 
 document.addEventListener('DOMContentLoaded', () => {
-    
     // --- 状態管理 ---
     const WATER_TYPES = {
         WaterOnly: { name: '水のみ', class: 'water' },
@@ -70,24 +69,20 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (e) { console.error("保存失敗:", e); }
     };
 
-    const blobToBase64 = (blob) => {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result);
-            reader.onerror = reject;
-            reader.readAsDataURL(blob);
-        });
-    };
+    const blobToBase64 = (blob) => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
 
     const base64ToBlob = (base64) => {
-        if (!base64 || !base64.includes(';base64,')) return null; 
         try {
             const parts = base64.split(';base64,');
             const contentType = parts[0].split(':')[1];
             const raw = window.atob(parts[1]);
-            const rawLength = raw.length;
-            const uInt8Array = new Uint8Array(rawLength);
-            for (let i = 0; i < rawLength; ++i) uInt8Array[i] = raw.charCodeAt(i);
+            const uInt8Array = new Uint8Array(raw.length);
+            for (let i = 0; i < raw.length; ++i) uInt8Array[i] = raw.charCodeAt(i);
             return new Blob([uInt8Array], { type: contentType });
         } catch (e) { return null; }
     };
@@ -106,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const req = indexedDB.open(DB_NAME, 1);
         req.onupgradeneeded = (e) => e.target.result.createObjectStore(STORE_NAME);
         req.onsuccess = (e) => { db = e.target.result; resolve(); };
-        req.onerror = () => { console.error("DB初期化失敗"); resolve(); }; // エラーでも止まらないようにする
+        req.onerror = () => { console.error("DB初期化失敗"); resolve(); };
     });
 
     const saveImage = async (id, blob) => {
@@ -124,37 +119,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const render = async () => {
         const list = document.getElementById('plant-card-list');
-        const dashboard = document.getElementById('dashboard');
-        const urgentList = document.getElementById('urgent-plant-list');
-        const season = getCurrentSeasonKey();
-        
-        objectUrls.forEach(URL.revokeObjectURL);
-        objectUrls.clear();
-
-        const sorted = [...userPlants].sort((a, b) => {
-            const dataA = PLANT_DATA.find(d => String(d.id) === String(a.speciesId));
-            const dataB = PLANT_DATA.find(d => String(d.id) === String(b.speciesId));
-            if (currentSort === 'name') return a.name.localeCompare(b.name, 'ja');
-            if (currentSort === 'minTemp') return (dataA?.minTemp || 0) - (dataB?.minTemp || 0);
-            if (currentSort === 'entryDate') return parseDate(b.entryDate) - parseDate(a.entryDate);
-            const getNextTime = (p, data) => {
-                const next = calculateNextDate(p.waterLog[0]?.date || p.entryDate, data?.management[season].waterIntervalDays);
-                return next ? new Date(next).getTime() : Infinity;
-            };
-            return getNextTime(a, dataA) - getNextTime(b, dataB);
-        });
-
-        sortedIds = sorted.map(p => p.id);
-        const urgents = sorted.filter(p => {
-            const data = PLANT_DATA.find(d => String(d.id) === String(p.speciesId));
-            const next = calculateNextDate(p.waterLog[0]?.date || p.entryDate, data?.management[season].waterIntervalDays);
-            return next && new Date(next) <= new Date(getLocalTodayDate());
-        });
-        if(dashboard) dashboard.style.display = urgents.length ? 'block' : 'none';
-        if(urgentList) urgentList.innerHTML = urgents.map(p => `<div class="urgent-item">🚨 ${p.name}</div>`).join('');
-
         if(!list) return;
         list.innerHTML = '';
+        const season = getCurrentSeasonKey();
+        
+        // ソート処理
+        const sorted = [...userPlants].sort((a, b) => {
+            if (currentSort === 'name') return a.name.localeCompare(b.name, 'ja');
+            const getNextTime = (p) => {
+                const d = PLANT_DATA.find(d => String(d.id) === String(p.speciesId));
+                const next = calculateNextDate(p.waterLog[0]?.date || p.entryDate, d?.management[season].waterIntervalDays);
+                return next ? new Date(next).getTime() : Infinity;
+            };
+            return getNextTime(a) - getNextTime(b);
+        });
+
         for (const plant of sorted) {
             const species = PLANT_DATA.find(d => String(d.id) === String(plant.speciesId));
             if (!species) continue;
@@ -163,129 +142,44 @@ document.addEventListener('DOMContentLoaded', () => {
             card.dataset.id = plant.id;
             const blob = await getImage(plant.id);
             const imgSrc = blob ? URL.createObjectURL(blob) : `./${species.img}`;
-            if (blob) objectUrls.add(imgSrc);
             const mnt = species.management[season];
             const nextDateStr = calculateNextDate(plant.waterLog[0]?.date || plant.entryDate, mnt.waterIntervalDays);
-            const isUrgent = nextDateStr && new Date(nextDateStr) <= new Date(getLocalTodayDate());
             
             card.innerHTML = `
-                <div class="controls"><span class="drag-handle">☰</span><button class="delete-btn">×</button></div>
+                <div class="controls"><button class="delete-btn">×</button></div>
                 <div class="card-content-wrapper">
                     <div class="card-image"><img src="${imgSrc}" loading="lazy"></div>
-                    <div class="card-header"><h3>${plant.name}</h3><p>${species.species}</p></div>
-                    <div class="status-box ${isUrgent ? 'alert-bg' : ''}">${isUrgent ? '⚠️ 水やり時期' : '🌿 順順'}</div>
-                    <div class="care-info">
-                        <p><strong>目安:</strong> ${formatDateJp(nextDateStr)}</p>
-                        <div class="quick-care-tags"><span>☀️ ${mnt.light}</span><span>💧 ${mnt.water}</span>${mnt.mist ? `<span>💨 葉水: ${mnt.mist}</span>` : ''}</div>
-                    </div>
+                    <h3>${plant.name}</h3><p>${species.species}</p>
+                    <p>次回: ${formatDateJp(nextDateStr)}</p>
                 </div>
-                <div class="card-footer"><button class="action-button tertiary water-done-btn">💧 記録</button></div>
+                <button class="water-done-btn">💧 記録</button>
             `;
             list.appendChild(card);
         }
     };
 
-    const showModal = (id) => {
-        currentPlantId = id;
-        const plant = userPlants.find(p => p.id === id);
-        const species = PLANT_DATA.find(d => String(d.id) === String(plant.speciesId));
-        const modal = document.getElementById('details-modal');
-        const detailSel = document.getElementById('detail-species-change-select');
-        if (detailSel) detailSel.value = plant.speciesId;
-        document.getElementById('detail-plant-name').textContent = plant.name;
-        document.getElementById('detail-species-name').innerHTML = `${species.species} <small>(${species.scientific})</small>`;
-        const detailImg = document.getElementById('detail-plant-image');
-        getImage(id).then(blob => {
-            const imgSrc = blob ? URL.createObjectURL(blob) : `./${species.img}`;
-            detailImg.src = imgSrc;
-            if (blob) objectUrls.add(imgSrc); 
-        });
-        const season = getCurrentSeasonKey();
-        const mnt = species.management[season];
-        const nextDateStr = calculateNextDate(plant.waterLog[0]?.date || plant.entryDate, mnt.waterIntervalDays);
-        const isUrgent = nextDateStr && new Date(nextDateStr) <= new Date(getLocalTodayDate());
-        document.getElementById('detail-next-watering').innerHTML = `
-            <div class="status-box ${isUrgent ? 'alert-bg' : ''}" style="margin: 0 0 1rem 0;">${isUrgent ? '⚠️ 水やり時期です' : '🌿 順調'}</div>
-            <div class="care-info" style="margin: 0 0 1.5rem 1rem;"><p style="font-size: 1.1rem; margin:0;"><strong>次回目安:</strong> ${formatDateJp(nextDateStr)}</p></div>`;
-        document.getElementById('season-care-content').innerHTML = `<ul><li><strong>光量:</strong> ${mnt.light}</li><li><strong>水やり:</strong> ${mnt.water}</li><li><strong>葉水:</strong> ${mnt.mist || '-'}</li><li><strong>温度:</strong> ${species.minTemp}℃以上</li></ul>`;
-        document.getElementById('plant-details').innerHTML = `<p><strong>特徴:</strong> ${species.feature}</p>`;
-        document.getElementById('entry-date-display').textContent = formatDateJp(plant.entryDate);
-        const historyArea = document.getElementById('water-done-in-detail');
-        historyArea.innerHTML = `<h3>📝 履歴</h3><button class="action-button tertiary" id="record-water-detail">💧 記録</button><ul class="history-list">${plant.waterLog.slice(0, 5).map(l => `<li>${formatDateJp(l.date)} - ${WATER_TYPES[l.type]?.name}</li>`).join('')}</ul>`;
-        document.getElementById('record-water-detail').onclick = () => showWaterTypeModal(id);
-        modal.style.display = 'block';
-    };
-
-    const showWaterTypeModal = (id) => {
-        currentPlantId = id;
-        const plant = userPlants.find(p => p.id === id);
-        const modal = document.getElementById('water-type-modal');
-        document.getElementById('water-type-modal-title').textContent = `${plant.name} の記録`;
-        const container = document.getElementById('water-type-options');
-        container.innerHTML = '';
-        Object.keys(WATER_TYPES).forEach(type => {
-            const btn = document.createElement('button');
-            btn.className = 'action-button';
-            btn.textContent = WATER_TYPES[type].name;
-            btn.onclick = () => {
-                const idx = userPlants.findIndex(p => p.id === id);
-                userPlants[idx].waterLog.unshift({ date: getLocalTodayDate(), type });
-                saveToLocal();
-                modal.style.display = 'none';
-                render();
-                if (document.getElementById('details-modal').style.display === 'block') showModal(id);
-            };
-            container.appendChild(btn);
-        });
-        modal.style.display = 'block';
-    };
-
     // --- イベント登録 ---
     const setupEvents = () => {
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('#quick-sort-buttons')) {
-                const btn = e.target.closest('button');
-                if (!btn) return;
-                currentSort = btn.dataset.sort;
-                localStorage.setItem('sort-select', currentSort);
-                render();
-            }
-            if (e.target.classList.contains('delete-btn')) {
-                const id = e.target.closest('.plant-card').dataset.id;
-                if (confirm('削除しますか？')) { userPlants = userPlants.filter(p => p.id !== id); saveToLocal(); render(); }
-            }
-            if (e.target.classList.contains('water-done-btn')) showWaterTypeModal(e.target.closest('.plant-card').dataset.id);
-            if (e.target.closest('.card-content-wrapper') && !e.target.closest('.controls')) showModal(e.target.closest('.plant-card').dataset.id);
-            if (e.target.classList.contains('close-button') || e.target.classList.contains('close-button-water-type')) e.target.closest('.modal').style.display = 'none';
-        });
-
         document.getElementById('add-plant-form').onsubmit = (e) => {
             e.preventDefault();
-            const sid = document.getElementById('species-select').value;
-            userPlants.push({ id: crypto.randomUUID(), speciesId: sid, name: document.getElementById('plant-name').value, entryDate: getLocalTodayDate(), waterLog: [{ date: document.getElementById('last-watered').value, type: document.getElementById('water-type-select').value }], repottingLog: [] });
+            userPlants.push({ id: crypto.randomUUID(), speciesId: document.getElementById('species-select').value, name: document.getElementById('plant-name').value, entryDate: getLocalTodayDate(), waterLog: [{ date: document.getElementById('last-watered').value, type: document.getElementById('water-type-select').value }], repottingLog: [] });
             saveToLocal(); render(); e.target.reset();
         };
 
-        // --- 追加：インポート/エクスポートのイベント登録 ---
         document.getElementById('export-data-button').onclick = async () => {
-            showLoading('エクスポート中...');
             const exportData = JSON.parse(JSON.stringify(userPlants));
             for (let plant of exportData) {
                 const blob = await getImage(plant.id);
                 if (blob) plant.imageData = await blobToBase64(blob);
             }
             const blob = new Blob([JSON.stringify(exportData)], { type: 'application/json' });
-            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `plants_backup_${getLocalTodayDate()}.json`; a.click();
-            hideLoading();
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'plants_backup.json'; a.click();
         };
 
         document.getElementById('import-data-button').onclick = () => document.getElementById('import-file-input').click();
         document.getElementById('import-file-input').onchange = (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
             const reader = new FileReader();
             reader.onload = async (re) => {
-                showLoading('復元中...');
                 const imported = JSON.parse(re.target.result);
                 for (let plant of imported) {
                     if (plant.imageData) {
@@ -295,40 +189,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
                 userPlants = imported;
-                saveToLocal();
-                render();
-                hideLoading();
-                alert('復元完了');
+                saveToLocal(); render(); alert('復元しました');
             };
-            reader.readAsText(file);
-        };
-
-        const detailFileInput = document.getElementById('detail-file-input');
-        document.getElementById('change-photo-button').onclick = () => detailFileInput.click();
-        detailFileInput.onchange = async (e) => {
-            if (e.target.files[0]) {
-                await saveImage(currentPlantId, e.target.files[0]);
-                render(); showModal(currentPlantId);
-            }
+            reader.readAsText(e.target.files[0]);
         };
     };
 
     const start = async () => {
-        try {
-            const saved = localStorage.getItem('userPlants');
-            userPlants = saved ? JSON.parse(saved) : [];
-        } catch (e) { userPlants = []; }
-
+        try { userPlants = JSON.parse(localStorage.getItem('userPlants')) || []; } catch(e) { userPlants = []; }
+        await initDB();
+        const sel = document.getElementById('species-select');
+        if(sel) PLANT_DATA.forEach(p => sel.add(new Option(p.species, p.id)));
         setupEvents();
-
-        try {
-            if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.error);
-            await initDB();
-            const sel = document.getElementById('species-select');
-            if(sel) PLANT_DATA.forEach(p => sel.add(new Option(p.species, p.id)));
-            await render();
-        } catch (e) { console.error("初期化失敗:", e); }
+        render();
     };
-
     start();
 });
