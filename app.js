@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const DB_NAME = 'HouseplantDB';
     const STORE_NAME = 'images';
     let db = null; 
-    let userPlants = []; // 初期値を空にする
+    let userPlants = [];
     let currentPlantId = null;
     let currentSort = localStorage.getItem('sort-select') || 'nextWateringDate';
     let currentGlobalSeason = localStorage.getItem('global-season-select') || 'AUTO';
@@ -67,9 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('last_update_time', Date.now());
             const display = document.getElementById('last-update-display');
             if (display) display.textContent = `最終更新: ${new Date().toLocaleString('ja-JP')}`;
-        } catch (e) {
-            console.error("保存失敗:", e);
-        }
+        } catch (e) { console.error("保存失敗:", e); }
     };
 
     const blobToBase64 = (blob) => {
@@ -89,21 +87,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const raw = window.atob(parts[1]);
             const rawLength = raw.length;
             const uInt8Array = new Uint8Array(rawLength);
-            for (let i = 0; i < rawLength; ++i) {
-                uInt8Array[i] = raw.charCodeAt(i);
-            }
+            for (let i = 0; i < rawLength; ++i) uInt8Array[i] = raw.charCodeAt(i);
             return new Blob([uInt8Array], { type: contentType });
-        } catch (e) {
-            return null;
-        }
+        } catch (e) { return null; }
     };
 
     const showLoading = (text) => {
         const overlay = document.getElementById('loading-overlay');
-        if(overlay) {
-            document.getElementById('loading-text').textContent = text;
-            overlay.style.display = 'flex';
-        }
+        if(overlay) { document.getElementById('loading-text').textContent = text; overlay.style.display = 'flex'; }
     };
 
     const hideLoading = () => {
@@ -115,6 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const req = indexedDB.open(DB_NAME, 1);
         req.onupgradeneeded = (e) => e.target.result.createObjectStore(STORE_NAME);
         req.onsuccess = (e) => { db = e.target.result; resolve(); };
+        req.onerror = () => { console.error("DB初期化失敗"); resolve(); }; // エラーでも止まらないようにする
     });
 
     const saveImage = async (id, blob) => {
@@ -145,7 +137,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (currentSort === 'name') return a.name.localeCompare(b.name, 'ja');
             if (currentSort === 'minTemp') return (dataA?.minTemp || 0) - (dataB?.minTemp || 0);
             if (currentSort === 'entryDate') return parseDate(b.entryDate) - parseDate(a.entryDate);
-            
             const getNextTime = (p, data) => {
                 const next = calculateNextDate(p.waterLog[0]?.date || p.entryDate, data?.management[season].waterIntervalDays);
                 return next ? new Date(next).getTime() : Infinity;
@@ -154,7 +145,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         sortedIds = sorted.map(p => p.id);
-
         const urgents = sorted.filter(p => {
             const data = PLANT_DATA.find(d => String(d.id) === String(p.speciesId));
             const next = calculateNextDate(p.waterLog[0]?.date || p.entryDate, data?.management[season].waterIntervalDays);
@@ -183,14 +173,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="card-content-wrapper">
                     <div class="card-image"><img src="${imgSrc}" loading="lazy"></div>
                     <div class="card-header"><h3>${plant.name}</h3><p>${species.species}</p></div>
-                    <div class="status-box ${isUrgent ? 'alert-bg' : ''}">${isUrgent ? '⚠️ 水やり時期' : '🌿 順調'}</div>
+                    <div class="status-box ${isUrgent ? 'alert-bg' : ''}">${isUrgent ? '⚠️ 水やり時期' : '🌿 順順'}</div>
                     <div class="care-info">
                         <p><strong>目安:</strong> ${formatDateJp(nextDateStr)}</p>
-                        <div class="quick-care-tags">
-                            <span>☀️ ${mnt.light}</span>
-                            <span>💧 ${mnt.water}</span>
-                            ${mnt.mist ? `<span>💨 葉水: ${mnt.mist}</span>` : ''}
-                        </div>
+                        <div class="quick-care-tags"><span>☀️ ${mnt.light}</span><span>💧 ${mnt.water}</span>${mnt.mist ? `<span>💨 葉水: ${mnt.mist}</span>` : ''}</div>
                     </div>
                 </div>
                 <div class="card-footer"><button class="action-button tertiary water-done-btn">💧 記録</button></div>
@@ -206,39 +192,26 @@ document.addEventListener('DOMContentLoaded', () => {
         const modal = document.getElementById('details-modal');
         const detailSel = document.getElementById('detail-species-change-select');
         if (detailSel) detailSel.value = plant.speciesId;
-
         document.getElementById('detail-plant-name').textContent = plant.name;
         document.getElementById('detail-species-name').innerHTML = `${species.species} <small>(${species.scientific})</small>`;
-        
         const detailImg = document.getElementById('detail-plant-image');
         getImage(id).then(blob => {
             const imgSrc = blob ? URL.createObjectURL(blob) : `./${species.img}`;
             detailImg.src = imgSrc;
             if (blob) objectUrls.add(imgSrc); 
         });
-
         const season = getCurrentSeasonKey();
         const mnt = species.management[season];
         const nextDateStr = calculateNextDate(plant.waterLog[0]?.date || plant.entryDate, mnt.waterIntervalDays);
         const isUrgent = nextDateStr && new Date(nextDateStr) <= new Date(getLocalTodayDate());
-        
-        const wateringDisplay = document.getElementById('detail-next-watering');
-        wateringDisplay.innerHTML = `
-            <div class="status-box ${isUrgent ? 'alert-bg' : ''}" style="margin: 0 0 1rem 0;">
-                ${isUrgent ? '⚠️ 水やり時期です' : '🌿 植物の状態は順調です'}
-            </div>
-            <div class="care-info" style="margin: 0 0 1.5rem 1rem;">
-                <p style="font-size: 1.1rem; margin:0;"><strong>次回水やり目安:</strong> ${formatDateJp(nextDateStr)}</p>
-            </div>
-        `;
-        document.getElementById('season-care-content').innerHTML = `
-            <ul><li><strong>光量:</strong> ${mnt.light}</li><li><strong>水やり:</strong> ${mnt.water}</li><li><strong>葉水:</strong> ${mnt.mist || '-'}</li><li><strong>温度:</strong> ${species.minTemp}℃以上</li></ul>
-        `;
+        document.getElementById('detail-next-watering').innerHTML = `
+            <div class="status-box ${isUrgent ? 'alert-bg' : ''}" style="margin: 0 0 1rem 0;">${isUrgent ? '⚠️ 水やり時期です' : '🌿 順調'}</div>
+            <div class="care-info" style="margin: 0 0 1.5rem 1rem;"><p style="font-size: 1.1rem; margin:0;"><strong>次回目安:</strong> ${formatDateJp(nextDateStr)}</p></div>`;
+        document.getElementById('season-care-content').innerHTML = `<ul><li><strong>光量:</strong> ${mnt.light}</li><li><strong>水やり:</strong> ${mnt.water}</li><li><strong>葉水:</strong> ${mnt.mist || '-'}</li><li><strong>温度:</strong> ${species.minTemp}℃以上</li></ul>`;
         document.getElementById('plant-details').innerHTML = `<p><strong>特徴:</strong> ${species.feature}</p>`;
         document.getElementById('entry-date-display').textContent = formatDateJp(plant.entryDate);
         const historyArea = document.getElementById('water-done-in-detail');
-        historyArea.innerHTML = `<h3>📝 履歴</h3><button class="action-button tertiary" id="record-water-detail">💧 記録</button>
-            <ul class="history-list">${plant.waterLog.slice(0, 5).map(l => `<li>${formatDateJp(l.date)} - ${WATER_TYPES[l.type]?.name}</li>`).join('')}</ul>`;
+        historyArea.innerHTML = `<h3>📝 履歴</h3><button class="action-button tertiary" id="record-water-detail">💧 記録</button><ul class="history-list">${plant.waterLog.slice(0, 5).map(l => `<li>${formatDateJp(l.date)} - ${WATER_TYPES[l.type]?.name}</li>`).join('')}</ul>`;
         document.getElementById('record-water-detail').onclick = () => showWaterTypeModal(id);
         modal.style.display = 'block';
     };
@@ -269,9 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- イベント登録 ---
     const setupEvents = () => {
-        // 全てのボタンクリック処理をここに集約
         document.addEventListener('click', (e) => {
-            // ソートボタン
             if (e.target.closest('#quick-sort-buttons')) {
                 const btn = e.target.closest('button');
                 if (!btn) return;
@@ -279,36 +250,57 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.setItem('sort-select', currentSort);
                 render();
             }
-            // 削除
             if (e.target.classList.contains('delete-btn')) {
                 const id = e.target.closest('.plant-card').dataset.id;
                 if (confirm('削除しますか？')) { userPlants = userPlants.filter(p => p.id !== id); saveToLocal(); render(); }
             }
-            // 水やり記録
-            if (e.target.classList.contains('water-done-btn')) {
-                showWaterTypeModal(e.target.closest('.plant-card').dataset.id);
-            }
-            // カード詳細
-            if (e.target.closest('.card-content-wrapper') && !e.target.closest('.controls')) {
-                showModal(e.target.closest('.plant-card').dataset.id);
-            }
-            // モーダル閉じる
-            if (e.target.classList.contains('close-button') || e.target.classList.contains('close-button-water-type')) {
-                e.target.closest('.modal').style.display = 'none';
-            }
+            if (e.target.classList.contains('water-done-btn')) showWaterTypeModal(e.target.closest('.plant-card').dataset.id);
+            if (e.target.closest('.card-content-wrapper') && !e.target.closest('.controls')) showModal(e.target.closest('.plant-card').dataset.id);
+            if (e.target.classList.contains('close-button') || e.target.classList.contains('close-button-water-type')) e.target.closest('.modal').style.display = 'none';
         });
 
         document.getElementById('add-plant-form').onsubmit = (e) => {
             e.preventDefault();
             const sid = document.getElementById('species-select').value;
-            userPlants.push({
-                id: crypto.randomUUID(), speciesId: sid,
-                name: document.getElementById('plant-name').value,
-                entryDate: getLocalTodayDate(),
-                waterLog: [{ date: document.getElementById('last-watered').value, type: document.getElementById('water-type-select').value }],
-                repottingLog: []
-            });
+            userPlants.push({ id: crypto.randomUUID(), speciesId: sid, name: document.getElementById('plant-name').value, entryDate: getLocalTodayDate(), waterLog: [{ date: document.getElementById('last-watered').value, type: document.getElementById('water-type-select').value }], repottingLog: [] });
             saveToLocal(); render(); e.target.reset();
+        };
+
+        // --- 追加：インポート/エクスポートのイベント登録 ---
+        document.getElementById('export-data-button').onclick = async () => {
+            showLoading('エクスポート中...');
+            const exportData = JSON.parse(JSON.stringify(userPlants));
+            for (let plant of exportData) {
+                const blob = await getImage(plant.id);
+                if (blob) plant.imageData = await blobToBase64(blob);
+            }
+            const blob = new Blob([JSON.stringify(exportData)], { type: 'application/json' });
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `plants_backup_${getLocalTodayDate()}.json`; a.click();
+            hideLoading();
+        };
+
+        document.getElementById('import-data-button').onclick = () => document.getElementById('import-file-input').click();
+        document.getElementById('import-file-input').onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async (re) => {
+                showLoading('復元中...');
+                const imported = JSON.parse(re.target.result);
+                for (let plant of imported) {
+                    if (plant.imageData) {
+                        const blob = base64ToBlob(plant.imageData);
+                        if (blob) await saveImage(plant.id, blob);
+                        delete plant.imageData;
+                    }
+                }
+                userPlants = imported;
+                saveToLocal();
+                render();
+                hideLoading();
+                alert('復元完了');
+            };
+            reader.readAsText(file);
         };
 
         const detailFileInput = document.getElementById('detail-file-input');
@@ -321,38 +313,21 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     };
 
-    // --- メイン起動処理 ---
     const start = async () => {
-        // 1. 安全なデータ読み込み
         try {
             const saved = localStorage.getItem('userPlants');
             userPlants = saved ? JSON.parse(saved) : [];
-        } catch (e) {
-            console.error("データ読み込み失敗:", e);
-            userPlants = [];
-        }
+        } catch (e) { userPlants = []; }
 
-        // 2. イベント登録 (先にやることでUIを操作可能にする)
-        try {
-            setupEvents();
-        } catch (e) {
-            console.error("イベント登録失敗:", e);
-        }
+        setupEvents();
 
-        // 3. データベース & 初期化
         try {
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('./sw.js').catch(console.error);
-            }
+            if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.error);
             await initDB();
-            
             const sel = document.getElementById('species-select');
             if(sel) PLANT_DATA.forEach(p => sel.add(new Option(p.species, p.id)));
-            
             await render();
-        } catch (e) {
-            console.error("初期化失敗:", e);
-        }
+        } catch (e) { console.error("初期化失敗:", e); }
     };
 
     start();
